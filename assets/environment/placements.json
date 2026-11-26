@@ -1,0 +1,58 @@
+{
+  "props": [
+    {
+      "file": "res://assets/environment/props/street_stalls_row.glb",
+      "anchor": "entrance",
+      "offset": [0, 0, 0],
+      "rotation_deg": [0, 0, 0],
+      "scale": 1.0,
+      "enabled": false,
+      "notes": "Add a closer row of street stalls near the base of the restaurant. See ART_PIPELINE.md."
+    },
+    {
+      "file": "res://assets/environment/props/nature_trees.glb",
+      "anchor": "street_far",
+      "offset": [-16, 0, -2],
+      "rotation_deg": [0, 190, 0],
+      "scale": 1.0,
+      "enabled": false,
+      "notes": "A small row of trees on the far street - import the Kenney Nature Kit. Enable after downloading."
+    },
+    {
+      "file": "res://assets/environment/props/nature_rocks.glb",
+      "anchor": "road_far",
+      "offset": [-10, 0, -7],
+      "rotation_deg": [0, 0, 0],
+      "scale": 1.0,
+      "enabled": false,
+      "notes": "Rock outcrops beside the far road (Kenney Nature Kit). Enable after downloading."
+    },
+    {
+      "file": "res://assets/environment/props/red_pot.glb",
+      "anchor": "counter_left",
+      "offset": [-0.6, 0.55, 0],
+      "rotation_deg": [0, 0, 0],
+      "scale": 1.0,
+      "enabled": false,
+      "notes": "Lobby display pot. Higher z places it in front of the cart."
+    },
+    {
+      "file": "res://assets/environment/props/terrace_cushions.glb",
+      "anchor": "terrace_left",
+      "offset": [0.3, 0.1, 1.5],
+      "rotation_deg": [0, 45, 0],
+      "scale": 1.0,
+      "enabled": false,
+      "notes": "Two cushioned benches on the terrace."
+    },
+    {
+      "file": "res://assets/environment/props/cooler_cart.glb",
+      "anchor": "terrace_right",
+      "offset": [-0.5, 0, 2.2],
+      "rotation_deg": [0, 90, 0],
+      "scale": 1.0,
+      "enabled": false,
+      "notes": "Small cooler cart pushed against the terrace outside the palm plants."
+    }
+  ]
+}

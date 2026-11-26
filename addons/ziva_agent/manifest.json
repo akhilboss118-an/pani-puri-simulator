@@ -1,0 +1,39 @@
+{
+  "version": "v3.3.9",
+  "godotCppVersion": "v4.2.0",
+  "serverUrl": "https://ziva.sh",
+  "branch": "main",
+  "commit": "02fa7f0",
+  "runtime": {
+    "linux-x64": {
+      "asset": "ziva-runtime-v3.3.9-linux-x64.tar.zst",
+      "sha256": "5e88c7875b01c921cbd4535902552e2d0c1ea72b3d9512885a943ae3ee2f802a",
+      "size": 175532542
+    },
+    "linux-arm64": {
+      "asset": "ziva-runtime-v3.3.9-linux-arm64.tar.zst",
+      "sha256": "09e18fcfe5d35215e444b1cdfd176ef51d162a1d7b93416184d9a0377feb61e7",
+      "size": 168386720
+    },
+    "windows-x64": {
+      "asset": "ziva-runtime-v3.3.9-windows-x64.tar.zst",
+      "sha256": "72e76916850392675f6760c866f52cfca3499a9bda4db74b60f97e86f0a3c843",
+      "size": 189112697
+    },
+    "windows-arm64": {
+      "asset": "ziva-runtime-v3.3.9-windows-arm64.tar.zst",
+      "sha256": "b826fa3ab481a8f7d0dc59d5c141e4bc73467a05a24f5d512c01bc5c76edb554",
+      "size": 174739952
+    },
+    "macos-arm64": {
+      "asset": "ziva-runtime-v3.3.9-macos-arm64.tar.zst",
+      "sha256": "f2e13d4efd0236ec716387bff7464c4f38fcdf6eb3ed9e52ebe17befc3814007",
+      "size": 146267145
+    },
+    "macos-x64": {
+      "asset": "ziva-runtime-v3.3.9-macos-x64.tar.zst",
+      "sha256": "5480ffd5bcce07c281091af11b032bd859ea5f501a58b2e29447cbfc904b73e6",
+      "size": 161970666
+    }
+  }
+}

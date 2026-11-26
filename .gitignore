@@ -1,0 +1,11 @@
+# Godot
+.godot/
+/android/
+
+# Build artifacts
+build/
+.import/
+
+# OS
+.DS_Store
+Thumbs.db

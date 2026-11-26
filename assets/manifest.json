@@ -1,0 +1,125 @@
+{
+  "project": "Pani Puri Simulator",
+  "version": "1.0.0",
+  "updated": "2026-11-25",
+  "policy": "Art is a mix of procedural primitives, shared cached materials, and seven customer GLBs converted from the user-supplied FBX characters. No Sketchfab models are downloaded in-game: environment assets are documented as a manual import in ART_PIPELINE.md, and attribution for every drop-in model is recorded here.",
+  "assets": [
+    {
+      "id": "customer_1",
+      "type": "character",
+      "path": "res://assets/models/customers/customer_1.glb",
+      "origin": "user-supplied FBX (anonymous source)",
+      "license": "user-provided (converted for this game)",
+      "attribution": "None - the user supplied the files.",
+      "status": "integrated",
+      "triangles": 6500,
+      "texture": "2048x2048 atlas downscaled to 512"
+    },
+    {
+      "id": "customer_2",
+      "type": "character",
+      "path": "res://assets/models/customers/customer_2.glb",
+      "origin": "user-supplied FBX (anonymous source)",
+      "license": "user-provided (converted for this game)",
+      "attribution": "None - the user supplied the files.",
+      "status": "integrated",
+      "triangles": 6500,
+      "texture": "2048x2048 atlas downscaled to 512"
+    },
+    {
+      "id": "customer_3",
+      "type": "character",
+      "path": "res://assets/models/customers/customer_3.glb",
+      "origin": "user-supplied FBX (anonymous source)",
+      "license": "user-provided (converted for this game)",
+      "attribution": "None - the user supplied the files.",
+      "status": "integrated",
+      "triangles": 6500,
+      "texture": "2048x2048 atlas downscaled to 512"
+    },
+    {
+      "id": "customer_4",
+      "type": "character",
+      "path": "res://assets/models/customers/customer_4.glb",
+      "origin": "user-supplied FBX (anonymous source)",
+      "license": "user-provided (converted for this game)",
+      "attribution": "None - the user supplied the files.",
+      "status": "integrated",
+      "triangles": 6500,
+      "texture": "2048x2048 atlas downscaled to 512"
+    },
+    {
+      "id": "customer_5",
+      "type": "character",
+      "path": "res://assets/models/customers/customer_5.glb",
+      "origin": "user-supplied FBX (anonymous source)",
+      "license": "user-provided (converted for this game)",
+      "attribution": "None - the user supplied the files.",
+      "status": "integrated",
+      "triangles": 6500,
+      "texture": "2048x2048 atlas downscaled to 512"
+    },
+    {
+      "id": "customer_6",
+      "type": "character",
+      "path": "res://assets/models/customers/customer_6.glb",
+      "origin": "user-supplied FBX (anonymous source)",
+      "license": "user-provided (converted for this game)",
+      "attribution": "None - the user supplied the files.",
+      "status": "integrated",
+      "triangles": 6500,
+      "texture": "2048x2048 atlas downscaled to 512"
+    },
+    {
+      "id": "customer_7",
+      "type": "character",
+      "path": "res://assets/models/customers/customer_7.glb",
+      "origin": "user-supplied FBX (anonymous source)",
+      "license": "user-provided (converted for this game)",
+      "attribution": "None - the user supplied the files.",
+      "status": "integrated",
+      "triangles": 6500,
+      "texture": "2048x2048 atlas downscaled to 512"
+    },
+    {
+      "id": "env_kenney_nature_kit",
+      "type": "environment",
+      "source": "Kenney (CC0)",
+      "url": "https://kenney.nl/assets/nature-kit",
+      "status": "recommended",
+      "notes": "Real 3D models: 330 files - trees, rocks, foliage. Download and unzip into assets/environment/props/ (see ART_PIPELINE.md)."
+    },
+    {
+      "id": "env_kenney_survival_kit",
+      "type": "environment",
+      "source": "Kenney (CC0)",
+      "url": "https://kenney.nl/assets/survival-kit",
+      "status": "recommended",
+      "notes": "80 nature/survival assets, 3D, CC0."
+    },
+    {
+      "id": "env_kenney_furniture_kit",
+      "type": "environment",
+      "source": "Kenney (CC0)",
+      "url": "https://kenney.nl/assets/furniture-kit",
+      "status": "recommended",
+      "notes": "140 interior furniture assets, 3D, CC0 - good for restaurant tables."
+    },
+    {
+      "id": "env_street_stalls_row",
+      "type": "environment",
+      "source": "Sketchfab",
+      "search": "https://sketchfab.com/search?q=indian+street+stalls+static+set",
+      "status": "suggested",
+      "notes": "A close row of vendor stalls behind the restaurant, near the entrances."
+    },
+    {
+      "id": "env_cooler_cart",
+      "type": "environment",
+      "source": "Sketchfab",
+      "search": "https://sketchfab.com/search?q=steel+barrel+mobile+cold+storage+cart",
+      "status": "suggested",
+      "notes": "A cooler cart against the terrace; static, under 1.5k triangles."
+    }
+  ]
+}
