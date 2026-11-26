@@ -1,58 +1,166 @@
 {
   "props": [
     {
-      "file": "res://assets/environment/props/street_stalls_row.glb",
-      "anchor": "entrance",
-      "offset": [0, 0, 0],
-      "rotation_deg": [0, 0, 0],
-      "scale": 1.0,
-      "enabled": false,
-      "notes": "Add a closer row of street stalls near the base of the restaurant. See ART_PIPELINE.md."
-    },
-    {
-      "file": "res://assets/environment/props/nature_trees.glb",
+      "file": "res://assets/environment/props/palm_tree_1.glb",
       "anchor": "street_far",
-      "offset": [-16, 0, -2],
-      "rotation_deg": [0, 190, 0],
-      "scale": 1.0,
-      "enabled": false,
-      "notes": "A small row of trees on the far street - import the Kenney Nature Kit. Enable after downloading."
-    },
-    {
-      "file": "res://assets/environment/props/nature_rocks.glb",
-      "anchor": "road_far",
-      "offset": [-10, 0, -7],
+      "offset": [4, 0, -7],
       "rotation_deg": [0, 0, 0],
-      "scale": 1.0,
-      "enabled": false,
-      "notes": "Rock outcrops beside the far road (Kenney Nature Kit). Enable after downloading."
+      "scale": 3.0,
+      "enabled": true,
+      "notes": "Kenney Nature Kit palm tree on the far pavement."
     },
     {
-      "file": "res://assets/environment/props/red_pot.glb",
+      "file": "res://assets/environment/props/palm_tree_2.glb",
+      "anchor": "street_far",
+      "offset": [16, 0, -7.5],
+      "rotation_deg": [0, 35, 0],
+      "scale": 3.0,
+      "enabled": true,
+      "notes": "Taller Nature Kit palm further down the street."
+    },
+    {
+      "file": "res://assets/environment/props/bush_large.glb",
+      "anchor": "entrance",
+      "offset": [-1.2, 0, -1.5],
+      "rotation_deg": [0, 0, 0],
+      "scale": 3.5,
+      "enabled": true,
+      "notes": "Shrub softening the restaurant entrance."
+    },
+    {
+      "file": "res://assets/environment/props/clay_pot.glb",
       "anchor": "counter_left",
-      "offset": [-0.6, 0.55, 0],
+      "offset": [-0.6, 0.68, 0],
       "rotation_deg": [0, 0, 0],
-      "scale": 1.0,
-      "enabled": false,
-      "notes": "Lobby display pot. Higher z places it in front of the cart."
+      "scale": 1.4,
+      "enabled": true,
+      "notes": "Clay planter on the side table beside the cart."
     },
     {
-      "file": "res://assets/environment/props/terrace_cushions.glb",
+      "file": "res://assets/environment/props/rock_large.glb",
+      "anchor": "road_far",
+      "offset": [4, 0, -1],
+      "rotation_deg": [0, 20, 0],
+      "scale": 1.6,
+      "enabled": true,
+      "notes": "Nature Kit rock outcrop by the far curb."
+    },
+    {
+      "file": "res://assets/environment/props/fence_section.glb",
+      "anchor": "road_far",
+      "offset": [-6, 0, -1.5],
+      "rotation_deg": [0, 0, 0],
+      "scale": 2.5,
+      "enabled": true,
+      "notes": "Simple fence panel along the far pavement."
+    },
+    {
+      "file": "res://assets/environment/props/barrel.glb",
+      "anchor": "counter_right",
+      "offset": [-0.8, 0, 0],
+      "rotation_deg": [0, 0, 0],
+      "scale": 2.5,
+      "enabled": true,
+      "notes": "Survival Kit barrel beside the serving counter."
+    },
+    {
+      "file": "res://assets/environment/props/crate_open.glb",
+      "anchor": "counter_left",
+      "offset": [-1.0, 0, 0.6],
+      "rotation_deg": [0, 25, 0],
+      "scale": 2.0,
+      "enabled": true,
+      "notes": "Open supply crate next to the stall."
+    },
+    {
+      "file": "res://assets/environment/props/firewood.glb",
+      "anchor": "counter_left",
+      "offset": [-1.2, 0, -0.4],
+      "rotation_deg": [0, 0, 0],
+      "scale": 2.5,
+      "enabled": true,
+      "notes": "Bundle of wood for the fryer."
+    },
+    {
+      "file": "res://assets/environment/props/signpost.glb",
+      "anchor": "entrance",
+      "offset": [-2.5, 0, 0.5],
+      "rotation_deg": [0, 0, 0],
+      "scale": 3.5,
+      "enabled": true,
+      "notes": "Wooden signpost pointing into the restaurant lane."
+    },
+    {
+      "file": "res://assets/environment/props/bench.glb",
+      "anchor": "street_far",
+      "offset": [8, 0, -7.2],
+      "rotation_deg": [0, 0, 0],
+      "scale": 4.0,
+      "enabled": true,
+      "notes": "Furniture Kit bench on the far pavement."
+    },
+    {
+      "file": "res://assets/environment/props/trashcan.glb",
+      "anchor": "counter_right",
+      "offset": [0.4, 0, 0.2],
+      "rotation_deg": [0, 0, 0],
+      "scale": 2.1,
+      "enabled": true,
+      "notes": "Bin beside the serving side of the cart."
+    },
+    {
+      "file": "res://assets/environment/props/terrace_plant.glb",
       "anchor": "terrace_left",
       "offset": [0.3, 0.1, 1.5],
       "rotation_deg": [0, 45, 0],
-      "scale": 1.0,
-      "enabled": false,
-      "notes": "Two cushioned benches on the terrace."
+      "scale": 1.8,
+      "enabled": true,
+      "notes": "Potted plant on the restaurant terrace."
     },
     {
-      "file": "res://assets/environment/props/cooler_cart.glb",
+      "file": "res://assets/environment/props/round_table.glb",
       "anchor": "terrace_right",
-      "offset": [-0.5, 0, 2.2],
-      "rotation_deg": [0, 90, 0],
-      "scale": 1.0,
-      "enabled": false,
-      "notes": "Small cooler cart pushed against the terrace outside the palm plants."
+      "offset": [0.8, 0.4, 0.2],
+      "rotation_deg": [0, 0, 0],
+      "scale": 1.4,
+      "enabled": true,
+      "notes": "Small round table at the terrace corner."
+    },
+    {
+      "file": "res://assets/environment/props/stool.glb",
+      "anchor": "terrace_right",
+      "offset": [1.8, 0, 0.4],
+      "rotation_deg": [0, 0, 0],
+      "scale": 2.2,
+      "enabled": true,
+      "notes": "Bar stool beside the terrace table."
+    },
+    {
+      "file": "res://assets/environment/props/soup_pot.glb",
+      "anchor": "counter_left",
+      "offset": [0.2, 0.62, 0],
+      "rotation_deg": [0, 0, 0],
+      "scale": 1.4,
+      "enabled": true,
+      "notes": "Food Kit cooking pot on the side table."
+    },
+    {
+      "file": "res://assets/environment/props/tomato.glb",
+      "anchor": "counter_left",
+      "offset": [0.5, 0.62, 0.1],
+      "rotation_deg": [0, 0, 0],
+      "scale": 1.5,
+      "enabled": true,
+      "notes": "Fresh tomatoes beside the pot."
+    },
+    {
+      "file": "res://assets/environment/props/lemon.glb",
+      "anchor": "counter_left",
+      "offset": [0.8, 0.62, 0.1],
+      "rotation_deg": [0, 30, 0],
+      "scale": 1.2,
+      "enabled": true,
+      "notes": "Lemons on the side table."
     }
   ]
 }

@@ -13,6 +13,8 @@ var upgrades_panel: UpgradesPanel
 var settings_panel: SettingsPanel
 var pause_panel: PausePanel
 var report_panel: ReportPanel
+var goals_panel: GoalsPanel
+var tutorial: Tutorial
 
 var _menu_camera: Camera3D
 var _menu_time: float = 0.0
@@ -26,6 +28,8 @@ func _ready() -> void:
 	show_menu()
 	if "--smoke" in OS.get_cmdline_user_args():
 		_run_smoke_test.call_deferred()
+	elif "--tutsmoke" in OS.get_cmdline_user_args():
+		_run_tutorial_smoke.call_deferred()
 	elif "--shots" in OS.get_cmdline_user_args():
 		_run_screenshot_tour.call_deferred()
 
@@ -75,8 +79,14 @@ func _build_ui() -> void:
 	settings_panel = SettingsPanel.new()
 	pause_panel = PausePanel.new()
 	report_panel = ReportPanel.new()
-	for panel in [inventory_panel, upgrades_panel, settings_panel, pause_panel, report_panel]:
+	goals_panel = GoalsPanel.new()
+	for panel in [inventory_panel, upgrades_panel, settings_panel, pause_panel, report_panel, goals_panel]:
 		ui_layer.add_child(panel)
+
+	tutorial = Tutorial.new()
+	tutorial.name = "Tutorial"
+	tutorial.setup(player, world)
+	ui_layer.add_child(tutorial)
 
 
 # ------------------------------------------------------------------ screens
@@ -85,6 +95,8 @@ func show_menu() -> void:
 	Game.overlay_open = false
 	get_tree().paused = false
 	_close_panels()
+	if tutorial:
+		tutorial.cancel()
 	if world:
 		world.customer_manager.close_stall()
 	if player:
@@ -129,7 +141,11 @@ func on_day_started(day: int) -> void:
 	Game.overlay_open = false
 	get_tree().paused = false
 	Audio.start_ambience()
-	Events.toast.emit("Day %d - stall open. Read the order card, then start cooking." % day, "good")
+	if Game.pending_tutorial:
+		Game.pending_tutorial = false
+		tutorial.start()
+	else:
+		Events.toast.emit("Day %d - stall open. Read the order card, then start cooking." % day, "good")
 
 
 func _reset_player() -> void:
@@ -161,6 +177,10 @@ func open_pause() -> void:
 	_open_only(pause_panel)
 
 
+func open_goals() -> void:
+	_open_only(goals_panel)
+
+
 func _open_only(panel: OverlayPanel) -> void:
 	if Game.state != Game.State.PLAYING:
 		return
@@ -169,7 +189,7 @@ func _open_only(panel: OverlayPanel) -> void:
 
 
 func _close_panels() -> void:
-	for panel in [inventory_panel, upgrades_panel, settings_panel, pause_panel, report_panel]:
+	for panel in [inventory_panel, upgrades_panel, settings_panel, pause_panel, report_panel, goals_panel]:
 		if panel != null and panel.visible:
 			panel.close()
 
@@ -180,6 +200,8 @@ func apply_quality() -> void:
 
 
 func _on_day_ended(report: Dictionary) -> void:
+	if tutorial:
+		tutorial.cancel()
 	if world:
 		world.customer_manager.close_stall()
 	if player:
@@ -196,6 +218,58 @@ func _process(delta: float) -> void:
 		var drift := sin(_menu_time * 0.11) * 0.55
 		_menu_camera.position = Vector3(4.8 + drift, 2.45 + sin(_menu_time * 0.07) * 0.1, 4.6 - drift * 0.3)
 		_menu_camera.look_at(Vector3(0.2, 1.5, 8.8))
+
+
+# --------------------------------------------------------- tutorial smoke test
+
+## Dev-only check that the guided first order freezes time, matches one puri,
+## and hands control back to a running day when served.
+func _run_tutorial_smoke() -> void:
+	await get_tree().process_frame
+	var failures: Array[String] = []
+	Game.settings.tutorial_done = false
+	Game.start_new_game()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	if not tutorial.is_active():
+		failures.append("tutorial did not start")
+	if Clock.running:
+		failures.append("clock was not frozen")
+	if int(Orders.active_order.get("quantity", -1)) != 1:
+		failures.append("tutorial order is not one puri")
+	if not Game.settings.has("tutorial_done"):
+		failures.append("tutorial setting missing")
+	if DisplayServer.get_name() != "headless":
+		await RenderingServer.frame_post_draw
+		await _capture(ProjectSettings.globalize_path("res://build/screenshots"), "13_tutorial")
+
+	var box: PuriBoxStation = world.stall.puri_box
+	var potato: BowlStation = world.stall.potato
+	var pani: PaniStation = world.stall.pani_mint
+	var plate: PlateStation = world.stall.plate
+	box.interact(player)   # take
+	box.interact(player)   # crack
+	potato.interact(player)
+	pani.interact(player)
+	plate.interact(player) # place
+	plate.interact(player) # serve
+	await get_tree().create_timer(0.3).timeout
+	if Orders.day_served < 1:
+		failures.append("tutorial puri was not served")
+	if Clock.running == false:
+		failures.append("clock did not resume")
+	if not bool(Game.settings.tutorial_done):
+		failures.append("tutorial completion not saved")
+	if tutorial.is_active():
+		failures.append("tutorial still active after serving")
+
+	if failures.is_empty():
+		print("TUT SMOKE OK: freeze, scripted order, six steps, serve, resume")
+		get_tree().quit(0)
+	else:
+		for f in failures:
+			printerr("TUT SMOKE FAIL: " + f)
+		get_tree().quit(1)
 
 
 # --------------------------------------------------------------- smoke test
@@ -218,6 +292,9 @@ func _run_smoke_test() -> void:
 	var pani: PaniStation = world.stall.pani_mint
 	var plate: PlateStation = world.stall.plate
 	var trash: TrashStation = world.stall.trash
+
+	if Goals.goals.size() != 3:
+		failures.append("daily goals did not initialise")
 
 	for station in world.get_tree().get_nodes_in_group("interactable"):
 		var prompt: String = station.get_prompt(player)
@@ -253,6 +330,13 @@ func _run_smoke_test() -> void:
 		failures.append("order was not served")
 	if Economy.cash <= cash_before:
 		failures.append("customer did not pay")
+
+	var goal_tracked := false
+	for goal in Goals.goals:
+		if int(goal.get("progress", 0)) > 0:
+			goal_tracked = true
+	if not goal_tracked:
+		failures.append("daily goals did not track serving")
 
 	box.interact(player)
 	box.interact(player)
@@ -356,9 +440,9 @@ func _run_screenshot_tour() -> void:
 
 	_grant_restaurant_upgrades()
 	world.sync_upgrades()
-	player.global_position = Vector3(0.0, 0.2, 9.0)
+	player.global_position = Vector3(0.0, 0.2, 4.5)
 	player.rotation.y = PI
-	player.camera.rotation.x = -0.06
+	player.camera.rotation.x = 0.02
 	await get_tree().create_timer(0.3).timeout
 	await _capture(out_dir, "09_restaurant")
 
@@ -366,6 +450,18 @@ func _run_screenshot_tour() -> void:
 	player.rotation.y = 0.0
 	player.camera.rotation.x = 0.04
 	await _capture(out_dir, "10_palace")
+
+	player.global_position = Vector3(0.0, 0.2, 4.5)
+	player.rotation.y = PI
+	player.camera.rotation.x = 0.16
+	await get_tree().create_timer(0.3).timeout
+	await _capture(out_dir, "11_franchise")
+
+	player.global_position = Vector3(-14.0, 0.2, 2.5)
+	player.rotation.y = 2.55
+	player.camera.rotation.x = 0.04
+	await get_tree().create_timer(0.3).timeout
+	await _capture(out_dir, "12_world_tour")
 
 	Game.end_day(true)
 	await get_tree().create_timer(0.3).timeout
@@ -383,13 +479,16 @@ func _capture(dir: String, shot_name: String) -> void:
 	print("SHOT ", path)
 
 
-## Buys every restaurant tier so the camera fly-through can show all three
+## Buys every restaurant tier so the camera fly-through can show all five
 ## visuals. Development/screenshot helper only.
 func _grant_restaurant_upgrades() -> void:
 	if player == null:
 		return
 	var original_cash := Economy.cash
-	Economy.cash = maxi(Economy.cash, 60000)
-	for id in ["restaurant_reno", "fine_dining", "pani_puri_palace"]:
+	var original_level := Progression.level
+	Economy.cash = maxi(Economy.cash, 300000)
+	Progression.level = Progression.MAX_LEVEL
+	for id in ["restaurant_reno", "fine_dining", "pani_puri_palace", "franchise_hq", "world_tour"]:
 		Progression.buy(id)
 	Economy.cash = original_cash
+	Progression.level = original_level

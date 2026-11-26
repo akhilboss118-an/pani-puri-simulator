@@ -44,30 +44,28 @@ publish):
 | Nature Kit | https://kenney.nl/assets/nature-kit | 330 | trees, rocks, foliage |
 | Survival Kit | https://kenney.nl/assets/survival-kit | 80 | nature, surv. items |
 | Furniture Kit | https://kenney.nl/assets/furniture-kit | 140 | interior furniture |
+| Food Kit | https://kenney.nl/assets/food-kit | 200 | food, pots and table props |
 
 ### 2a. Drop-in placement (semi-realistic world)
+
+**18 curated CC0 props are already shipped and enabled** in
+`assets/environment/props/` and placed by `assets/environment/placements.json`:
+two palms, a shrub, a clay pot, a rock, a fence, a barrel, a crate, firewood,
+a signpost, a bench, a bin, a terrace plant, a round table, a stool, a cooking
+pot, tomatoes and lemons. At startup the log prints
+`EnvironmentLoader: loaded 18 imported prop(s)`. The two texture atlases ship
+as `props/Textures/colormap.png` (Food Kit) and `props/Textures/s.png`
+(Survival Kit) - Survival GLBs were repathed to `Textures/s.png` so both atlases
+can coexist.
+
+To add more:
 
 1. Download a Kenney pack (they are under **License: Creative Commons CC0**,
    so attribution is optional but appreciated - see `assets/manifest.json`).
 2. Unzip and move the `.glb` files you want into `new-game-project/assets/environment/props/`.
 3. Open the GLB in the Godot editor (auto-import), adjust import if you like.
-4. Add a line to `assets/environment/placements.json`:
-
-```json
-{
-  "file": "res://assets/environment/props/tree_01.glb",
-  "anchor": "street_far",
-  "offset": [-16, 0, -2],
-  "rotation_deg": [0, 190, 0],
-  "scale": 1.0,
-  "enabled": true
-}
-```
-
+4. Add a line to `assets/environment/placements.json` with `"enabled": true`.
 5. Re-export the web build.
-
-Two nature placements (`nature_trees.glb` on the far street, `nature_rocks.glb`
-on the far road) are enabled by default - enable them after dropping the files.
 
 ### 2b. Sketchfab (manual, no in-game downloads)
 

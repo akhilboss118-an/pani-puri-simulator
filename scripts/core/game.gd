@@ -8,12 +8,13 @@ extends Node
 enum State { MENU, PLAYING, PAUSED, DAY_END }
 
 const SETTINGS_PATH := "user://settings.cfg"
-const VERSION := "1.0.0"
+const VERSION := "1.1.0"
 
 var state: State = State.MENU
 var day: int = 1
 var root: Node = null
 var overlay_open: bool = false
+var pending_tutorial: bool = false
 
 var settings := {
 	"mouse_sensitivity": 0.28,
@@ -22,6 +23,7 @@ var settings := {
 	"invert_y": false,
 	"reduced_motion": false,
 	"show_fps": false,
+	"tutorial_done": false,
 }
 
 var _quality_names := ["Low", "Medium", "High"]
@@ -40,6 +42,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("pause") and state == State.PLAYING:
 		if root:
 			root.call("open_pause")
+	elif event.is_action_pressed("toggle_goals") and state == State.PLAYING:
+		if root:
+			root.call("open_goals")
 
 
 # ---------------------------------------------------------------- input setup
@@ -55,6 +60,7 @@ func _setup_input() -> void:
 	_bind_keys("toggle_inventory", [KEY_TAB, KEY_I])
 	_bind_keys("toggle_upgrades", [KEY_U])
 	_bind_keys("toggle_report", [KEY_R])
+	_bind_keys("toggle_goals", [KEY_G])
 	_bind_joy_button("interact", JOY_BUTTON_A)
 	_bind_joy_button("pause", JOY_BUTTON_START)
 	_bind_joy_axis("move_left", JOY_AXIS_LEFT_X, -1.0)
@@ -107,10 +113,11 @@ func start_new_game() -> void:
 	Progression.reset()
 	Orders.reset()
 	Clock.reset()
+	pending_tutorial = not bool(settings.get("tutorial_done", false)) and not _dev_run()
 	if root:
-		root.start_game(true)
 		root.world.sync_upgrades()
 	set_state(State.PLAYING)
+	start_day(true)
 
 
 func continue_game() -> void:
@@ -118,15 +125,33 @@ func continue_game() -> void:
 	if not loaded:
 		start_new_game()
 		return
+	pending_tutorial = false
 	if root:
-		root.start_game(false)
 		root.world.sync_upgrades()
 	set_state(State.PLAYING)
+	resume_day()
 
 
-func start_day() -> void:
-	Inventory.begin_day()
+func _dev_run() -> bool:
+	var args := OS.get_cmdline_user_args()
+	return "--smoke" in args or "--shots" in args
+
+
+## Fresh days skip spoilage; days after the first apply it in Inventory.begin_day.
+func start_day(fresh: bool = false) -> void:
+	if not fresh:
+		Inventory.begin_day()
 	Clock.begin_day()
+	Progression.begin_day()
+	Goals.begin_day(day)
+	set_state(State.PLAYING)
+	if root:
+		root.on_day_started(day)
+
+
+## Continue from a saved clock instead of resetting to opening time.
+func resume_day() -> void:
+	Clock.resume()
 	Progression.begin_day()
 	set_state(State.PLAYING)
 	if root:
@@ -145,6 +170,9 @@ func end_day(closed_by_player: bool = false) -> void:
 		"served": Orders.day_served,
 		"lost": Orders.day_lost,
 		"rating": Orders.day_rating,
+		"tips": Orders.day_tips,
+		"best_combo": Orders.best_combo,
+		"goals": Goals.to_dict(),
 		"reputation": Progression.reputation,
 		"closed_by_player": closed_by_player,
 	}
@@ -165,8 +193,6 @@ func next_day() -> void:
 	day += 1
 	Orders.reset_day()
 	Economy.begin_day()
-	if root:
-		root.on_day_started(day)
 	start_day()
 
 

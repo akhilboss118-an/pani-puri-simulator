@@ -1,8 +1,8 @@
 {
   "project": "Pani Puri Simulator",
-  "version": "1.0.0",
-  "updated": "2026-11-25",
-  "policy": "Art is a mix of procedural primitives, shared cached materials, and seven customer GLBs converted from the user-supplied FBX characters. No Sketchfab models are downloaded in-game: environment assets are documented as a manual import in ART_PIPELINE.md, and attribution for every drop-in model is recorded here.",
+  "version": "1.1.0",
+  "updated": "2026-11-26",
+  "policy": "Art is a mix of procedural primitives, shared cached materials, seven customer GLBs converted from the user-supplied FBX characters, and 18 curated Kenney CC0 environment props. No Sketchfab models are downloaded in-game: environment assets are documented as a manual import in ART_PIPELINE.md, and attribution for every drop-in model is recorded here.",
   "assets": [
     {
       "id": "customer_1",
@@ -86,24 +86,44 @@
       "type": "environment",
       "source": "Kenney (CC0)",
       "url": "https://kenney.nl/assets/nature-kit",
-      "status": "recommended",
-      "notes": "Real 3D models: 330 files - trees, rocks, foliage. Download and unzip into assets/environment/props/ (see ART_PIPELINE.md)."
+      "license": "Creative Commons CC0 1.0",
+      "attribution": "Kenney - https://kenney.nl - CC0 (attribution optional)",
+      "status": "integrated",
+      "files": ["palm_tree_1.glb", "palm_tree_2.glb", "bush_large.glb", "clay_pot.glb", "rock_large.glb", "fence_section.glb"],
+      "notes": "Six curated nature props placed through assets/environment/placements.json."
     },
     {
       "id": "env_kenney_survival_kit",
       "type": "environment",
       "source": "Kenney (CC0)",
       "url": "https://kenney.nl/assets/survival-kit",
-      "status": "recommended",
-      "notes": "80 nature/survival assets, 3D, CC0."
+      "license": "Creative Commons CC0 1.0",
+      "attribution": "Kenney - https://kenney.nl - CC0 (attribution optional)",
+      "status": "integrated",
+      "files": ["barrel.glb", "crate_open.glb", "firewood.glb", "signpost.glb"],
+      "notes": "Four curated survival props; their colormap atlas ships as Textures/s.png."
     },
     {
       "id": "env_kenney_furniture_kit",
       "type": "environment",
       "source": "Kenney (CC0)",
       "url": "https://kenney.nl/assets/furniture-kit",
-      "status": "recommended",
-      "notes": "140 interior furniture assets, 3D, CC0 - good for restaurant tables."
+      "license": "Creative Commons CC0 1.0",
+      "attribution": "Kenney - https://kenney.nl - CC0 (attribution optional)",
+      "status": "integrated",
+      "files": ["bench.glb", "trashcan.glb", "terrace_plant.glb", "round_table.glb", "stool.glb"],
+      "notes": "Five curated furniture props for the street and terrace."
+    },
+    {
+      "id": "env_kenney_food_kit",
+      "type": "environment",
+      "source": "Kenney (CC0)",
+      "url": "https://kenney.nl/assets/food-kit",
+      "license": "Creative Commons CC0 1.0",
+      "attribution": "Kenney - https://kenney.nl - CC0 (attribution optional)",
+      "status": "integrated",
+      "files": ["soup_pot.glb", "tomato.glb", "lemon.glb"],
+      "notes": "Three small food props on the side table; colormap ships as Textures/colormap.png."
     },
     {
       "id": "env_street_stalls_row",

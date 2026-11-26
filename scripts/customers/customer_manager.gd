@@ -14,6 +14,7 @@ var active: Customer = null
 var _timer: float = 2.0
 var _running: bool = false
 var _serial: int = 0
+var _tutorial_customer: Customer = null
 
 
 func _ready() -> void:
@@ -30,6 +31,7 @@ func begin_day() -> void:
 	Orders.clear_active()
 	_timer = 2.5
 	_serial = 0
+	_tutorial_customer = null
 	_running = true
 
 
@@ -40,6 +42,71 @@ func close_stall() -> void:
 	for c in customers:
 		if is_instance_valid(c) and c.state != Customer.State.LEAVING:
 			c.leave(exit_point)
+
+
+# ------------------------------------------------------------------ tutorial
+
+## Pauses natural arrivals while the guided lesson runs. The scripted customer
+## is already placed at the counter and stays active.
+func freeze_for_tutorial() -> void:
+	_running = false
+	_timer = 999.0
+
+
+func end_tutorial() -> void:
+	_tutorial_customer = null
+	_running = true
+	_timer = 8.0
+
+
+## One gentle customer with a tiny, fixed order that matches the six tutorial
+## steps exactly (one mild mint puri with potato, no onion or chickpea).
+func spawn_tutorial_customer() -> Customer:
+	for c in customers:
+		if is_instance_valid(c):
+			c.queue_free()
+	customers.clear()
+	queue.clear()
+	active = null
+	Orders.clear_active()
+	_serial = 1
+
+	var customer := Customer.new()
+	customer.customer_name = "Customer 1"
+	customer.model_index = 1
+	customer.is_vip = false
+	add_child(customer)
+	customer.setup(4.0)
+	customer.exit_position = exit_point
+	var spot := _queue_slot(0)
+	customer.global_position = spot
+	customer.target_position = spot
+	customer.has_arrived = true
+	customer.departed.connect(_on_departed)
+	customer.walked_out.connect(_on_walked_out)
+	customers.append(customer)
+	queue.append(customer)
+	_tutorial_customer = customer
+
+	var recipe := GameData.recipe("classic")
+	var order := {
+		"recipe_id": "classic",
+		"name": "Classic Pani Puri",
+		"quantity": 1,
+		"pani": "mint",
+		"spice": 0,
+		"sweet": false,
+		"onion": false,
+		"chickpea": false,
+		"price": Progression.price_for(recipe),
+		"customer": "Customer 1",
+		"note": "One puri, please!",
+	}
+	customer.begin_order(order)
+	Orders.set_active(order, customer)
+	active = customer
+	customer.face_towards(Vector3(0.0, 0.14, 10.65))
+	return customer
 
 
 func _process(delta: float) -> void:
@@ -103,6 +170,7 @@ func _on_walked_out(customer: Customer) -> void:
 		active = null
 		Orders.clear_active()
 	Orders.register_walkout()
+	Orders.break_combo()
 	Events.toast.emit("%s got tired of waiting and left." % customer.customer_name, "bad")
 	customer.leave(exit_point)
 	_refresh_queue()
@@ -159,12 +227,18 @@ func serve_plate(puris: Array[PuriData]) -> bool:
 	Progression.add_reputation((total_score / maxi(1, count) - 0.55) * 5.0)
 	var xp_gain := 8 + int(round(total_score * 8.0)) + count
 	Progression.add_xp(xp_gain)
-	_spawn_money_text(active.global_position + Vector3(0, 2.0, 0), total_payment, xp_gain)
-	Events.toast.emit(final_message + "  +Rs %d" % total_payment, "good" if total_score / maxi(1, count) >= 0.6 else "bad")
 	var avg_score := total_score / maxi(1, count)
+	var tip := 0
+	if complete:
+		var patience := active.patience_ratio() if is_instance_valid(active) else 0.0
+		tip = Orders.register_completion(avg_score, order_quantity, patience, int(order.get("price", 30)))
+	_spawn_money_text(active.global_position + Vector3(0, 2.0, 0), total_payment, xp_gain, tip)
+	var message := final_message + "  +Rs %d" % total_payment
+	if tip > 0:
+		message += "  +Rs %d tip!" % tip
+	Events.toast.emit(message, "good" if avg_score >= 0.6 else "bad")
 	if complete:
 		active.receive(avg_score, final_message)
-		Orders.register_completion(avg_score, order_quantity)
 		active.leave(active.exit_position)
 		var just_served := active
 		Orders.clear_active()
@@ -174,9 +248,11 @@ func serve_plate(puris: Array[PuriData]) -> bool:
 	return true
 
 
-func _spawn_money_text(world_position: Vector3, amount: int, xp_gain: int = 0) -> void:
+func _spawn_money_text(world_position: Vector3, amount: int, xp_gain: int = 0, tip: int = 0) -> void:
 	var label := Label3D.new()
 	label.text = "+ Rs %d" % amount
+	if tip > 0:
+		label.text += "\n+ Rs %d tip" % tip
 	if xp_gain > 0:
 		label.text += "   +%d XP" % xp_gain
 	label.font_size = 64

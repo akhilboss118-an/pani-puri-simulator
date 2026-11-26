@@ -63,17 +63,43 @@ func _refresh() -> void:
 	_row("Net profit", "Rs %d" % profit, UIKit.GREEN if profit >= 0 else Color("ff8a6a"))
 	_row("Puris served", str(served), UIKit.CREAM)
 	_row("Customers lost", str(lost), UIKit.RED if lost > 0 else UIKit.MUTED)
+	_row("Tips earned", "Rs %d" % int(report.get("tips", 0)), UIKit.GOLD)
+	_row("Best combo", "x%d" % int(report.get("best_combo", 0)), UIKit.TEAL)
 	_row("Average rating", "%d%%" % int(round(rating * 100.0)), UIKit.CREAM)
 	_row("Reputation", "%d / 100" % int(round(rep)), UIKit.ORANGE)
 	var xp_gained := int(report.get("xp_gained", 0))
 	var level := int(report.get("level", Progression.level))
 	_row("XP earned", "%d (+ %d / %d XP)" % [xp_gained, Progression.xp, Progression.xp_to_next()], UIKit.TEAL)
 	_row("Level", "LV %d - %s" % [level, Progression.level_title()], UIKit.ORANGE)
+	_add_goals(report.get("goals", {}))
 
 	if lost > 0:
 		var tip := UIKit.label("Tip: start a puri the moment an order appears. Patience runs out fast.", 14, UIKit.MUTED)
 		tip.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		_body.add_child(tip)
+
+
+func _add_goals(stored: Variant) -> void:
+	if typeof(stored) != TYPE_DICTIONARY:
+		return
+	var data: Dictionary = stored
+	var all: Array = data.get("goals", [])
+	if all.is_empty():
+		return
+	_body.add_child(UIKit.hsep(6))
+	var header := UIKit.label("DAILY GOALS   %d / %d" % [
+		int(data.get("completed", 0)), all.size(),
+	], 16, UIKit.ORANGE)
+	_body.add_child(header)
+	for entry in all:
+		if typeof(entry) != TYPE_DICTIONARY:
+			continue
+		var goal: Dictionary = entry
+		var done := bool(goal.get("done", false))
+		var value := "DONE" if done else "%d / %d" % [
+			int(goal.get("progress", 0)), int(goal.get("target", 1)),
+		]
+		_row(String(goal.get("label", "Goal")), value, UIKit.GREEN if done else UIKit.MUTED)
 
 
 func _row(label_text: String, value_text: String, value_color: Color) -> void:

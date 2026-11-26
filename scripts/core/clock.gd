@@ -29,6 +29,12 @@ func stop() -> void:
 	running = false
 
 
+## Resume a saved day from its stored time (continue, rather than a fresh 9 AM).
+func resume() -> void:
+	running = true
+	_emit_time()
+
+
 func _process(delta: float) -> void:
 	if not running:
 		return

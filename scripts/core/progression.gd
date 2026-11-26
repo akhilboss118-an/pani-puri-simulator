@@ -195,8 +195,13 @@ func buy(id: String) -> bool:
 	return true
 
 
-## 0 = street cart, 1 = restaurant, 2 = fine dining, 3 = palace.
+## 0 = street cart, 1 = restaurant, 2 = fine dining, 3 = palace,
+## 4 = franchise HQ, 5 = world tour.
 func restaurant_tier() -> int:
+	if has_upgrade("world_tour"):
+		return 5
+	if has_upgrade("franchise_hq"):
+		return 4
 	if has_upgrade("pani_puri_palace"):
 		return 3
 	if has_upgrade("fine_dining"):
@@ -218,8 +223,8 @@ func queue_size() -> int:
 		size += 1
 	if has_upgrade("street_permit"):
 		size += 1
-	size += mini(restaurant_tier(), 2)
-	return mini(size, 8)
+	size += restaurant_tier()
+	return mini(size, 12)
 
 
 func max_customers() -> int:
@@ -230,8 +235,8 @@ func max_customers() -> int:
 		cap += 2
 	cap += restaurant_tier()
 	if Game.settings.quality == 0:
-		cap = mini(cap, 5)
-	return mini(cap, 10)
+		cap = mini(cap, 6)
+	return mini(cap, 12)
 
 
 func patience_bonus() -> float:
@@ -251,7 +256,7 @@ func arrival_interval() -> float:
 	if has_upgrade("street_permit"):
 		base *= 0.8
 	base *= maxf(0.72, 1.0 - float(level - 1) * 0.025)
-	base *= [1.0, 0.94, 0.88, 0.82][restaurant_tier()]
+	base *= [1.0, 0.94, 0.88, 0.82, 0.76, 0.70][restaurant_tier()]
 	base *= rush_multiplier()
 	return maxf(2.2, base)
 
@@ -276,7 +281,15 @@ func unlock_progress_text() -> String:
 		return "Level 7 unlocks the Pani Puri Palace."
 	if not has_upgrade("pani_puri_palace"):
 		return "Pani Puri Palace is ready in this panel."
-	return "Pani Puri Palace complete - the whole street is yours."
+	if level < 8:
+		return "Level 8 unlocks the Franchise Headquarters."
+	if not has_upgrade("franchise_hq"):
+		return "Franchise Headquarters is ready in this panel."
+	if level < 10:
+		return "Level 10 unlocks the World Tour Expansion."
+	if not has_upgrade("world_tour"):
+		return "World Tour Expansion is ready in this panel."
+	return "World Tour complete - Pani Puri is global."
 
 
 # --------------------------------------------------------------- rush hour
@@ -298,6 +311,8 @@ func rush_multiplier() -> float:
 func vip_chance() -> float:
 	if not rush_hour_active():
 		return 0.0
+	if has_upgrade("world_tour"):
+		return 0.45
 	if has_upgrade("franchise_hq"):
 		return 0.35
 	if has_upgrade("pani_puri_palace"):

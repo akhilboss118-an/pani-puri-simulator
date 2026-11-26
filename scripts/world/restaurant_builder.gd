@@ -1,9 +1,11 @@
 class_name RestaurantBuilder
 extends RefCounted
-## Builds the restaurant that the cart grows into. Three cumulative tiers:
+## Builds the restaurant that the cart grows into. Five cumulative tiers:
 ##   1. Restaurant Renovation - tiled terrace, tables, pergola, entrance arch
 ##   2. Fine Dining Terrace  - balcony deck, chandeliers, tablecloths
 ##   3. Pani Puri Palace     - grand marquee, red carpet, topiary, fountain
+##   4. Franchise HQ         - glass head office, delivery fleet, brand flags
+##   5. World Tour           - global banner, flags, food trucks, globe
 ## Everything is primitives with shared materials so the web build stays small.
 
 const DECK_Z := 10.9
@@ -26,20 +28,32 @@ static func build(parent: Node3D, quality: int) -> Dictionary:
 	var tier3 := Node3D.new()
 	tier3.name = "Tier3Palace"
 	root.add_child(tier3)
+	var tier4 := Node3D.new()
+	tier4.name = "Tier4Franchise"
+	root.add_child(tier4)
+	var tier5 := Node3D.new()
+	tier5.name = "Tier5WorldTour"
+	root.add_child(tier5)
 
 	_tier1(tier1, quality)
 	_tier2(tier2, quality)
 	_tier3(tier3, quality)
+	_tier4(tier4, quality)
+	_tier5(tier5, quality)
 
 	tier1.visible = false
 	tier2.visible = false
 	tier3.visible = false
+	tier4.visible = false
+	tier5.visible = false
 	var fountain_body: StaticBody3D = tier3.get_meta("fountain_body", null)
 	return {
 		"root": root,
 		"tier1": tier1,
 		"tier2": tier2,
 		"tier3": tier3,
+		"tier4": tier4,
+		"tier5": tier5,
 		"fountain_body": fountain_body,
 	}
 
@@ -50,12 +64,18 @@ static func sync(built: Dictionary, tier: int) -> void:
 	var t1: Node3D = built.get("tier1")
 	var t2: Node3D = built.get("tier2")
 	var t3: Node3D = built.get("tier3")
+	var t4: Node3D = built.get("tier4")
+	var t5: Node3D = built.get("tier5")
 	if t1:
 		t1.visible = tier >= 1
 	if t2:
 		t2.visible = tier >= 2
 	if t3:
 		t3.visible = tier >= 3
+	if t4:
+		t4.visible = tier >= 4
+	if t5:
+		t5.visible = tier >= 5
 	var fountain: StaticBody3D = built.get("fountain_body")
 	if fountain:
 		fountain.collision_layer = 1 if tier >= 3 else 0
@@ -321,6 +341,156 @@ static func _tier3(root: Node3D, quality: int) -> void:
 			light.omni_range = 6.0
 			light.shadow_enabled = false
 			root.add_child(light)
+
+
+# ------------------------------------------------------------------ tier 4
+
+static func _tier4(root: Node3D, quality: int) -> void:
+	# glass head office built on top of the balcony
+	MeshFactory.box(root, Vector3(14.6, 0.22, 2.0), Vector3(0, 3.38, 11.7), Color("17312f"), "HQFloor", 0.0, false)
+	var glass := Color("2e5a63")
+	MeshFactory.box(root, Vector3(14.4, 2.0, 0.16), Vector3(0, 4.45, 10.78), glass, "HQGlassFront", 0.0, false)
+	MeshFactory.box(root, Vector3(14.4, 2.0, 0.16), Vector3(0, 4.45, 12.62), glass.darkened(0.12), "HQGlassBack", 0.0, false)
+	for px in [-7.2, 7.2]:
+		MeshFactory.box(root, Vector3(0.16, 2.0, 1.84), Vector3(px, 4.45, 11.7), Color("21434a"), "HQGlassSide", 0.0, false)
+	for i in 9:
+		var mx := -7.2 + i * 1.8
+		MeshFactory.box(root, Vector3(0.08, 2.05, 0.2), Vector3(mx, 4.45, 10.76), GameData.C_GOLD, "HQMullion", 0.0, false)
+	MeshFactory.box(root, Vector3(14.8, 0.2, 2.1), Vector3(0, 5.55, 11.7), Color("17312f"), "HQRoof", 0.0, false)
+	MeshFactory.box(root, Vector3(14.9, 0.06, 2.2), Vector3(0, 5.68, 11.7), GameData.C_GOLD, "HQRoofTrim", 0.0, false)
+	MeshFactory.signboard(root, "PANI PURI HQ", Vector3(0, 4.95, 10.68), 5.2, Color("122a29"), GameData.C_GOLD, 0.62, PI)
+
+	# rooftop plant and brand flag
+	for ax in [-4.6, 4.6]:
+		MeshFactory.box(root, Vector3(1.1, 0.55, 0.9), Vector3(ax, 5.92, 11.9), Color("9aa0a5"), "ACUnit")
+		MeshFactory.cylinder(root, 0.22, 0.03, Vector3(ax, 6.2, 11.9), Color("4a4f54"), "ACFan", 10, false)
+	MeshFactory.cylinder(root, 0.04, 1.9, Vector3(-7.0, 6.63, 12.15), Color("b9bcc0"), "HQFlagPole", 6, false)
+	MeshFactory.box(root, Vector3(1.5, 0.8, 0.04), Vector3(-6.22, 7.23, 12.15), GameData.C_ORANGE, "HQFlag", 0.0, false)
+	MeshFactory.sphere(root, 0.07, Vector3(-7.0, 7.6, 12.15), GameData.C_GOLD, "HQFlagFinial", 6, false)
+
+	# delivery fleet parked on the left pavement
+	_delivery_scooter(root, Vector3(-8.8, 0.12, 6.7), GameData.C_ORANGE, PI * 0.5)
+	_delivery_scooter(root, Vector3(-10.3, 0.12, 6.7), GameData.C_TEAL, PI * 0.5)
+	_delivery_scooter(root, Vector3(-11.8, 0.12, 6.7), GameData.C_RED, PI * 0.5)
+
+	if quality >= 1:
+		for lx in [-4.5, 4.5]:
+			var light := OmniLight3D.new()
+			light.position = Vector3(lx, 4.3, 10.3)
+			light.light_color = Color("9fe4e0")
+			light.light_energy = 0.35
+			light.omni_range = 5.0
+			light.shadow_enabled = false
+			root.add_child(light)
+
+
+static func _delivery_scooter(parent: Node3D, pos: Vector3, color: Color, rot_y: float) -> void:
+	var root := Node3D.new()
+	root.position = pos
+	root.rotation.y = rot_y
+	parent.add_child(root)
+	MeshFactory.box(root, Vector3(0.42, 0.34, 1.15), Vector3(0, 0.66, 0), color, "ScooterBody")
+	MeshFactory.box(root, Vector3(0.36, 0.12, 0.55), Vector3(0, 0.88, 0.12), Color("2b2622"), "Seat", 0.0, false)
+	for sz in [-0.55, 0.55]:
+		var wheel := MeshFactory.cylinder(root, 0.21, 0.1, Vector3(0, 0.24, sz), Color("2b2622"), "Wheel", 10, false)
+		wheel.rotation.z = PI / 2.0
+	MeshFactory.cylinder(root, 0.03, 0.55, Vector3(0, 0.98, -0.5), Color("8a8f94"), "Handle", 6, false)
+	MeshFactory.box(root, Vector3(0.5, 0.04, 0.04), Vector3(0, 1.24, -0.5), Color("2b2622"), "Bar", 0.0, false)
+	MeshFactory.box(root, Vector3(0.5, 0.46, 0.5), Vector3(0, 1.08, 0.62), Color("f2e2c4"), "DeliveryBox")
+	MeshFactory.box(root, Vector3(0.52, 0.12, 0.52), Vector3(0, 1.08, 0.62), color, "DeliveryStripe", 0.0, false)
+
+
+# ------------------------------------------------------------------ tier 5
+
+static func _tier5(root: Node3D, quality: int) -> void:
+	# world tour banner and destinations board above the HQ
+	MeshFactory.signboard(root, "WORLD TOUR", Vector3(0, 6.55, 10.7), 6.2, Color("1d2b53"), Color("f7e9cf"), 0.62, PI)
+	MeshFactory.signboard(root, "LONDON  -  TOKYO  -  NEW YORK", Vector3(0, 6.02, 10.7), 4.8, Color("15203d"), GameData.C_GOLD, 0.3, PI)
+	for px in [-3.1, 3.1]:
+		MeshFactory.box(root, Vector3(0.06, 0.95, 0.06), Vector3(px, 6.02, 10.74), GameData.C_GOLD, "BannerPost", 0.0, false)
+
+	# international flag row on the office roof
+	var flags := [
+		{"c": Color("e8892f"), "a": Color("f5f0e6")},
+		{"c": Color("f5f0e6"), "a": Color("c93b3b")},
+		{"c": Color("2b3f7a"), "a": Color("d9dce6")},
+		{"c": Color("c93b3b"), "a": Color("f5f0e6")},
+		{"c": Color("3a6fb0"), "a": Color("f5f0e6")},
+		{"c": Color("3f8f5a"), "a": Color("f5f0e6")},
+		{"c": Color("2f8f86"), "a": Color("f2c94c")},
+	]
+	for i in flags.size():
+		var fx := -5.4 + i * 1.8
+		var flag: Dictionary = flags[i]
+		MeshFactory.cylinder(root, 0.03, 1.2, Vector3(fx, 6.28, 12.15), Color("b9bcc0"), "FlagPole", 6, false)
+		MeshFactory.box(root, Vector3(0.66, 0.42, 0.03), Vector3(fx + 0.35, 6.68, 12.15), flag["c"], "NationFlag", 0.0, false)
+		MeshFactory.box(root, Vector3(0.66, 0.11, 0.035), Vector3(fx + 0.35, 6.53, 12.15), flag["a"], "FlagStripe", 0.0, false)
+		MeshFactory.sphere(root, 0.045, Vector3(fx, 6.9, 12.15), GameData.C_GOLD, "FlagFinial", 6, false)
+
+	# food trucks in the left plaza
+	_food_truck(root, Vector3(-16.8, 0.12, 9.8), GameData.C_RED, Color("f2e2c4"), "LONDON")
+	_food_truck(root, Vector3(-20.6, 0.12, 9.8), GameData.C_TEAL, Color("f2c94c"), "TOKYO")
+
+	# globe monument on the right side of the terrace
+	var gx := 9.3
+	var gz := 10.0
+	MeshFactory.cylinder(root, 0.44, 0.12, Vector3(gx, 0.18, gz), Color("b9a88e"), "GlobeBase", 14, false)
+	MeshFactory.cylinder(root, 0.16, 0.9, Vector3(gx, 0.68, gz), GameData.C_GOLD, "GlobeColumn", 8, false)
+	var globe := MeshFactory.sphere(root, 0.5, Vector3(gx, 1.38, gz), Color("2f6f9e"), "Globe", 16)
+	globe.rotation = Vector3(0.0, 0.4, 0.18)
+	var land := [
+		Vector3(0.30, 0.20, 0.28), Vector3(-0.28, 0.26, 0.26),
+		Vector3(0.12, -0.30, 0.36), Vector3(-0.30, -0.14, -0.30),
+		Vector3(0.22, 0.05, -0.38),
+	]
+	for spot in land:
+		var blob := MeshFactory.sphere(root, 0.17, Vector3(gx, 1.38, gz) + spot, Color("4f8a4a"), "Continent", 8, false)
+		blob.scale = Vector3(1.25, 0.8, 0.45)
+	var ring := TorusMesh.new()
+	ring.inner_radius = 0.62
+	ring.outer_radius = 0.68
+	ring.rings = 20
+	ring.ring_segments = 6
+	var ring_mi := MeshInstance3D.new()
+	ring_mi.name = "GlobeRing"
+	ring_mi.mesh = ring
+	ring_mi.position = Vector3(gx, 1.38, gz)
+	ring_mi.rotation = Vector3(0.35, 0.0, 0.22)
+	ring_mi.material_override = MeshFactory.material(GameData.C_GOLD, 0.4, 0.5)
+	root.add_child(ring_mi)
+	MeshFactory.add_box_collider(root, Vector3(1.1, 2.0, 1.1), Vector3(gx, 1.0, gz), 1)
+
+	if quality >= 1:
+		var light := OmniLight3D.new()
+		light.position = Vector3(gx, 1.4, gz - 1.0)
+		light.light_color = Color("bfe4ff")
+		light.light_energy = 0.3
+		light.omni_range = 3.5
+		light.shadow_enabled = false
+		root.add_child(light)
+
+
+static func _food_truck(parent: Node3D, pos: Vector3, body_color: Color, accent: Color, city: String) -> void:
+	var root := Node3D.new()
+	root.position = pos
+	parent.add_child(root)
+	MeshFactory.box(root, Vector3(2.2, 1.75, 3.6), Vector3(0, 1.22, 0), body_color, "TruckBody")
+	MeshFactory.box(root, Vector3(2.4, 0.12, 3.8), Vector3(0, 2.16, 0), accent, "TruckRoof", 0.0, false)
+	MeshFactory.box(root, Vector3(2.0, 1.15, 1.25), Vector3(0, 0.95, -2.25), body_color.darkened(0.08), "TruckCab")
+	MeshFactory.box(root, Vector3(1.7, 0.55, 0.06), Vector3(0, 1.45, -2.9), Color("33454d"), "TruckWindshield", 0.0, false)
+	MeshFactory.box(root, Vector3(2.22, 0.18, 3.62), Vector3(0, 0.42, 0), accent, "TruckSkirt", 0.0, false)
+	for wx in [-1.05, 1.05]:
+		for wz in [-1.9, 1.2]:
+			var wheel := MeshFactory.cylinder(root, 0.3, 0.14, Vector3(wx, 0.3, wz), Color("2b2622"), "TruckWheel", 10, false)
+			wheel.rotation.z = PI / 2.0
+	# serving hatch facing the restaurant (+X)
+	MeshFactory.box(root, Vector3(0.06, 0.85, 1.7), Vector3(1.12, 1.5, 0.35), Color("23343a"), "TruckHatch", 0.0, false)
+	MeshFactory.box(root, Vector3(0.42, 0.06, 1.9), Vector3(1.28, 1.05, 0.35), Color("d9d2c4"), "TruckCounter", 0.0, false)
+	var awning := MeshFactory.box(root, Vector3(0.95, 0.05, 2.0), Vector3(1.45, 2.0, 0.35), accent, "TruckAwning", 0.0, false)
+	awning.rotation.z = -0.2
+	MeshFactory.signboard(root, city, Vector3(1.14, 1.86, 0.35), 1.7, Color("15203d"), accent, 0.34, PI / 2.0)
+	MeshFactory.signboard(root, "PANI PURI", Vector3(1.14, 1.32, -0.95), 1.4, Color("15203d"), Color("f7e9cf"), 0.26, PI / 2.0)
+	MeshFactory.add_box_collider(root, Vector3(2.4, 2.3, 4.0), Vector3(0, 1.15, -0.3), 1)
 
 
 # ------------------------------------------------------------------ helpers

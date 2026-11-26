@@ -9,8 +9,14 @@ var day_served: int = 0
 var day_lost: int = 0
 var day_waste: int = 0
 var day_rating: float = 0.0
+var day_tips: int = 0
+var combo: int = 0
+var best_combo: int = 0
 var _rating_sum: float = 0.0
 var _rating_count: int = 0
+
+const GOOD_PURI_SCORE := 0.72
+const MAX_COMBO := 10
 
 
 func reset() -> void:
@@ -26,8 +32,45 @@ func reset_day() -> void:
 	day_lost = 0
 	day_waste = 0
 	day_rating = 0.0
+	day_tips = 0
+	combo = 0
+	best_combo = 0
 	_rating_sum = 0.0
 	_rating_count = 0
+	Events.combo_changed.emit(combo, combo_multiplier())
+
+
+# --------------------------------------------------------------- combo / tips
+
+## Five good puris in a row pay 1.25x, ten pay 1.5x. A weak puri or a walkout
+## drops the streak back to zero.
+func combo_multiplier() -> float:
+	return 1.0 + 0.05 * float(mini(combo, MAX_COMBO))
+
+
+func _register_puri_score(score: float) -> void:
+	if score >= GOOD_PURI_SCORE:
+		combo += 1
+		best_combo = maxi(best_combo, combo)
+	else:
+		combo = 0
+	Events.combo_changed.emit(combo, combo_multiplier())
+
+
+func break_combo() -> void:
+	if combo == 0:
+		return
+	combo = 0
+	Events.combo_changed.emit(combo, combo_multiplier())
+
+
+func tip_for(score: float, quantity: int, patience_ratio: float, price: int) -> int:
+	if score < 0.55 or quantity <= 0:
+		return 0
+	var base := float(price * quantity)
+	var factor := lerpf(0.4, 1.1, clampf(patience_ratio, 0.0, 1.0))
+	var amount := base * 0.12 * clampf(score, 0.0, 1.0) * factor * combo_multiplier()
+	return maxi(0, int(round(amount)))
 
 
 # --------------------------------------------------------------- generation
@@ -142,12 +185,19 @@ func evaluate_plate(puris: Array, order: Dictionary, patience_ratio: float = 1.0
 
 
 ## Called when an order is fully served one-puri-at-a-time. Updates day
-## statistics without re-adding cash/reputation (already handled per-puri).
-func register_completion(score: float, quantity: int) -> void:
+## statistics and pays a speed/accuracy tip without re-adding the puri payments.
+func register_completion(score: float, quantity: int, patience_ratio: float = 1.0, price: int = 30) -> int:
 	day_served += quantity
 	_rating_sum += score
 	_rating_count += 1
 	day_rating = _rating_sum / maxi(1.0, float(_rating_count))
+	var tip := tip_for(score, quantity, patience_ratio, price)
+	if tip > 0:
+		day_tips += tip
+		Economy.add_cash(tip, "Tip")
+		Events.tip_earned.emit(tip, day_tips)
+	Events.order_completed.emit(quantity)
+	return tip
 
 
 func serve_single_puri(puri_data: PuriData, order: Dictionary, patience_ratio: float = 1.0) -> Dictionary:
@@ -155,7 +205,9 @@ func serve_single_puri(puri_data: PuriData, order: Dictionary, patience_ratio: f
 	var score := puri_data.score_against(order)
 	var price := int(order.get("price", 30))
 	var patience_factor := lerpf(0.78, 1.04, clampf(patience_ratio, 0.0, 1.0))
-	var payment := int(round(float(price) * (0.45 + 0.55 * score) * patience_factor))
+	_register_puri_score(score)
+	Goals.on_puri_served(score)
+	var payment := int(round(float(price) * (0.45 + 0.55 * score) * patience_factor * combo_multiplier()))
 	order["quantity"] = maxi(0, remaining - 1)
 	var complete := remaining <= 1
 	var remaining_after := maxi(0, remaining - 1)

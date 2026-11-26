@@ -36,6 +36,7 @@ func add_cash(amount: int, reason: String = "Sale") -> void:
 	if amount > 0:
 		day_revenue += amount
 		total_revenue += amount
+		Events.income.emit(amount)
 	_log(amount, reason)
 	Events.money_changed.emit(cash)
 

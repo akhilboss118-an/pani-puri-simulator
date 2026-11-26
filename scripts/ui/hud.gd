@@ -16,6 +16,9 @@ var _fps_ticks: int = 0
 var _fps_accum: float = 0.0
 var _stock_warning: Label
 var _rush_label: Label
+var _combo_label: Label
+var _tips_label: Label
+var _goals_label: Label
 var _order_card: PanelContainer
 var _order_title: Label
 var _order_body: Label
@@ -73,6 +76,9 @@ func _build() -> void:
 	Events.stock_changed.connect(_on_stock_changed)
 	Events.overlay_changed.connect(_on_overlay_changed)
 	Events.rush_hour_changed.connect(_on_rush_hour_changed)
+	Events.combo_changed.connect(_on_combo_changed)
+	Events.tip_earned.connect(_on_tip_earned)
+	Events.goals_changed.connect(_on_goals_changed)
 
 	_on_money_changed(Economy.cash)
 	_on_reputation_changed(Progression.reputation)
@@ -80,6 +86,9 @@ func _build() -> void:
 	_on_xp_changed(Progression.level, Progression.xp, Progression.xp_to_next(), Progression.xp_ratio())
 	_on_stock_changed("")
 	_on_rush_hour_changed(Progression.rush_hour_active())
+	_on_combo_changed(Orders.combo, Orders.combo_multiplier())
+	_on_tip_earned(0, Orders.day_tips)
+	_on_goals_changed(Goals.to_dict())
 	_on_prompt_changed("")
 	_on_held_changed("")
 
@@ -130,6 +139,15 @@ func _build_top_left() -> void:
 	_rush_label.visible = false
 	box.add_child(_rush_label)
 
+	_combo_label = UIKit.label("", 14, UIKit.GOLD)
+	_combo_label.visible = false
+	box.add_child(_combo_label)
+	_tips_label = UIKit.label("", 13, UIKit.GOLD)
+	_tips_label.visible = false
+	box.add_child(_tips_label)
+	_goals_label = UIKit.label("GOALS  0/3  (G)", 12, UIKit.TEAL)
+	box.add_child(_goals_label)
+
 
 func _build_top_right() -> void:
 	var row := HBoxContainer.new()
@@ -157,6 +175,9 @@ func _build_top_right() -> void:
 	var upgrade_button := UIKit.button("Upgrades", 40)
 	upgrade_button.pressed.connect(func(): Game.root.call("open_upgrades"))
 	row.add_child(upgrade_button)
+	var goals_button := UIKit.button("Goals", 40)
+	goals_button.pressed.connect(func(): Game.root.call("open_goals"))
+	row.add_child(goals_button)
 	var menu_button := UIKit.button("Menu", 40)
 	menu_button.pressed.connect(func(): Game.root.call("open_pause"))
 	row.add_child(menu_button)
@@ -365,6 +386,34 @@ func _on_level_up(level: int) -> void:
 	_level_label.scale = Vector2(1.45, 1.45)
 	var tween := create_tween()
 	tween.tween_property(_level_label, "scale", Vector2.ONE, 0.45).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+
+func _on_combo_changed(combo: int, multiplier: float) -> void:
+	if _combo_label == null:
+		return
+	if combo < 2:
+		_combo_label.visible = false
+		return
+	_combo_label.visible = true
+	_combo_label.text = "COMBO x%d   +%d%%" % [combo, int(round((multiplier - 1.0) * 100.0))]
+	_combo_label.pivot_offset = _combo_label.size * 0.5
+	_combo_label.scale = Vector2(1.2, 1.2)
+	var tween := create_tween()
+	tween.tween_property(_combo_label, "scale", Vector2.ONE, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+
+func _on_tip_earned(_amount: int, total: int) -> void:
+	if _tips_label == null:
+		return
+	_tips_label.visible = total > 0
+	_tips_label.text = "TIPS  Rs %d" % total
+
+
+func _on_goals_changed(data: Dictionary) -> void:
+	if _goals_label == null:
+		return
+	var all: Array = data.get("goals", [])
+	_goals_label.text = "GOALS  %d/%d  (G)" % [int(data.get("completed", 0)), all.size()]
 
 
 func _on_prompt_changed(text: String) -> void:

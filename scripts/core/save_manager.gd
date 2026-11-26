@@ -24,6 +24,7 @@ func save_game() -> bool:
 		"stock": Inventory.to_dict(),
 		"progress": Progression.to_dict(),
 		"clock": Clock.to_dict(),
+		"goals": Goals.to_dict(),
 	}
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if file == null:
@@ -58,6 +59,11 @@ func load_game() -> bool:
 		Inventory.from_dict(stock_data)
 	Progression.from_dict(data.get("progress", {}))
 	Clock.from_dict(data.get("clock", {}))
+	var goals_data: Variant = data.get("goals", {})
+	if typeof(goals_data) == TYPE_DICTIONARY:
+		Goals.from_dict(goals_data)
+	else:
+		Goals.begin_day(Game.day)
 
 	Economy.reset()
 	Economy.cash = maxi(0, int(data.get("cash", 500)))

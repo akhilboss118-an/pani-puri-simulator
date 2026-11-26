@@ -10,8 +10,8 @@ var stall: Dictionary = {}
 var restaurant: Dictionary = {}
 
 var queue_points: Array[Vector3] = []
-var spawn_point := Vector3(10.5, 0.14, 7.4)
-var exit_point := Vector3(12.5, 0.14, 7.4)
+var spawn_point := Vector3(15.0, 0.14, 7.4)
+var exit_point := Vector3(17.0, 0.14, 7.4)
 var player_spawn := Vector3(0, 0.2, 10.65)
 
 var _sun: DirectionalLight3D
@@ -290,8 +290,8 @@ func _build_stall() -> void:
 
 func _build_customers() -> void:
 	queue_points.clear()
-	for i in 8:
-		queue_points.append(Vector3(1.5 + i * 1.0, 0.14, 7.55))
+	for i in 12:
+		queue_points.append(Vector3(1.5 + i * 0.92, 0.14, 7.55))
 
 	customer_manager = CustomerManager.new()
 	customer_manager.name = "CustomerManager"
@@ -345,6 +345,10 @@ func _on_upgrade(id: String) -> void:
 			Events.toast.emit("The balcony dining deck is open.", "good")
 		"pani_puri_palace":
 			Events.toast.emit("Pani Puri Palace is complete. The whole street knows your name.", "good")
+		"franchise_hq":
+			Events.toast.emit("Franchise HQ open - the delivery fleet is rolling.", "good")
+		"world_tour":
+			Events.toast.emit("World Tour launched - Pani Puri is global!", "good")
 
 
 ## Re-applies every purchased upgrade to the 3D world. Called after building and
@@ -411,6 +415,10 @@ func _update_signage(tier: int) -> void:
 				main_label.text = "PANI PURI"
 			3:
 				main_label.text = "PANI PURI PALACE"
+			4:
+				main_label.text = "PANI PURI HQ"
+			5:
+				main_label.text = "PANI PURI WORLD"
 			_:
 				main_label.text = "PANI PURI HOUSE"
 	if sub_label:
@@ -419,6 +427,10 @@ func _update_signage(tier: int) -> void:
 				sub_label.text = "FINE DINING  -  CHAAT"
 			3:
 				sub_label.text = "ROYAL CHAAT HOUSE"
+			4:
+				sub_label.text = "FRANCHISE  -  CHAAT"
+			5:
+				sub_label.text = "WORLD TOUR  -  CHAAT"
 			_:
 				sub_label.text = "GOLGAPPA  -  CHAAT"
 	if Progression.has_upgrade("signboard"):
@@ -427,7 +439,11 @@ func _update_signage(tier: int) -> void:
 	if board == null:
 		return
 	var color := GameData.C_ORANGE
-	if tier >= 3:
+	if tier >= 5:
+		color = Color("1d2b53")
+	elif tier == 4:
+		color = Color("17312f")
+	elif tier == 3:
 		color = Color("5c1f1f")
 	elif tier == 2:
 		color = GameData.C_TEAL
