@@ -1,6 +1,6 @@
 {
   "project": "Pani Puri Simulator",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "updated": "2026-11-26",
   "policy": "Art is a mix of procedural primitives, shared cached materials, seven customer GLBs converted from the user-supplied FBX characters, and 18 curated Kenney CC0 environment props. No Sketchfab models are downloaded in-game: environment assets are documented as a manual import in ART_PIPELINE.md, and attribution for every drop-in model is recorded here.",
   "assets": [

@@ -8,7 +8,7 @@ extends Node
 enum State { MENU, PLAYING, PAUSED, DAY_END }
 
 const SETTINGS_PATH := "user://settings.cfg"
-const VERSION := "1.1.0"
+const VERSION := "1.1.1"
 
 var state: State = State.MENU
 var day: int = 1
@@ -134,7 +134,7 @@ func continue_game() -> void:
 
 func _dev_run() -> bool:
 	var args := OS.get_cmdline_user_args()
-	return "--smoke" in args or "--shots" in args
+	return "--smoke" in args or "--shots" in args or "--film" in args
 
 
 ## Fresh days skip spoilage; days after the first apply it in Inventory.begin_day.

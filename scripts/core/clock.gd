@@ -9,12 +9,14 @@ const DAY_REAL_SECONDS := 420.0
 var minutes: int = START_MINUTES
 var running: bool = false
 var _last_emitted: int = -1
+var _minute_accum: float = 0.0
 
 
 func reset() -> void:
 	minutes = START_MINUTES
 	running = false
 	_last_emitted = -1
+	_minute_accum = 0.0
 	_emit_time()
 
 
@@ -22,6 +24,7 @@ func begin_day() -> void:
 	minutes = START_MINUTES
 	running = true
 	_last_emitted = -1
+	_minute_accum = 0.0
 	_emit_time()
 
 
@@ -39,7 +42,11 @@ func _process(delta: float) -> void:
 	if not running:
 		return
 	var game_minutes_per_second := float(END_MINUTES - START_MINUTES) / DAY_REAL_SECONDS
-	minutes += int(ceil(game_minutes_per_second * delta))
+	_minute_accum += game_minutes_per_second * delta
+	var step := int(_minute_accum)
+	if step > 0:
+		minutes += step
+		_minute_accum -= float(step)
 	if minutes != _last_emitted:
 		_emit_time()
 	if minutes >= END_MINUTES:
@@ -82,4 +89,5 @@ func to_dict() -> Dictionary:
 
 func from_dict(data: Dictionary) -> void:
 	minutes = int(data.get("minutes", START_MINUTES))
+	_minute_accum = 0.0
 	_emit_time()

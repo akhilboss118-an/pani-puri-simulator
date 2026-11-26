@@ -19,6 +19,33 @@ var tutorial: Tutorial
 var _menu_camera: Camera3D
 var _menu_time: float = 0.0
 
+var _film_active: bool = false
+var _film_time: float = 0.0
+var _film_step: int = 0
+var _film_timeline: Array = [
+	{"at": 0.0, "fn": "film_menu"},
+	{"at": 3.2, "fn": "film_counter"},
+	{"at": 4.6, "fn": "film_take"},
+	{"at": 5.8, "fn": "film_crack"},
+	{"at": 7.0, "fn": "film_potato"},
+	{"at": 8.2, "fn": "film_pani"},
+	{"at": 9.4, "fn": "film_plate"},
+	{"at": 10.8, "fn": "film_serve"},
+	{"at": 12.0, "fn": "film_quick_puri"},
+	{"at": 13.4, "fn": "film_quick_puri"},
+	{"at": 14.8, "fn": "film_quick_puri"},
+	{"at": 16.2, "fn": "film_quick_puri"},
+	{"at": 17.2, "fn": "film_combo"},
+	{"at": 18.4, "fn": "film_inventory"},
+	{"at": 20.0, "fn": "film_close"},
+	{"at": 20.4, "fn": "film_upgrades"},
+	{"at": 22.0, "fn": "film_close"},
+	{"at": 22.4, "fn": "film_grant"},
+	{"at": 23.4, "fn": "film_wide"},
+	{"at": 25.2, "fn": "film_flags"},
+	{"at": 27.0, "fn": "film_hold"},
+]
+
 
 func _ready() -> void:
 	Game.root = self
@@ -30,6 +57,8 @@ func _ready() -> void:
 		_run_smoke_test.call_deferred()
 	elif "--tutsmoke" in OS.get_cmdline_user_args():
 		_run_tutorial_smoke.call_deferred()
+	elif "--film" in OS.get_cmdline_user_args():
+		_run_film.call_deferred()
 	elif "--shots" in OS.get_cmdline_user_args():
 		_run_screenshot_tour.call_deferred()
 
@@ -213,11 +242,135 @@ func _on_day_ended(report: Dictionary) -> void:
 
 
 func _process(delta: float) -> void:
+	if _film_active:
+		_film_tick(delta)
 	if Game.state == Game.State.MENU and _menu_camera != null:
 		_menu_time += delta
 		var drift := sin(_menu_time * 0.11) * 0.55
 		_menu_camera.position = Vector3(4.8 + drift, 2.45 + sin(_menu_time * 0.07) * 0.1, 4.6 - drift * 0.3)
 		_menu_camera.look_at(Vector3(0.2, 1.5, 8.8))
+
+
+# ---------------------------------------------------------------- promo film
+
+## Deterministic 30-second gameplay tour recorded by Godot's movie writer with
+## --write-movie. Dev-only: never triggered during normal play.
+func _run_film() -> void:
+	await get_tree().process_frame
+	Game.start_new_game()
+	await get_tree().process_frame
+	process_mode = Node.PROCESS_MODE_ALWAYS  # panels pause the tree; keep the timeline running
+	world.customer_manager.call("freeze_for_tutorial")
+	world.customer_manager.call("spawn_tutorial_customer")
+	hud.visible = false
+	_film_time = 0.0
+	_film_step = 0
+	_film_active = true
+
+
+func _film_tick(delta: float) -> void:
+	_film_time += delta
+	while _film_step < _film_timeline.size() and _film_time >= float(_film_timeline[_film_step].get("at", 0.0)):
+		var entry: Dictionary = _film_timeline[_film_step]
+		_film_step += 1
+		call(String(entry.get("fn", "")))
+
+
+func _film_move(pos: Vector3, ry: float, rx: float) -> void:
+	player.global_position = pos
+	player.rotation.y = ry
+	player.camera.rotation.x = rx
+
+
+func film_menu() -> void:
+	hud.visible = false
+	if _menu_camera:
+		_menu_camera.current = true
+		_menu_camera.position = Vector3(2.0, 2.2, 3.5)
+		_menu_camera.look_at(Vector3(0.0, 1.4, 8.9))
+	_menu_time = 0.0
+
+
+func film_counter() -> void:
+	hud.visible = true
+	if _menu_camera:
+		_menu_camera.current = false
+	player.camera.current = true
+	_film_move(Vector3(0.0, 0.2, 10.25), 0.0, -0.12)
+
+
+func film_take() -> void:
+	_film_move(Vector3(-1.85, 0.2, 10.15), 0.0, -0.08)
+	world.stall.puri_box.interact(player)
+
+
+func film_crack() -> void:
+	world.stall.puri_box.interact(player)
+
+
+func film_potato() -> void:
+	_film_move(Vector3(-1.4, 0.2, 10.15), 0.0, -0.08)
+	world.stall.potato.interact(player)
+
+
+func film_pani() -> void:
+	_film_move(Vector3(0.3, 0.2, 10.15), 0.0, -0.08)
+	world.stall.pani_mint.interact(player)
+
+
+func film_plate() -> void:
+	_film_move(Vector3(1.72, 0.2, 10.15), 0.0, -0.08)
+	world.stall.plate.interact(player)
+
+
+func film_serve() -> void:
+	_film_move(Vector3(1.0, 0.2, 10.15), 0.0, 0.02)
+	world.stall.plate.interact(player)
+
+
+func film_quick_puri() -> void:
+	if Orders.active_customer == null:
+		world.customer_manager.call("spawn_tutorial_customer")
+	_film_move(Vector3(0.3, 0.2, 10.15), 0.0, -0.1)
+	world.stall.puri_box.interact(player)
+	world.stall.puri_box.interact(player)
+	world.stall.potato.interact(player)
+	world.stall.pani_mint.interact(player)
+	world.stall.plate.interact(player)
+	world.stall.plate.interact(player)
+
+
+func film_combo() -> void:
+	_film_move(Vector3(0.8, 0.2, 10.2), 0.0, -0.05)
+
+
+func film_inventory() -> void:
+	open_inventory()
+
+
+func film_upgrades() -> void:
+	open_upgrades()
+
+
+func film_close() -> void:
+	_close_panels()
+
+
+func film_grant() -> void:
+	_grant_restaurant_upgrades()
+	world.sync_upgrades()
+
+
+func film_wide() -> void:
+	_film_move(Vector3(0.0, 0.2, 4.5), PI, 0.06)
+
+
+func film_flags() -> void:
+	_film_move(Vector3(-14.0, 0.2, 2.5), 2.55, 0.04)
+
+
+func film_hold() -> void:
+	_film_move(Vector3(0.0, 0.2, 4.5), PI, 0.1)
 
 
 # --------------------------------------------------------- tutorial smoke test
