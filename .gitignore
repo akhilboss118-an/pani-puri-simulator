@@ -6,6 +6,11 @@
 build/
 .import/
 
+# Signing material (keystore lives outside the repo)
+*.keystore
+*.jks
+*.p12
+
 # OS
 .DS_Store
 Thumbs.db
