@@ -8,6 +8,14 @@
 
 config_version=5
 
+[android]
+
+package/unique_name="com.panipurisimulator.game"
+screen/support_normal=true
+screen/support_large=true
+screen/support_xlarge=true
+user_data_backup/allow=false
+
 [application]
 
 config/name="Pani Puri Simulator"
@@ -48,18 +56,6 @@ window/stretch/aspect="expand"
 
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
-
-[rendering/textures/vram_compression]
-import_etc2_astc=true
-import_s3tc_bptc=false
-
-lights_and_shadows/directional_shadow/soft_shadow_filter_quality=0
-environment/defaults/default_clear_color=Color(0.803922, 0.729412, 0.611765, 1)
-
-[android]
-
-package/unique_name="com.panipurisimulator.game"
-screen/support_normal=true
-screen/support_large=true
-screen/support_xlarge=true
-user_data_backup/allow=false
+textures/vram_compression/import_etc2_astc=true
+textures/vram_compression/lights_and_shadows/directional_shadow/soft_shadow_filter_quality=0
+textures/vram_compression/environment/defaults/default_clear_color=Color(0.803922, 0.729412, 0.611765, 1)

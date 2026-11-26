@@ -158,11 +158,11 @@ func serve_plate(puris: Array[PuriData]) -> bool:
 		active.receive(avg_score, final_message)
 		Orders.register_completion(avg_score, order_quantity)
 		active.leave(active.exit_position)
-	var just_served := active
-	Orders.clear_active()
-	queue.erase(just_served)
-	active = null
-	_refresh_queue()
+		var just_served := active
+		Orders.clear_active()
+		queue.erase(just_served)
+		active = null
+		_refresh_queue()
 	return true
 
 
@@ -188,3 +188,5 @@ func _spawn_money_text(world_position: Vector3, amount: int, xp_gain: int = 0) -
 
 func waiting_count() -> int:
 	return queue.size()
+
+
