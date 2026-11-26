@@ -11,6 +11,16 @@ var xp: int = 0
 var lifetime_xp: int = 0
 var purchased: Dictionary = {}
 
+var _rush_was_active: bool = false
+
+
+func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
+
+
+func _process(_delta: float) -> void:
+	_check_rush_hour()
+
 
 func reset() -> void:
 	reputation = 20.0
@@ -67,6 +77,10 @@ func add_xp(amount: int) -> int:
 
 
 func level_title() -> String:
+	if level >= 10:
+		return "Global Chain"
+	if level >= 8:
+		return "Franchise HQ"
 	if level >= 7:
 		return "Pani Puri Palace"
 	if level >= 5:
@@ -93,11 +107,11 @@ func level_reward_text(for_level: int) -> String:
 		7:
 			return "Pani Puri Palace unlocked in Upgrades."
 		8:
-			return "New recipe: Signature Platter."
+			return "New recipe: Signature Platter. Franchise HQ unlocked."
 		9:
-			return "Rare customers start asking by name."
+			return "New recipe: Chaat Bomb. Rare VIP customers appear."
 		10:
-			return "Pani Puri Palace runner-up. Your street runs the block."
+			return "New recipe: Tandoori Pani Puri. World Tour unlocked."
 		_:
 			return "Customers are noticing your stall."
 
@@ -238,6 +252,7 @@ func arrival_interval() -> float:
 		base *= 0.8
 	base *= maxf(0.72, 1.0 - float(level - 1) * 0.025)
 	base *= [1.0, 0.94, 0.88, 0.82][restaurant_tier()]
+	base *= rush_multiplier()
 	return maxf(2.2, base)
 
 
@@ -262,6 +277,41 @@ func unlock_progress_text() -> String:
 	if not has_upgrade("pani_puri_palace"):
 		return "Pani Puri Palace is ready in this panel."
 	return "Pani Puri Palace complete - the whole street is yours."
+
+
+# --------------------------------------------------------------- rush hour
+
+## Rush hour windows (lunch and dinner) bring faster arrivals and VIP customers.
+func rush_hour_active() -> bool:
+	var h := Clock.hour()
+	return h >= 12 and h < 14 or h >= 18 and h < 20
+
+
+## Arrival speed multiplier during rush hour (lower = faster arrivals).
+func rush_multiplier() -> float:
+	if rush_hour_active():
+		return 0.55
+	return 1.0
+
+
+## Chance a spawned customer is a VIP (pays more, more patient, complex orders).
+func vip_chance() -> float:
+	if not rush_hour_active():
+		return 0.0
+	if has_upgrade("franchise_hq"):
+		return 0.35
+	if has_upgrade("pani_puri_palace"):
+		return 0.25
+	return 0.15
+
+
+func _check_rush_hour() -> void:
+	var active := rush_hour_active()
+	if active != _rush_was_active:
+		_rush_was_active = active
+		Events.rush_hour_changed.emit(active)
+		if active:
+			Events.toast.emit("Rush hour! Customers are lining up.", "good")
 
 
 # --------------------------------------------------------------------- save

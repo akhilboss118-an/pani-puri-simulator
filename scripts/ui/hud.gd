@@ -15,6 +15,7 @@ var _fps_label: Label
 var _fps_ticks: int = 0
 var _fps_accum: float = 0.0
 var _stock_warning: Label
+var _rush_label: Label
 var _order_card: PanelContainer
 var _order_title: Label
 var _order_body: Label
@@ -71,12 +72,14 @@ func _build() -> void:
 	Events.toast.connect(_on_toast)
 	Events.stock_changed.connect(_on_stock_changed)
 	Events.overlay_changed.connect(_on_overlay_changed)
+	Events.rush_hour_changed.connect(_on_rush_hour_changed)
 
 	_on_money_changed(Economy.cash)
 	_on_reputation_changed(Progression.reputation)
 	_on_time_changed(Clock.hour(), 0)
 	_on_xp_changed(Progression.level, Progression.xp, Progression.xp_to_next(), Progression.xp_ratio())
 	_on_stock_changed("")
+	_on_rush_hour_changed(Progression.rush_hour_active())
 	_on_prompt_changed("")
 	_on_held_changed("")
 
@@ -122,6 +125,10 @@ func _build_top_left() -> void:
 
 	_stock_warning = UIKit.label("", 13, UIKit.RED)
 	box.add_child(_stock_warning)
+
+	_rush_label = UIKit.label("RUSH HOUR", 12, UIKit.GOLD)
+	_rush_label.visible = false
+	box.add_child(_rush_label)
 
 
 func _build_top_right() -> void:
@@ -469,6 +476,13 @@ func set_visible_playing(value: bool) -> void:
 	visible = value
 	if value:
 		_on_prompt_changed("")
+
+
+func _on_rush_hour_changed(active: bool) -> void:
+	if _rush_label:
+		_rush_label.visible = active
+		if active:
+			_rush_label.modulate = UIKit.GOLD
 
 
 func _on_overlay_changed(open: bool) -> void:

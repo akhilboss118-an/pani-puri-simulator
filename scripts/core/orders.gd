@@ -32,7 +32,7 @@ func reset_day() -> void:
 
 # --------------------------------------------------------------- generation
 
-func generate_order(customer_name: String = "Customer") -> Dictionary:
+func generate_order(customer_name: String = "Customer", vip: bool = false) -> Dictionary:
 	var pool: Array[RecipeDef] = []
 	var total_weight := 0.0
 	for recipe in GameData.recipes():
@@ -54,7 +54,9 @@ func generate_order(customer_name: String = "Customer") -> Dictionary:
 
 	var quantity := 3
 	var rep := Progression.reputation
-	if rep > 55.0:
+	if vip:
+		quantity = randi_range(4, 8)
+	elif rep > 55.0:
 		quantity = randi_range(3, 6)
 	elif rep > 25.0:
 		quantity = randi_range(3, 5)

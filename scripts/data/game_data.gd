@@ -76,6 +76,8 @@ static func recipes() -> Array[RecipeDef]:
 			RecipeDef.make("masala_blast", "Masala Blast", 50, ["potato"], "mint", 2, false, true, true, 30.0, 1.1, 4),
 			RecipeDef.make("royal", "Royal Pani Puri", 62, ["potato"], "mint", 1, true, true, true, 50.0, 0.8, 6),
 			RecipeDef.make("signature", "Signature Platter", 74, ["potato"], "mint", 1, true, true, true, 70.0, 0.6, 8),
+			RecipeDef.make("chaat_bomb", "Chaat Bomb", 88, ["potato", "chickpea"], "mint", 2, true, true, true, 45.0, 0.7, 10),
+			RecipeDef.make("tandoori", "Tandoori Pani Puri", 105, ["potato", "chickpea"], "mint", 2, true, true, true, 60.0, 0.6, 12),
 		]
 	return _recipes
 
@@ -136,6 +138,18 @@ static func upgrades() -> Array[Dictionary]:
 				"description": "A landmark restaurant: grand marquee, gold trim, red carpet, fountain and the royal menu.",
 				"cost": 30000, "icon": "palace", "level": 7, "tier": "restaurant",
 				"requires": "fine_dining",
+			},
+			{
+				"id": "franchise_hq", "name": "Franchise Headquarters",
+				"description": "Corporate office, delivery fleet and celebrity chef. +2 queue spots and VIP customers.",
+				"cost": 75000, "icon": "office", "level": 8, "tier": "restaurant",
+				"requires": "pani_puri_palace",
+			},
+			{
+				"id": "world_tour", "name": "World Tour Expansion",
+				"description": "Take Pani Puri global: food trucks in London, Tokyo and New York. +3 queue spots.",
+				"cost": 150000, "icon": "globe", "level": 10, "tier": "restaurant",
+				"requires": "franchise_hq",
 			},
 		]
 	return _upgrades

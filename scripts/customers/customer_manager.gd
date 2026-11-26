@@ -61,6 +61,7 @@ func _spawn() -> void:
 	var customer := Customer.new()
 	customer.customer_name = "Customer %d" % _serial
 	customer.model_index = ((_serial - 1) % Customer.MODEL_COUNT) + 1
+	customer.is_vip = randf() < Progression.vip_chance()
 	add_child(customer)
 	customer.setup(Progression.patience_bonus())
 	customer.exit_position = exit_point
@@ -71,6 +72,8 @@ func _spawn() -> void:
 	queue.append(customer)
 	customer.walk_to(_queue_slot(queue.size() - 1), queue.size() - 1)
 	Audio.play("bell", randf_range(0.9, 1.1), -22.0)
+	if customer.is_vip:
+		Events.toast.emit("A VIP customer has arrived!", "good")
 
 
 func _queue_slot(index: int) -> Vector3:
@@ -81,10 +84,15 @@ func _queue_slot(index: int) -> Vector3:
 
 func _promote(customer: Customer) -> void:
 	active = customer
-	var order := Orders.generate_order(customer.customer_name)
+	var order := Orders.generate_order(customer.customer_name, customer.is_vip)
+	if customer.is_vip:
+		order.price = int(order.price * 1.5)
+		order.name = "VIP: " + order.name
 	customer.begin_order(order)
 	Orders.set_active(order, customer)
 	Events.toast.emit("%s wants %d puris." % [customer.customer_name, int(order.quantity)], "info")
+	if customer.is_vip:
+		Events.toast.emit("VIP order - pays 50%% more!", "good")
 
 
 func _on_walked_out(customer: Customer) -> void:

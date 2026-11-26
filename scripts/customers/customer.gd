@@ -26,6 +26,7 @@ var queue_index: int = 0
 var target_position: Vector3 = Vector3.ZERO
 var exit_position: Vector3 = Vector3(18, 0, 6.5)
 var has_arrived: bool = false
+var is_vip: bool = false
 
 var _body: Node3D
 var _model: Node3D
@@ -140,6 +141,16 @@ func _build_procedural_body() -> void:
 	MeshFactory.box(_head, Vector3(0.018, 0.034, 0.02), Vector3(0, -0.018, 0.122), skin.darkened(0.12), "Nose", 0.0, false)
 	MeshFactory.box(_head, Vector3(0.042, 0.009, 0.01), Vector3(0, -0.058, 0.118), Color("6b3a2e"), "Smile", 0.0, false)
 
+	if is_vip:
+		var crown := MeshFactory.cylinder(_head, 0.05, 0.03, Vector3(0, 0.15, 0), GameData.C_GOLD, "Crown", 8, false)
+		crown.scale = Vector3(1.0, 1.8, 1.0)
+		var jewel := MeshFactory.sphere(_head, 0.025, Vector3(0, 0.19, 0), GameData.C_RED, "Jewel", 6, false)
+		var jewel_mat := MeshFactory.material(GameData.C_RED, 0.2, 0.0, true)
+		jewel_mat.emission_enabled = true
+		jewel_mat.emission = GameData.C_RED
+		jewel_mat.emission_energy_multiplier = 1.5
+		jewel.material_override = jewel_mat
+
 
 func _build_order_overlay() -> void:
 	# order bubble
@@ -161,8 +172,12 @@ func _build_order_overlay() -> void:
 
 func setup(patience_bonus: float) -> void:
 	patience_max = randf_range(26.0, 34.0) * (1.0 + patience_bonus)
+	if is_vip:
+		patience_max *= 1.6
+		_walk_speed = randf_range(1.4, 1.9)
+	else:
+		_walk_speed = randf_range(1.05, 1.5)
 	patience_left = patience_max
-	_walk_speed = randf_range(1.05, 1.5)
 
 
 func walk_to(position: Vector3, index: int) -> void:
