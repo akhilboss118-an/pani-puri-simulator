@@ -139,7 +139,7 @@ func continue_game() -> void:
 
 func _dev_run() -> bool:
 	var args := OS.get_cmdline_user_args()
-	return "--smoke" in args or "--shots" in args or "--film" in args
+	return "--smoke" in args or "--shots" in args or "--film" in args or "--updatefilm" in args
 
 
 ## Fresh days skip spoilage; days after the first apply it in Inventory.begin_day.

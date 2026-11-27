@@ -47,6 +47,41 @@ var _film_timeline: Array = [
 	{"at": 27.0, "fn": "film_hold"},
 ]
 
+var _update_timeline: Array = [
+	{"at": 0.0, "fn": "film_menu"},
+	{"at": 3.0, "fn": "film_counter"},
+	{"at": 4.5, "fn": "film_take"},
+	{"at": 5.7, "fn": "film_crack"},
+	{"at": 6.9, "fn": "film_potato"},
+	{"at": 8.1, "fn": "film_pani"},
+	{"at": 9.3, "fn": "film_plate"},
+	{"at": 10.6, "fn": "film_serve"},
+	{"at": 11.8, "fn": "film_quick_puri"},
+	{"at": 13.0, "fn": "film_quick_puri"},
+	{"at": 14.2, "fn": "film_quick_puri"},
+	{"at": 15.4, "fn": "film_quick_puri"},
+	{"at": 16.4, "fn": "film_combo"},
+	{"at": 17.6, "fn": "film_inventory"},
+	{"at": 19.2, "fn": "film_close"},
+	{"at": 19.6, "fn": "film_upgrades"},
+	{"at": 21.2, "fn": "film_close"},
+	{"at": 21.6, "fn": "film_grant"},
+	{"at": 22.6, "fn": "film_grant_machine"},
+	{"at": 23.6, "fn": "film_wide"},
+	{"at": 25.0, "fn": "film_flags"},
+	{"at": 27.0, "fn": "film_machine"},
+	{"at": 29.5, "fn": "film_wide"},
+	{"at": 31.5, "fn": "film_flags"},
+	{"at": 33.5, "fn": "film_hold"},
+	{"at": 36.0, "fn": "film_machine"},
+	{"at": 39.0, "fn": "film_wide"},
+	{"at": 42.0, "fn": "film_flags"},
+	{"at": 45.0, "fn": "film_hold"},
+	{"at": 48.0, "fn": "film_wide"},
+	{"at": 51.0, "fn": "film_flags"},
+	{"at": 54.0, "fn": "film_hold"},
+]
+
 
 func _ready() -> void:
 	Game.root = self
@@ -61,6 +96,8 @@ func _ready() -> void:
 		_run_tutorial_smoke.call_deferred()
 	elif "--film" in OS.get_cmdline_user_args():
 		_run_film.call_deferred()
+	elif "--updatefilm" in OS.get_cmdline_user_args():
+		_run_update_film.call_deferred()
 	elif "--shots" in OS.get_cmdline_user_args():
 		_run_screenshot_tour.call_deferred()
 
@@ -284,6 +321,20 @@ func _run_film() -> void:
 	_film_active = true
 
 
+func _run_update_film() -> void:
+	await get_tree().process_frame
+	Game.start_new_game()
+	await get_tree().process_frame
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	world.customer_manager.call("freeze_for_tutorial")
+	world.customer_manager.call("spawn_tutorial_customer")
+	hud.visible = true
+	_film_time = 0.0
+	_film_step = 0
+	_film_timeline = _update_timeline
+	_film_active = true
+
+
 func _film_tick(delta: float) -> void:
 	_film_time += delta
 	while _film_step < _film_timeline.size() and _film_time >= float(_film_timeline[_film_step].get("at", 0.0)):
@@ -375,6 +426,15 @@ func film_close() -> void:
 func film_grant() -> void:
 	_grant_restaurant_upgrades()
 	world.sync_upgrades()
+
+
+func film_grant_machine() -> void:
+	_grant_machine_upgrades()
+	world.sync_upgrades()
+
+
+func film_machine() -> void:
+	_film_move(Vector3(2.0, 0.2, 10.6), -0.2, -0.16)
 
 
 func film_wide() -> void:
