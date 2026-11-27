@@ -48,6 +48,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("toggle_collection") and state == State.PLAYING:
 		if root:
 			root.call("open_collection")
+	elif event.is_action_pressed("toggle_models") and state == State.PLAYING:
+		if root:
+			root.call("open_models")
 
 
 # ---------------------------------------------------------------- input setup
@@ -65,6 +68,7 @@ func _setup_input() -> void:
 	_bind_keys("toggle_report", [KEY_R])
 	_bind_keys("toggle_goals", [KEY_G])
 	_bind_keys("toggle_collection", [KEY_B])
+	_bind_keys("toggle_models", [KEY_M])
 	_bind_joy_button("interact", JOY_BUTTON_A)
 	_bind_joy_button("pause", JOY_BUTTON_START)
 	_bind_joy_axis("move_left", JOY_AXIS_LEFT_X, -1.0)

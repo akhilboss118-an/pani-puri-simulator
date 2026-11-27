@@ -15,6 +15,7 @@ var pause_panel: PausePanel
 var report_panel: ReportPanel
 var goals_panel: GoalsPanel
 var collection_panel: CollectionPanel
+var model_gallery_panel: ModelGalleryPanel
 var tutorial: Tutorial
 
 var _menu_camera: Camera3D
@@ -145,7 +146,8 @@ func _build_ui() -> void:
 	report_panel = ReportPanel.new()
 	goals_panel = GoalsPanel.new()
 	collection_panel = CollectionPanel.new()
-	for panel in [inventory_panel, upgrades_panel, settings_panel, pause_panel, report_panel, goals_panel, collection_panel]:
+	model_gallery_panel = ModelGalleryPanel.new()
+	for panel in [inventory_panel, upgrades_panel, settings_panel, pause_panel, report_panel, goals_panel, collection_panel, model_gallery_panel]:
 		ui_layer.add_child(panel)
 
 	tutorial = Tutorial.new()
@@ -253,6 +255,10 @@ func open_collection() -> void:
 	_open_only(collection_panel)
 
 
+func open_models() -> void:
+	_open_only(model_gallery_panel)
+
+
 func _open_only(panel: OverlayPanel) -> void:
 	if Game.state != Game.State.PLAYING:
 		return
@@ -261,7 +267,7 @@ func _open_only(panel: OverlayPanel) -> void:
 
 
 func _close_panels() -> void:
-	for panel in [inventory_panel, upgrades_panel, settings_panel, pause_panel, report_panel, goals_panel, collection_panel]:
+	for panel in [inventory_panel, upgrades_panel, settings_panel, pause_panel, report_panel, goals_panel, collection_panel, model_gallery_panel]:
 		if panel != null and panel.visible:
 			panel.close()
 
@@ -692,6 +698,11 @@ func _run_screenshot_tour() -> void:
 	await get_tree().create_timer(0.3).timeout
 	await _capture(out_dir, "13_collection")
 	collection_panel.close()
+
+	open_models()
+	await get_tree().create_timer(0.4).timeout
+	await _capture(out_dir, "14_models")
+	model_gallery_panel.close()
 
 	_grant_machine_upgrades()
 	world.sync_upgrades()
