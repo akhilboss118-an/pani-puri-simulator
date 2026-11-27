@@ -187,6 +187,11 @@ func _promote(customer: Customer) -> void:
 		order.price = int(order.price * 1.5)
 		order.name = "VIP: " + order.name
 	order["vip"] = customer.is_vip
+	if not customer.is_vip and customer != _tutorial_customer and randf() < 0.22:
+		order["delivery"] = true
+		order["price"] = int(order.get("price", 30)) + int(round(float(order.get("price", 30)) * 0.15))
+		if String(order.get("note", "")) == "":
+			order["note"] = "Delivery!"
 	var tip_mult := 1.0
 	match customer.personality:
 		"impatient":

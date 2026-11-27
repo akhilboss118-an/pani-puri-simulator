@@ -34,6 +34,7 @@ func save_game() -> bool:
 		return false
 	file.store_string(JSON.stringify(data, "\t"))
 	file.close()
+	CloudSave.snapshot()
 	return true
 
 

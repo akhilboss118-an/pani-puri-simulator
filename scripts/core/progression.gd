@@ -11,6 +11,7 @@ var xp: int = 0
 var lifetime_xp: int = 0
 var purchased: Dictionary = {}
 var recipe_stats: Dictionary = {}   # recipe_id -> {serves, best, stars}
+var prestige_level: int = 0
 
 var _rush_was_active: bool = false
 
@@ -140,7 +141,8 @@ func price_for(recipe: RecipeDef) -> int:
 	var price := price_per_puri + premium
 	if recipe_stars(recipe.id) >= 3:
 		price += int(round(float(recipe.base_price) * 0.1))
-	return price
+	price = int(round(float(price) * prestige_multiplier()))
+	return maxi(1, price)
 
 
 func recipe_stars(recipe_id: String) -> int:
@@ -242,6 +244,35 @@ func restaurant_tier() -> int:
 	if has_upgrade("restaurant_reno"):
 		return 1
 	return 0
+
+
+# ------------------------------------------------------------------ prestige
+
+func can_prestige() -> bool:
+	return level >= MAX_LEVEL
+
+
+func prestige_multiplier() -> float:
+	return 1.0 + float(prestige_level) * 0.1
+
+
+func prestige() -> bool:
+	if not can_prestige():
+		Events.toast.emit("Reach level %d first to open a new branch." % MAX_LEVEL, "bad")
+		return false
+	prestige_level += 1
+	level = 1
+	xp = 0
+	Economy.cash = 500
+	Economy.day_revenue = 0
+	Economy.day_expenses = 0
+	Economy.begin_day()
+	Events.reputation_changed.emit(reputation)
+	Events.price_changed.emit(price_per_puri)
+	_emit_xp()
+	Events.toast.emit("New branch opened! Prestige %d, +10%% permanent prices." % prestige_level, "good")
+	Audio.play("good", 1.3, -5.0)
+	return true
 
 
 # ------------------------------------------------------------------ effects
@@ -383,6 +414,7 @@ func to_dict() -> Dictionary:
 		"xp": xp,
 		"lifetime_xp": lifetime_xp,
 		"recipe_stats": recipe_stats.duplicate(true),
+		"prestige_level": prestige_level,
 	}
 
 
@@ -392,6 +424,7 @@ func from_dict(data: Dictionary) -> void:
 	level = clampi(int(data.get("level", 1)), 1, MAX_LEVEL)
 	xp = maxi(0, int(data.get("xp", 0)))
 	lifetime_xp = maxi(xp, int(data.get("lifetime_xp", xp)))
+	prestige_level = maxi(0, int(data.get("prestige_level", 0)))
 	purchased.clear()
 	for id in data.get("upgrades", []):
 		purchased[String(id)] = true

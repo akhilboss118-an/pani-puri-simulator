@@ -81,6 +81,22 @@ func _build_content() -> void:
 
 	content.add_child(UIKit.label("Customers pay less when the price is high for their taste.", 13, UIKit.MUTED))
 
+	var prestige_row := HBoxContainer.new()
+	prestige_row.add_theme_constant_override("separation", 10)
+	var prestige_text := VBoxContainer.new()
+	prestige_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	prestige_text.add_child(UIKit.label("PRESTIGE  %d  -  +%d%% prices" % [Progression.prestige_level, int(round((Progression.prestige_multiplier() - 1.0) * 100.0))], 16, UIKit.GOLD))
+	prestige_text.add_child(UIKit.label("Reach level %d, then open a new branch. Resets day/cash/level; keeps upgrades." % Progression.MAX_LEVEL, 12, UIKit.MUTED))
+	prestige_row.add_child(prestige_text)
+	var prestige_button := UIKit.button("Open new branch", 40)
+	prestige_button.disabled = not Progression.can_prestige()
+	prestige_button.pressed.connect(func():
+		if Progression.prestige():
+			_refresh()
+	)
+	prestige_row.add_child(prestige_button)
+	content.add_child(prestige_row)
+
 	var scroll := ScrollContainer.new()
 	scroll.custom_minimum_size = Vector2(0, 300)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED

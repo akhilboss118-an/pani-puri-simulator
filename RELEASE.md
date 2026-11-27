@@ -34,11 +34,16 @@ Expected: `Verifies`, v2 and v3 schemes true, one signer.
 | Field | Value |
 | --- | --- |
 | Package | `com.panipurisimulator.game` |
-| Version | `1.3.0` (versionCode `6`) |
+| Version | `1.4.0` (versionCode `7`) |
 | Min SDK | 24 (Android 7.0) |
 | Target SDK | 36 |
 | ABI | `arm64-v8a` |
 | Output | `build/android/PaniPuriSimulator-release.apk` |
+
+# Play Store: build an Android App Bundle instead of APK
+# & $godot --headless --path . --export-release "Android - PaniPuri" `
+#   "build/android/PaniPuriSimulator.aab"
+# Kit: docs/play_store/ (listing, privacy, data safety, ratings, feature graphic)
 
 Bump `version/code` and `version/name` in `export_presets.cfg` before every
 store upload. The version code must always increase.

@@ -13,6 +13,7 @@ func _build_content() -> void:
 	_add_slider("Master volume", 0.0, 1.0, 0.01, float(Game.settings.master_volume), "master_volume")
 	_add_check("Invert vertical look", bool(Game.settings.invert_y), "invert_y")
 	_add_check("Reduced camera motion", bool(Game.settings.reduced_motion), "reduced_motion")
+	_add_language_row()
 	content.add_child(UIKit.hsep(4))
 	content.add_child(UIKit.label("Low quality disables shadows and limits crowd size - best for phones and browsers.", 14, UIKit.MUTED))
 	var close_button := UIKit.button("Done", 48)
@@ -61,6 +62,24 @@ func _add_quality_row() -> void:
 		Game.apply_setting("quality", index)
 		if Game.root:
 			Game.root.call("apply_quality")
+	)
+	row.add_child(option)
+	content.add_child(row)
+
+
+func _add_language_row() -> void:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	var name_label := UIKit.label("Language", 17)
+	name_label.custom_minimum_size = Vector2(210, 0)
+	row.add_child(name_label)
+	var option := OptionButton.new()
+	option.add_item("English", 0)
+	option.add_item("हिंदी", 1)
+	option.selected = 1 if String(Game.settings.get("locale", "en")) == "hi" else 0
+	option.custom_minimum_size = Vector2(220, 38)
+	option.item_selected.connect(func(index: int):
+		Game.apply_setting("locale", "hi" if index == 1 else "en")
 	)
 	row.add_child(option)
 	content.add_child(row)

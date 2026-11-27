@@ -8,7 +8,7 @@ extends Node
 enum State { MENU, PLAYING, PAUSED, DAY_END }
 
 const SETTINGS_PATH := "user://settings.cfg"
-const VERSION := "1.3.0"
+const VERSION := "1.4.0"
 
 var state: State = State.MENU
 var day: int = 1
@@ -24,6 +24,7 @@ var settings := {
 	"reduced_motion": false,
 	"show_fps": false,
 	"tutorial_done": false,
+	"locale": "en",
 }
 
 var _quality_names := ["Low", "Medium", "High"]
@@ -197,6 +198,9 @@ func end_day(closed_by_player: bool = false) -> void:
 	report["xp_to_next"] = Progression.xp_to_next()
 	set_state(State.DAY_END)
 	Achievements.on_day_end(report)
+	CloudSave.publish_score("best_day_profit", float(report.get("profit", 0)))
+	CloudSave.publish_score("most_served_day", float(report.get("served", 0)))
+	CloudSave.publish_score("most_tips_day", float(report.get("tips", 0)))
 	Events.day_ended.emit(report)
 
 
@@ -236,6 +240,8 @@ func apply_setting(key: String, value: Variant) -> void:
 	settings[key] = value
 	if key == "master_volume":
 		Audio.apply_volume(float(value))
+	if key == "locale" and get_node_or_null("/root/I18n") != null:
+		get_node("/root/I18n").call("set_locale", String(value))
 	_save_settings()
 	Events.settings_changed.emit()
 

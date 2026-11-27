@@ -16,6 +16,7 @@ var report_panel: ReportPanel
 var goals_panel: GoalsPanel
 var collection_panel: CollectionPanel
 var model_gallery_panel: ModelGalleryPanel
+var cloud_panel: CloudPanel
 var tutorial: Tutorial
 
 var _menu_camera: Camera3D
@@ -147,7 +148,8 @@ func _build_ui() -> void:
 	goals_panel = GoalsPanel.new()
 	collection_panel = CollectionPanel.new()
 	model_gallery_panel = ModelGalleryPanel.new()
-	for panel in [inventory_panel, upgrades_panel, settings_panel, pause_panel, report_panel, goals_panel, collection_panel, model_gallery_panel]:
+	cloud_panel = CloudPanel.new()
+	for panel in [inventory_panel, upgrades_panel, settings_panel, pause_panel, report_panel, goals_panel, collection_panel, model_gallery_panel, cloud_panel]:
 		ui_layer.add_child(panel)
 
 	tutorial = Tutorial.new()
@@ -259,6 +261,10 @@ func open_models() -> void:
 	_open_only(model_gallery_panel)
 
 
+func open_cloud() -> void:
+	_open_only(cloud_panel)
+
+
 func _open_only(panel: OverlayPanel) -> void:
 	if Game.state != Game.State.PLAYING:
 		return
@@ -267,7 +273,7 @@ func _open_only(panel: OverlayPanel) -> void:
 
 
 func _close_panels() -> void:
-	for panel in [inventory_panel, upgrades_panel, settings_panel, pause_panel, report_panel, goals_panel, collection_panel, model_gallery_panel]:
+	for panel in [inventory_panel, upgrades_panel, settings_panel, pause_panel, report_panel, goals_panel, collection_panel, model_gallery_panel, cloud_panel]:
 		if panel != null and panel.visible:
 			panel.close()
 

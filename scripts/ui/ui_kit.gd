@@ -84,7 +84,7 @@ static func style(bg: Color, radius: int = 12, border: Color = BORDER, border_wi
 
 static func label(text: String, size: int = 18, color: Color = CREAM) -> Label:
 	var l := Label.new()
-	l.text = text
+	l.text = I18n.t(text)
 	l.add_theme_font_size_override("font_size", size)
 	l.add_theme_color_override("font_color", color)
 	return l
@@ -92,7 +92,7 @@ static func label(text: String, size: int = 18, color: Color = CREAM) -> Label:
 
 static func button(text: String, min_height: int = 46) -> Button:
 	var b := Button.new()
-	b.text = text
+	b.text = I18n.t(text)
 	b.custom_minimum_size = Vector2(0, min_height)
 	b.focus_mode = Control.FOCUS_NONE
 	return b

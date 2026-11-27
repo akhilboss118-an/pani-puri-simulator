@@ -30,6 +30,13 @@ func _build_content() -> void:
 	settings.pressed.connect(_open_other.bind("settings"))
 	content.add_child(settings)
 
+	var cloud := UIKit.button("Save & Leaderboards", 46)
+	cloud.pressed.connect(func():
+		close()
+		Game.root.call("open_cloud")
+	)
+	content.add_child(cloud)
+
 	content.add_child(UIKit.hsep(6))
 
 	var close_stall := UIKit.button("Close stall for today", 46)
