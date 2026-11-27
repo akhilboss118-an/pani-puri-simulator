@@ -23,7 +23,7 @@ low-end phones, no ads, offline, free.
 - Optional 2 tablet screenshots
 
 **Pre-launch checklist:**
-- [ ] Build **AAB** (not APK): `--export-release "Android - PaniPuri" build/android/PaniPuriSimulator.aab`
+- [ ] Build **AAB** for Play Store in a Gradle Android build configuration (this repo ships a verified signed APK preset).
 - [ ] Bump `version/code` + `version/name`, keystore is project-owned (outside repo)
 - [ ] Upload privacy policy URL (PRIVACY_POLICY.md) and Data Safety (DATA_SAFETY.md)
 - [ ] Content rating (CONTENT_RATING.md)

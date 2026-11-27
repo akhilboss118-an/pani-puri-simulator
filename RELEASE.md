@@ -40,9 +40,9 @@ Expected: `Verifies`, v2 and v3 schemes true, one signer.
 | ABI | `arm64-v8a` |
 | Output | `build/android/PaniPuriSimulator-release.apk` |
 
-# Play Store: build an Android App Bundle instead of APK
-# & $godot --headless --path . --export-release "Android - PaniPuri" `
-#   "build/android/PaniPuriSimulator.aab"
+# Play Store: build an Android App Bundle (.aab) instead of APK in a Gradle
+# Android build configuration, keeping the same package/keystore settings.
+# This repo ships a verified signed APK preset; AAB is a Play Store step.
 # Kit: docs/play_store/ (listing, privacy, data safety, ratings, feature graphic)
 
 Bump `version/code` and `version/name` in `export_presets.cfg` before every
