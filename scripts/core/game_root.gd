@@ -61,11 +61,7 @@ var _update_timeline: Array = [
 	{"at": 14.2, "fn": "film_quick_puri"},
 	{"at": 15.4, "fn": "film_quick_puri"},
 	{"at": 16.4, "fn": "film_combo"},
-	{"at": 17.6, "fn": "film_inventory"},
-	{"at": 19.2, "fn": "film_close"},
-	{"at": 19.6, "fn": "film_upgrades"},
-	{"at": 21.2, "fn": "film_close"},
-	{"at": 21.6, "fn": "film_grant"},
+	{"at": 21.2, "fn": "film_grant"},
 	{"at": 22.6, "fn": "film_grant_machine"},
 	{"at": 23.6, "fn": "film_wide"},
 	{"at": 25.0, "fn": "film_flags"},
@@ -327,7 +323,7 @@ func _run_update_film() -> void:
 	await get_tree().process_frame
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	world.customer_manager.call("freeze_for_tutorial")
-	world.customer_manager.call("spawn_tutorial_customer")
+	world.customer_manager.call("spawn_tutorial_customer", 8)
 	hud.visible = true
 	_film_time = 0.0
 	_film_step = 0
@@ -397,7 +393,7 @@ func film_serve() -> void:
 
 func film_quick_puri() -> void:
 	if Orders.active_customer == null:
-		world.customer_manager.call("spawn_tutorial_customer")
+		world.customer_manager.call("spawn_tutorial_customer", 9)
 	_film_move(Vector3(0.3, 0.2, 10.15), 0.0, -0.1)
 	world.stall.puri_box.interact(player)
 	world.stall.puri_box.interact(player)

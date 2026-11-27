@@ -62,7 +62,7 @@ func end_tutorial() -> void:
 
 ## One gentle customer with a tiny, fixed order that matches the six tutorial
 ## steps exactly (one mild mint puri with potato, no onion or chickpea).
-func spawn_tutorial_customer() -> Customer:
+func spawn_tutorial_customer(model_index: int = 1) -> Customer:
 	for c in customers:
 		if is_instance_valid(c):
 			c.queue_free()
@@ -74,7 +74,7 @@ func spawn_tutorial_customer() -> Customer:
 
 	var customer := Customer.new()
 	customer.customer_name = "Customer 1"
-	customer.model_index = 1
+	customer.model_index = clampi(model_index, 1, Customer.MODEL_COUNT)
 	customer.is_vip = false
 	add_child(customer)
 	customer.setup(4.0)
