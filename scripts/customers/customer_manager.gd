@@ -105,6 +105,7 @@ func spawn_tutorial_customer() -> Customer:
 		"note": "One puri, please!",
 		"vip": false,
 		"tip_mult": 1.0,
+		"dialogue": "tutorial",
 	}
 	customer.begin_order(order)
 	Orders.set_active(order, customer)
@@ -198,6 +199,33 @@ func _promote(customer: Customer) -> void:
 	if customer.personality == "tourist" and String(order.get("note", "")) == "":
 		var notes: Array[String] = ["Just visiting!", "Tell me what's good.", "One for the road!"]
 		order["note"] = notes[randi() % notes.size()]
+
+	var dialogue := "order_pani" if randf() < 0.45 else "order_basic"
+	match customer.personality:
+		"impatient":
+			dialogue = "hurry"
+		"foodie":
+			dialogue = "order_spicy" if int(order.get("spice", 1)) >= 2 else "order_basic"
+	if customer.is_regular:
+		dialogue = "regular"
+	if customer.is_vip:
+		dialogue = "vip"
+	if Game.festival() == "Diwali":
+		dialogue = "diwali"
+	elif Game.festival() == "Holi":
+		dialogue = "holi"
+	elif Game.weather() == "rain":
+		dialogue = "rain"
+	var note_lower := String(order.get("note", "")).to_lower()
+	if note_lower.contains("no onion"):
+		dialogue = "order_no_onion"
+	elif note_lower.contains("extra onion"):
+		dialogue = "order_onion"
+	elif note_lower.contains("mild"):
+		dialogue = "order_mild"
+	elif note_lower.contains("sweet"):
+		dialogue = "order_sweet"
+	order["dialogue"] = dialogue
 	customer.begin_order(order)
 	Orders.set_active(order, customer)
 	Events.toast.emit("%s wants %d puris." % [customer.customer_name, int(order.quantity)], "info")

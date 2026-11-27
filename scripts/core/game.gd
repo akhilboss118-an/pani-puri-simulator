@@ -8,7 +8,7 @@ extends Node
 enum State { MENU, PLAYING, PAUSED, DAY_END }
 
 const SETTINGS_PATH := "user://settings.cfg"
-const VERSION := "1.2.0"
+const VERSION := "1.2.1"
 
 var state: State = State.MENU
 var day: int = 1

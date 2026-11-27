@@ -5,8 +5,31 @@ extends Node
 const RATE := 22050
 const PLAYER_COUNT := 8
 
+## line id -> {dev = Devanagari, en = romanised/English subtitle}
+const DIALOGUE_LINES := {
+	"order_basic": {"dev": "भैया, एक पानी पुरी देना ना!", "en": "Bhaiya, one pani puri please!"},
+	"order_pani": {"dev": "भैया, थोड़ा प्यास डालो!", "en": "Bhaiya, thoda pyaas dalo!"},
+	"order_spicy": {"dev": "भैया, थोड़ा तीखा बना दें!", "en": "Make it a bit spicier!"},
+	"order_mild": {"dev": "भैया, हल्का बना दें, प्लीज़!", "en": "Make it mild, please!"},
+	"order_sweet": {"dev": "भैया, मीठी चटनी थोड़ी कम!", "en": "A little less sweet chutney!"},
+	"order_onion": {"dev": "भैया, प्याज़ थोड़ा ज़्यादा डालो!", "en": "Extra onion, please!"},
+	"order_no_onion": {"dev": "भैया, प्याज़ बिल्कुल मत डालो!", "en": "No onion at all!"},
+	"hurry": {"dev": "भैया, जल्दी करो, देर हो रही है!", "en": "Hurry up, I'm running late!"},
+	"vip": {"dev": "स्पेशल ऑर्डर है, भैया! VIP वाला!", "en": "Special order - VIP!"},
+	"regular": {"dev": "भैया, वही पुराना ऑर्डर!", "en": "The usual, bhaiya!"},
+	"diwali": {"dev": "शुभ दीपावली, भैया! पुरी ज़्यादा डालो!", "en": "Happy Diwali! Extra puris please!"},
+	"holi": {"dev": "होली है, रंग में पुरी दो!", "en": "It's Holi - make it colourful!"},
+	"rain": {"dev": "बारिश है, गरम-गरम पानी डालो!", "en": "It's raining - keep the pani warm!"},
+	"serve_perfect": {"dev": "वाह भैया, बिल्कुल परफ़ेक्ट!", "en": "Wow, absolutely perfect!"},
+	"serve_good": {"dev": "शुक्रिया भैया, मज़ा आ गया!", "en": "Thanks, that was great!"},
+	"serve_bad": {"dev": "भैया, ये तो ठीक नहीं हुआ!", "en": "That wasn't quite right!"},
+	"walkout": {"dev": "बस भैया, अब मैं चलता हूँ!", "en": "I'm done waiting, I'll go!"},
+	"tutorial": {"dev": "एक पुरी, बस! सिखा दो भैया।", "en": "Just one puri - teach me, bhaiya!"},
+}
+
 var volume: float = 0.75
 var _streams: Dictionary = {}
+var _dialogues: Dictionary = {}
 var _players: Array[AudioStreamPlayer] = []
 var _next := 0
 var _ambience: AudioStreamPlayer
@@ -22,6 +45,7 @@ func _ready() -> void:
 		add_child(p)
 		_players.append(p)
 	_build_streams()
+	_load_dialogues()
 	_ambience = AudioStreamPlayer.new()
 	_ambience.stream = _streams["ambience"]
 	_ambience.volume_db = -22.0
@@ -87,6 +111,43 @@ func play_at(id: String, world_position: Vector3, db: float = -8.0) -> void:
 	var length := stream.get_length() if stream != null else 0.4
 	var tween := player.create_tween()
 	tween.tween_interval(maxf(0.2, length + 0.2))
+	tween.tween_callback(player.queue_free)
+
+
+func _load_dialogues() -> void:
+	var dir := DirAccess.open("res://assets/audio/dialogues")
+	if dir == null:
+		return
+	for file_name in dir.get_files():
+		if not file_name.ends_with(".ogg"):
+			continue
+		var stream: Resource = load("res://assets/audio/dialogues/" + file_name)
+		if stream is AudioStream:
+			_dialogues[file_name.get_basename()] = stream
+
+
+func play_dialogue(id: String, world_position: Vector3) -> void:
+	if not _dialogues.has(id):
+		return
+	var line: Dictionary = DIALOGUE_LINES.get(id, {})
+	var subtitle := ""
+	if not line.is_empty():
+		subtitle = "%s\n%s" % [String(line.get("dev", "")), String(line.get("en", ""))]
+	var stream := _dialogues[id] as AudioStream
+	var length := stream.get_length() if stream != null else 2.0
+	Events.dialogue_spoken.emit(subtitle, length)
+	if Game.root == null or Game.root.world == null:
+		return
+	var player := AudioStreamPlayer3D.new()
+	player.stream = stream
+	player.volume_db = -4.0
+	player.max_distance = 20.0
+	player.attenuation_model = AudioStreamPlayer3D.ATTENUATION_INVERSE_DISTANCE
+	Game.root.world.add_child(player)
+	player.global_position = world_position
+	player.play()
+	var tween := player.create_tween()
+	tween.tween_interval(maxf(0.3, length + 0.2))
 	tween.tween_callback(player.queue_free)
 
 

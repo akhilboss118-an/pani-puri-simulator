@@ -115,7 +115,24 @@ Mixamo needs an Adobe account, so it is not scripted. Workflow:
 - Street/world stays procedural: ~10-20 materials shared by reference.
 - Use the Compatibility renderer (`gl_compatibility`), see `project.godot`.
 
-## 5. Export presets
+## 5. Customer voice lines (Hindi / Hinglish)
+
+18 short lines are generated with the Eleven Labs API and shipped as OGG files
+in `assets/audio/dialogues/`. `Audio.play_dialogue()` plays them positionally
+from the customer and emits a Devanagari + English subtitle rendered with
+`NotoSansDevanagari-Regular.ttf` (SIL OFL 1.1).
+
+To regenerate them, set `ELEVENLABS_API_KEY` in your environment and run:
+
+```
+powershell -File tools/tts/generate_dialogues.ps1
+```
+
+The key is read from the environment only - never commit it. The OFL licence for
+the subtitle font is in `assets/fonts/OFL.txt`; attribution for both is in
+`assets/manifest.json`.
+
+## 6. Export presets
 
 `export_presets.cfg` has `Web`, `Windows` and `Android` presets.
 

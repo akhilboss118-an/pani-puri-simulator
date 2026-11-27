@@ -27,6 +27,9 @@ var _order_body: Label
 var _order_bar: ProgressBar
 var _prompt_panel: PanelContainer
 var _prompt_label: Label
+var _subtitle_panel: PanelContainer
+var _subtitle_label: Label
+var _subtitle_serial: int = 0
 var _held_panel: PanelContainer
 var _held_label: Label
 var _toast_box: VBoxContainer
@@ -59,6 +62,7 @@ func _build() -> void:
 	_build_top_right()
 	_build_order_card()
 	_build_prompt()
+	_build_subtitle()
 	_build_held()
 	_build_toasts()
 	_build_crosshair()
@@ -84,6 +88,7 @@ func _build() -> void:
 	Events.achievement_unlocked.connect(_on_achievement_changed)
 	Events.achievement_progress.connect(_on_achievement_changed_broad)
 	Events.day_theme_changed.connect(_on_theme_changed)
+	Events.dialogue_spoken.connect(_on_dialogue_spoken)
 
 	_on_money_changed(Economy.cash)
 	_on_reputation_changed(Progression.reputation)
@@ -227,6 +232,29 @@ func _build_order_card() -> void:
 
 
 # ------------------------------------------------------------------- prompts
+
+func _build_subtitle() -> void:
+	_subtitle_panel = UIKit.panel(12)
+	_subtitle_panel.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	_subtitle_panel.offset_left = -430
+	_subtitle_panel.offset_right = 430
+	_subtitle_panel.offset_top = -196
+	_subtitle_panel.offset_bottom = -116
+	_subtitle_panel.add_theme_stylebox_override("panel", UIKit.style(Color(0.08, 0.06, 0.05, 0.88), 12, UIKit.GOLD, 2, 10))
+	_subtitle_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_subtitle_panel)
+	_subtitle_label = UIKit.label("", 21, UIKit.CREAM)
+	_subtitle_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_subtitle_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_subtitle_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var font_path := "res://assets/fonts/NotoSansDevanagari-Regular.ttf"
+	if ResourceLoader.exists(font_path):
+		var font: Resource = load(font_path)
+		if font is Font:
+			_subtitle_label.add_theme_font_override("font", font)
+	_subtitle_panel.add_child(_subtitle_label)
+	_subtitle_panel.visible = false
+
 
 func _build_prompt() -> void:
 	_prompt_panel = UIKit.panel(10)
@@ -439,6 +467,23 @@ func _refresh_badges() -> void:
 func _on_theme_changed(_weather: String, label: String) -> void:
 	if _theme_label:
 		_theme_label.text = label
+
+
+func _on_dialogue_spoken(text: String, duration: float) -> void:
+	if _subtitle_panel == null:
+		return
+	if text == "":
+		_subtitle_panel.visible = false
+		return
+	_subtitle_serial += 1
+	var serial := _subtitle_serial
+	_subtitle_label.text = text
+	_subtitle_panel.visible = true
+	var timer := get_tree().create_timer(maxf(1.2, duration))
+	timer.timeout.connect(func():
+		if serial == _subtitle_serial:
+			_subtitle_panel.visible = false
+	)
 
 
 func _on_achievement_changed(_id: String, _title: String, _cash: int, _xp: int) -> void:

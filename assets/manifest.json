@@ -1,8 +1,8 @@
 {
   "project": "Pani Puri Simulator",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "updated": "2026-11-27",
-  "policy": "Art is a mix of procedural primitives, shared cached materials, seven customer GLBs converted from the user-supplied FBX characters, 18 curated Kenney CC0 environment props, and procedural music/SFX. No Sketchfab models are downloaded in-game: environment assets are documented as a manual import in ART_PIPELINE.md, and attribution for every drop-in model is recorded here.",
+  "policy": "Art is a mix of procedural primitives, shared cached materials, seven customer GLBs converted from the user-supplied FBX characters, 18 curated Kenney CC0 environment props, procedural music/SFX, 18 Eleven Labs Hindi/Hinglish voice lines and a Noto Sans Devanagari subtitle font. No Sketchfab models are downloaded in-game: environment assets are documented as a manual import in ART_PIPELINE.md, and attribution for every drop-in model is recorded here.",
   "assets": [
     {
       "id": "customer_1",
@@ -140,6 +140,28 @@
       "search": "https://sketchfab.com/search?q=steel+barrel+mobile+cold+storage+cart",
       "status": "suggested",
       "notes": "A cooler cart against the terrace; static, under 1.5k triangles."
+    },
+    {
+      "id": "voice_hindi_dialogues",
+      "type": "audio",
+      "source": "Eleven Labs API",
+      "url": "https://elevenlabs.io",
+      "license": "Generated with the user's Eleven Labs account; regenerate with tools/tts/generate_dialogues.ps1",
+      "attribution": "None required - generated for this game. The API key is never stored in the repository.",
+      "status": "integrated",
+      "files": ["18 OGG lines in assets/audio/dialogues/"],
+      "notes": "Hindi/Hinglish customer lines including 'Bhaiya, thoda pyaas dalo!'. Model: eleven_multilingual_v2, voices Roger and Jessica."
+    },
+    {
+      "id": "font_noto_devanagari",
+      "type": "font",
+      "source": "Google Fonts / Noto Project",
+      "url": "https://fonts.google.com/noto/specimen/Noto+Sans+Devanagari",
+      "license": "SIL Open Font License 1.1 (see assets/fonts/OFL.txt)",
+      "attribution": "Noto Sans Devanagari - The Noto Project Authors",
+      "status": "integrated",
+      "files": ["NotoSansDevanagari-Regular.ttf"],
+      "notes": "Used for the Devanagari subtitle lines shown with customer voice lines."
     }
   ]
 }

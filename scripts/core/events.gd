@@ -32,5 +32,6 @@ signal achievement_unlocked(id: String, title: String, reward_cash: int, reward_
 signal achievement_progress(id: String, value: int)
 signal recipe_mastery_changed(recipe_id: String, stars: int)
 signal day_theme_changed(theme: String, label: String)
+signal dialogue_spoken(text: String, duration: float)
 signal settings_changed()
 signal overlay_changed(open: bool)

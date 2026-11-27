@@ -248,6 +248,9 @@ func begin_order(order_data: Dictionary) -> void:
 	_bar_fill.visible = true
 	_bar_bg.visible = true
 	Audio.play("bell", 1.2, -18.0)
+	var line := String(order_data.get("dialogue", ""))
+	if line != "":
+		Audio.play_dialogue(line, global_position)
 
 
 func order_text() -> String:
@@ -284,6 +287,8 @@ func receive(score: float, message: String) -> void:
 	_bar_fill.visible = false
 	_bar_bg.visible = false
 	Audio.play("good" if score >= 0.6 else "bad", 1.0, -8.0)
+	var reaction := "serve_bad" if score < 0.6 else ("serve_perfect" if score >= 0.9 else "serve_good")
+	Audio.play_dialogue(reaction, global_position)
 	if score >= 0.6:
 		var tween := create_tween()
 		tween.tween_property(_body, "position:y", 0.14, 0.12)
@@ -393,4 +398,5 @@ func _patience_tick(delta: float) -> void:
 		_bubble.text = "Too slow!"
 		_bubble.visible = true
 		_bubble_bg.visible = true
+		Audio.play_dialogue("walkout", global_position)
 		walked_out.emit(self)
