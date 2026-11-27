@@ -1,9 +1,10 @@
 # Art Pipeline
 
-Everything in the game except the seven customer GLBs is procedural (primitives
-plus shared cached materials), so the download is tiny and the workflow is
-fully documented here. The seven customers were converted from the user-supplied
-FBX characters, and the names of those files are kept out of the game.
+Everything in the game except the nine customer GLBs and a handful of environment
+props is procedural (primitives plus shared cached materials), so the download
+stays small. Seven static customers were converted from user-supplied FBX
+characters, two more are animated Mixamo-style NPCs, and all names are kept
+out of the game.
 
 ## 1. Customers: FBX -> GLB
 
@@ -27,6 +28,20 @@ What it does per character (`tools/blender/convert_customers.py`):
 Output: `customer_1.glb` .. `customer_7.glb`. The source names stay only in
 the build tool; `CustomerManager` assigns names `Customer 1..N` and hands out
 the GLBs in rotation (`Customer.MODEL_COUNT`).
+
+### Animated customers
+
+`customer_8.glb` and `customer_9.glb` keep their rig and ship three clips,
+`idle`, `walk` and `eat`. Build them from a Breathing Idle + Walking + eat
+FBX trio (same rigged character):
+
+```
+blender --background --python tools/blender/convert_animated_npc.py -- idle.fbx walking.fbx eat.fbx customer_8.glb
+```
+
+`Customer` finds the `AnimationPlayer`, plays `idle`, switches to `walk` when
+moving, plays `eat` when the order is served, and returns to `walk` when leaving.
+The source names are never used in-game.
 
 To review a conversion, render a preview of one:
 

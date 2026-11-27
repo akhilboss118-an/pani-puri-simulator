@@ -1,8 +1,8 @@
 {
   "project": "Pani Puri Simulator",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "updated": "2026-11-27",
-  "policy": "Art is a mix of procedural primitives, shared cached materials, seven customer GLBs converted from the user-supplied FBX characters, 18 curated Kenney CC0 environment props, procedural music/SFX, 18 Eleven Labs Hindi/Hinglish voice lines and a Noto Sans Devanagari subtitle font. No Sketchfab models are downloaded in-game: environment assets are documented as a manual import in ART_PIPELINE.md, and attribution for every drop-in model is recorded here.",
+  "policy": "Art is a mix of procedural primitives, shared cached materials, seven static customer GLBs converted from user-supplied FBX plus two animated Mixamo customers (idle/walk/eat), 18 Kenney CC0 props plus user-supplied Poly-by-Google, MiniPoly, Kay Lousberg, Ultimate Food Pack and Pani Puri Thela assets, procedural music/SFX, 18 Eleven Labs Hindi/Hinglish voice lines and a Noto Sans Devanagari subtitle font. No Sketchfab models are downloaded in-game: environment assets are documented as a manual import in ART_PIPELINE.md, and attribution for every drop-in model is recorded here.",
   "assets": [
     {
       "id": "customer_1",
@@ -80,6 +80,28 @@
       "status": "integrated",
       "triangles": 6500,
       "texture": "2048x2048 atlas downscaled to 512"
+    },
+    {
+      "id": "customer_8",
+      "type": "character",
+      "path": "res://assets/models/customers/customer_8.glb",
+      "origin": "user-supplied animated FBX (Mixamo-style, anonymous)",
+      "license": "user-provided (converted for this game)",
+      "attribution": "None - the user supplied the files.",
+      "status": "integrated",
+      "animations": ["idle", "walk", "eat"],
+      "notes": "Converted with tools/blender/convert_animated_npc.py from Breathing Idle + Walking + eat FBXs."
+    },
+    {
+      "id": "customer_9",
+      "type": "character",
+      "path": "res://assets/models/customers/customer_9.glb",
+      "origin": "user-supplied animated FBX (Mixamo-style, anonymous)",
+      "license": "user-provided (converted for this game)",
+      "attribution": "None - the user supplied the files.",
+      "status": "integrated",
+      "animations": ["idle", "walk", "eat"],
+      "notes": "Converted with tools/blender/convert_animated_npc.py from Breathing Idle + Walking + eat FBXs."
     },
     {
       "id": "env_kenney_nature_kit",
@@ -162,6 +184,61 @@
       "status": "integrated",
       "files": ["NotoSansDevanagari-Regular.ttf"],
       "notes": "Used for the Devanagari subtitle lines shown with customer voice lines."
+    },
+    {
+      "id": "env_user_garbage",
+      "type": "environment",
+      "source": "Poly by Google",
+      "license": "user-provided",
+      "attribution": "Poly by Google",
+      "status": "integrated",
+      "files": ["garbage_bin.glb"]
+    },
+    {
+      "id": "env_user_apartment",
+      "type": "environment",
+      "source": "Poly by Google",
+      "license": "user-provided",
+      "attribution": "Poly by Google",
+      "status": "integrated",
+      "files": ["apartment_building.glb"]
+    },
+    {
+      "id": "env_user_bike",
+      "type": "environment",
+      "source": "MiniPoly",
+      "license": "user-provided",
+      "attribution": "MiniPoly",
+      "status": "integrated",
+      "files": ["bike.glb"]
+    },
+    {
+      "id": "env_user_box_b",
+      "type": "environment",
+      "source": "Kay Lousberg",
+      "license": "user-provided",
+      "attribution": "Kay Lousberg",
+      "status": "integrated",
+      "files": ["box_b.glb"]
+    },
+    {
+      "id": "env_ultimate_food_pack",
+      "type": "environment",
+      "source": "Ultimate Food Pack",
+      "license": "user-provided",
+      "attribution": "Ultimate Food Pack",
+      "status": "integrated",
+      "files": ["cooking_pot.glb", "frying_pan.glb"]
+    },
+    {
+      "id": "env_panipuri_thela",
+      "type": "environment",
+      "source": "user-supplied Pani Puri Thela",
+      "license": "user-provided",
+      "attribution": "user-provided",
+      "status": "integrated",
+      "files": ["panipuri_thela.glb"],
+      "notes": "Converted from panipuri.fbx; parked as a second stall at the entrance."
     }
   ]
 }

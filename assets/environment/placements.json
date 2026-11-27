@@ -161,6 +161,69 @@
       "scale": 1.2,
       "enabled": true,
       "notes": "Lemons on the side table."
+    },
+    {
+      "file": "res://assets/environment/props/garbage_bin.glb",
+      "anchor": "counter_right",
+      "offset": [0.9, 0.15, 0.45],
+      "rotation_deg": [0, 0, 0],
+      "scale": 0.32,
+      "enabled": true,
+      "notes": "User-supplied Poly-by-Google garbage bin beside the serving side."
+    },
+    {
+      "file": "res://assets/environment/props/apartment_building.glb",
+      "anchor": "street_far",
+      "offset": [22, 0, -9],
+      "rotation_deg": [0, 180, 0],
+      "scale": 0.62,
+      "enabled": true,
+      "notes": "User-supplied Poly-by-Google apartment building on the far pavement."
+    },
+    {
+      "file": "res://assets/environment/props/bike.glb",
+      "anchor": "entrance",
+      "offset": [-11, 0.14, 1.5],
+      "rotation_deg": [0, 35, 0],
+      "scale": 0.13,
+      "enabled": true,
+      "notes": "User-supplied MiniPoly bike parked near the restaurant."
+    },
+    {
+      "file": "res://assets/environment/props/box_b.glb",
+      "anchor": "counter_left",
+      "offset": [-1.4, 0.12, 0.4],
+      "rotation_deg": [0, 15, 0],
+      "scale": 2.2,
+      "enabled": true,
+      "notes": "User-supplied Kay Lousberg box beside the prep side."
+    },
+    {
+      "file": "res://assets/environment/props/cooking_pot.glb",
+      "anchor": "counter_left",
+      "offset": [0.35, 0.95, -0.1],
+      "rotation_deg": [0, 0, 0],
+      "scale": 0.4,
+      "enabled": true,
+      "notes": "Ultimate Food Pack cooking pot on the side table."
+    },
+    {
+      "file": "res://assets/environment/props/frying_pan.glb",
+      "anchor": "counter_left",
+      "offset": [0.7, 0.88, -0.35],
+      "rotation_deg": [0, 25, 0],
+      "scale": 0.3,
+      "enabled": true,
+      "notes": "Ultimate Food Pack frying pan beside the pot."
+    },
+    {
+      "file": "res://assets/environment/props/panipuri_thela.glb",
+      "anchor": "entrance",
+      "offset": [-9, 1.3, 1.2],
+      "rotation_deg": [0, 0, 0],
+      "scale": 0.15,
+      "enabled": true,
+      "notes": "User-supplied Pani Puri thela model parked at the entrance."
     }
   ]
 }

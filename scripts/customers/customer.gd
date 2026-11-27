@@ -11,7 +11,7 @@ signal walked_out(customer: Customer)
 
 enum State { WALK_IN, QUEUE, ORDER, REACTION, LEAVING }
 
-const MODEL_COUNT := 7
+const MODEL_COUNT := 9
 const MODEL_DIR := "res://assets/models/customers"
 
 static var _model_cache: Dictionary = {}
@@ -35,6 +35,8 @@ var favourite_recipe: String = ""
 var _body: Node3D
 var _model: Node3D
 var _model_base_scale: float = 1.0
+var _animation_player: AnimationPlayer
+var _animated: bool = false
 var _leg_l: Node3D
 var _leg_r: Node3D
 var _arm_l: Node3D
@@ -60,6 +62,7 @@ func _ready() -> void:
 	_bar_bg.visible = false
 	if _badge:
 		_badge.visible = false
+	_play_animation("idle")
 
 
 func _build() -> void:
@@ -90,6 +93,10 @@ func _build_imported_model() -> bool:
 	_model.scale = Vector3.ONE * height_scale
 	_model_base_scale = height_scale
 	_body.add_child(_model)
+	var anim_players: Array[Node] = _model.find_children("*", "AnimationPlayer", true, false)
+	_animation_player = anim_players[0] as AnimationPlayer if not anim_players.is_empty() else null
+	_animated = _animation_player != null
+	_animated = _animation_player != null
 	for node in _model.find_children("*", "MeshInstance3D", true, false):
 		var mesh := node as MeshInstance3D
 		mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
@@ -289,6 +296,7 @@ func receive(score: float, message: String) -> void:
 	Audio.play("good" if score >= 0.6 else "bad", 1.0, -8.0)
 	var reaction := "serve_bad" if score < 0.6 else ("serve_perfect" if score >= 0.9 else "serve_good")
 	Audio.play_dialogue(reaction, global_position)
+	_play_animation("eat")
 	if score >= 0.6:
 		var tween := create_tween()
 		tween.tween_property(_body, "position:y", 0.14, 0.12)
@@ -305,6 +313,7 @@ func leave(exit_position: Vector3) -> void:
 	_leaving = true
 	target_position = exit_position
 	has_arrived = false
+	_play_animation("walk")
 	_bubble.visible = false
 	_bubble_bg.visible = false
 	_bar_fill.visible = false
@@ -332,6 +341,14 @@ func _active_state() -> bool:
 	return Game.state == Game.State.PLAYING
 
 
+func _play_animation(name: String) -> void:
+	if _animation_player == null or not _animation_player.has_animation(name):
+		return
+	if _animation_player.current_animation == name and _animation_player.is_playing():
+		return
+	_animation_player.play(name)
+
+
 func _move(delta: float) -> void:
 	var flat_target := Vector3(target_position.x, global_position.y, target_position.z)
 	var distance := global_position.distance_to(flat_target)
@@ -342,8 +359,10 @@ func _move(delta: float) -> void:
 				state = State.QUEUE
 			elif state == State.LEAVING:
 				departed.emit(self)
+		_play_animation("walk" if state == State.LEAVING else "idle")
 		_idle_anim(delta)
 		return
+	_play_animation("walk")
 	var direction := (flat_target - global_position).normalized()
 	global_position += direction * _walk_speed * delta
 	var look_target := global_position + direction
@@ -357,11 +376,11 @@ func _move(delta: float) -> void:
 	if _arm_l and _arm_r:
 		_arm_l.rotation.x = -swing * 0.7
 		_arm_r.rotation.x = swing * 0.7
-	if _model:
+	if _model != null and not _animated:
 		_model.position.y = absf(sin(_phase)) * 0.035
 		_model.rotation.z = sin(_phase * 0.5) * 0.035
 		_model.rotation.x = -0.04
-	else:
+	elif _model == null:
 		_body.position.y = absf(sin(_phase)) * 0.03
 
 
@@ -372,7 +391,7 @@ func _idle_anim(delta: float) -> void:
 	if _arm_l:
 		_arm_l.rotation.x = lerpf(_arm_l.rotation.x, 0.0, delta * 8.0)
 		_arm_r.rotation.x = lerpf(_arm_r.rotation.x, 0.0, delta * 8.0)
-	if _model:
+	if _model != null and not _animated:
 		_model.position.y = lerpf(_model.position.y, 0.0, delta * 6.0)
 		_model.rotation.z = lerpf(_model.rotation.z, 0.0, delta * 6.0)
 		_model.rotation.x = lerpf(_model.rotation.x, 0.0, delta * 6.0)
