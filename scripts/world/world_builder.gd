@@ -15,6 +15,12 @@ var exit_point := Vector3(17.0, 0.14, 7.4)
 var player_spawn := Vector3(0, 0.2, 10.65)
 
 var _sun: DirectionalLight3D
+var _world_env: WorldEnvironment
+var _world_environment: Environment
+var _theme_root: Node3D
+var _rain: GPUParticles3D
+var _confetti: GPUParticles3D
+var _festival_lights: Node3D
 var _gate: Node3D
 var _gate_body: StaticBody3D
 var _menu_label: Label3D
@@ -33,9 +39,11 @@ func build(quality: int) -> void:
 	_build_customers()
 	_boundaries()
 	_expansion_gate()
+	_build_theme_visuals()
 	Events.upgrade_purchased.connect(_on_upgrade)
 	Events.price_changed.connect(_on_price_changed)
 	sync_upgrades()
+	apply_day_theme(Game.day)
 
 
 func apply_quality(quality: int) -> void:
@@ -70,6 +78,8 @@ func _setup_environment() -> void:
 	env.fog_density = 0.0035
 	world_env.environment = env
 	add_child(world_env)
+	_world_env = world_env
+	_world_environment = env
 
 	_sun = DirectionalLight3D.new()
 	_sun.name = "Sun"
@@ -327,6 +337,104 @@ func _expansion_gate() -> void:
 	_gate_body = MeshFactory.add_box_collider(_gate, Vector3(0.3, 2.2, 4.8), Vector3(-13.5, 1.1, 8.5), 1)
 
 
+# ------------------------------------------------------------------- day theme
+
+func _build_theme_visuals() -> void:
+	_theme_root = Node3D.new()
+	_theme_root.name = "DayTheme"
+	add_child(_theme_root)
+
+	_rain = _make_particles(
+		Vector3(22, 0.2, 18), Color(0.7, 0.85, 1.0, 0.55), 0.035,
+		Vector3(0, -1, 0), 12.0, 220
+	)
+	var rain_quad := _rain.draw_pass_1 as QuadMesh
+	if rain_quad != null:
+		rain_quad.size = Vector2(0.03, 0.22)
+	_rain.position = Vector3(0, 5.0, 2.0)
+	_theme_root.add_child(_rain)
+
+	_confetti = _make_particles(
+		Vector3(16, 1.0, 12), Color(0.95, 0.45, 0.75, 0.9), 0.07,
+		Vector3(0, -0.35, 0), 0.6, 130
+	)
+	_confetti.position = Vector3(0, 5.0, 8.0)
+	_theme_root.add_child(_confetti)
+
+	_festival_lights = Node3D.new()
+	_festival_lights.name = "FestivalLights"
+	_theme_root.add_child(_festival_lights)
+	var bulb_mat := MeshFactory.material(Color("ffd27a"), 0.4, 0.0, true)
+	bulb_mat.emission_enabled = true
+	bulb_mat.emission = Color("ffb347")
+	bulb_mat.emission_energy_multiplier = 1.5
+	for i in 14:
+		var x := -2.8 + i * 0.43
+		var bulb := MeshFactory.sphere(_festival_lights, 0.05, Vector3(x, 2.2, 8.15), Color("ffd27a"), "Diya", 6, false)
+		bulb.material_override = bulb_mat
+	for i in 10:
+		var x2 := -6.3 + i * 1.4
+		var lamp := MeshFactory.sphere(_festival_lights, 0.055, Vector3(x2, 3.2, 12.35), Color("ffd27a"), "TerraceDiya", 6, false)
+		lamp.material_override = bulb_mat
+	_festival_lights.visible = false
+
+
+func _make_particles(extents: Vector3, color: Color, size: float, direction: Vector3, gravity: float, amount: int) -> GPUParticles3D:
+	var process := ParticleProcessMaterial.new()
+	process.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+	process.emission_box_extents = extents
+	process.direction = direction
+	process.spread = 0.18
+	process.initial_velocity_min = 2.0
+	process.initial_velocity_max = 5.0
+	process.gravity = Vector3(0, -gravity, 0)
+	process.scale_min = 0.6
+	process.scale_max = 1.4
+	var quad := QuadMesh.new()
+	quad.size = Vector2(size, size * 2.4)
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = color
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	quad.material = mat
+	var particles := GPUParticles3D.new()
+	particles.process_material = process
+	particles.draw_pass_1 = quad
+	particles.amount = amount
+	particles.lifetime = 2.2
+	particles.visible = false
+	return particles
+
+
+func apply_day_theme(day: int) -> void:
+	var weather := GameData.weather_for_day(day)
+	var festival := GameData.festival_for_day(day)
+	if _world_environment != null:
+		match weather:
+			"rain":
+				_world_environment.fog_density = 0.008
+				_world_environment.ambient_light_energy = 0.5
+				_world_environment.fog_light_color = Color("aeb6bb")
+			"heat":
+				_world_environment.fog_density = 0.002
+				_world_environment.ambient_light_energy = 0.82
+				_world_environment.fog_light_color = Color("f0d6a2")
+			_:
+				_world_environment.fog_density = 0.0035
+				_world_environment.ambient_light_energy = 0.65
+				_world_environment.fog_light_color = Color("d9b58d")
+	if _sun != null:
+		_sun.light_energy = 0.65 if weather == "rain" else (1.2 if weather == "heat" else 1.0)
+	if _rain != null:
+		_rain.visible = weather == "rain"
+	if _confetti != null:
+		_confetti.visible = festival == "Holi"
+	if _festival_lights != null:
+		_festival_lights.visible = festival != ""
+	Events.day_theme_changed.emit(weather, GameData.theme_label(day))
+
+
 # ------------------------------------------------------------------- upgrades
 
 func _on_upgrade(id: String) -> void:
@@ -339,6 +447,12 @@ func _on_upgrade(id: String) -> void:
 		"bigger_plate":
 			if plate:
 				plate.clear_plate()
+		"potato_machine":
+			Events.toast.emit("Potato prep machine installed - raw potatoes now become filling.", "good")
+		"turbo_peeler":
+			Events.toast.emit("Turbo drum fitted - the peeler is twice as fast.", "good")
+		"auto_fill_arm":
+			Events.toast.emit("Auto-fill arm ready - walk close with an open puri.", "good")
 		"restaurant_reno":
 			Events.toast.emit("The cart is now a restaurant - turn around to see the terrace.", "good")
 		"fine_dining":
@@ -358,6 +472,8 @@ func sync_upgrades() -> void:
 	RestaurantBuilder.sync(restaurant, tier)
 	if stall.has("pani_garlic") and stall.pani_garlic != null:
 		stall.pani_garlic.set_enabled(Progression.has_upgrade("garlic_pani"))
+	if stall.has("potato_machine") and stall.potato_machine != null:
+		stall.potato_machine.set_enabled(Progression.has_upgrade("potato_machine"))
 	if _gate:
 		var permit := Progression.has_upgrade("street_permit")
 		_gate.visible = not permit

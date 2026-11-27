@@ -47,6 +47,7 @@ static func ingredients() -> Array[IngredientDef]:
 	if _ingredients.is_empty():
 		_ingredients = [
 			IngredientDef.make("puri", "Puri shells", C_PURI, 180, 60, 90, 48, true),
+			IngredientDef.make("raw_potato", "Raw potatoes", C_POTATO, 120, 40, 70, 30),
 			IngredientDef.make("potato", "Potato filling", C_POTATO, 80, 30, 60, 24, true),
 			IngredientDef.make("chickpea", "Chickpeas", C_CHICKPEA, 60, 24, 55, 18),
 			IngredientDef.make("onion", "Chopped onion", C_ONION, 50, 20, 40, 14),
@@ -123,6 +124,23 @@ static func upgrades() -> Array[Dictionary]:
 				"cost": 3200, "icon": "gate",
 			},
 			{
+				"id": "potato_machine", "name": "Automatic Potato Prep Machine",
+				"description": "Peels and mashes raw potatoes into filling automatically. Consumes raw potatoes.",
+				"cost": 18000, "icon": "pot", "level": 5,
+			},
+			{
+				"id": "turbo_peeler", "name": "Turbo Peeler Drum",
+				"description": "The prep machine produces potato filling twice as fast.",
+				"cost": 32000, "icon": "pot", "level": 7,
+				"requires": "potato_machine",
+			},
+			{
+				"id": "auto_fill_arm", "name": "Auto-Fill Arm",
+				"description": "Walks near the machine with an open puri and potato is added for you.",
+				"cost": 55000, "icon": "box", "level": 9,
+				"requires": "turbo_peeler",
+			},
+			{
 				"id": "restaurant_reno", "name": "Restaurant Renovation",
 				"description": "Tiled terrace, tables, planters and a proper restaurant front. Opens an extra queue spot.",
 				"cost": 4500, "icon": "restaurant", "level": 3, "tier": "restaurant",
@@ -160,3 +178,37 @@ static func upgrade(id: String) -> Dictionary:
 		if u.id == id:
 			return u
 	return {}
+
+
+static func weather_for_day(day: int) -> String:
+	var cycle := (day - 1) % 6
+	if cycle == 2:
+		return "rain"
+	if cycle == 3:
+		return "heat"
+	return "clear"
+
+
+static func festival_for_day(day: int) -> String:
+	var cycle := (day - 1) % 10
+	if cycle == 4:
+		return "Diwali"
+	if cycle == 9:
+		return "Holi"
+	return ""
+
+
+static func theme_label(day: int) -> String:
+	var weather := weather_for_day(day)
+	var festival := festival_for_day(day)
+	var parts: Array[String] = []
+	match weather:
+		"rain":
+			parts.append("MONSOON SHOWERS")
+		"heat":
+			parts.append("HEAT WAVE")
+	if festival != "":
+		parts.append(festival.to_upper() + " FESTIVAL")
+	if parts.is_empty():
+		return "CLEAR DAY"
+	return "  /  ".join(parts)

@@ -27,6 +27,10 @@ var target_position: Vector3 = Vector3.ZERO
 var exit_position: Vector3 = Vector3(18, 0, 6.5)
 var has_arrived: bool = false
 var is_vip: bool = false
+var personality: String = "tourist"
+var is_regular: bool = false
+var visits: int = 1
+var favourite_recipe: String = ""
 
 var _body: Node3D
 var _model: Node3D
@@ -38,6 +42,7 @@ var _arm_r: Node3D
 var _head: Node3D
 var _bubble: Label3D
 var _bubble_bg: MeshInstance3D
+var _badge: Label3D
 var _bar_fill: MeshInstance3D
 var _bar_bg: MeshInstance3D
 var _phase: float = 0.0
@@ -53,6 +58,8 @@ func _ready() -> void:
 	_bubble_bg.visible = false
 	_bar_fill.visible = false
 	_bar_bg.visible = false
+	if _badge:
+		_badge.visible = false
 
 
 func _build() -> void:
@@ -161,6 +168,9 @@ func _build_order_overlay() -> void:
 	_bubble = MeshFactory.label(self, "", Vector3(0, 2.08, 0.01), 26, Color("241a12"), 0.003)
 	_bubble.width = 400
 	_bubble.autowrap_mode = TextServer.AUTOWRAP_OFF
+	_badge = MeshFactory.label(self, "", Vector3(0.9, 2.12, 0.01), 17, Color("241a12"), 0.0024)
+	_badge.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_badge.visible = false
 
 	# patience bar
 	_bar_bg = MeshFactory.quad(self, Vector2(0.5, 0.06), Vector3(0, 1.84, 0), Color(0.15, 0.12, 0.1, 0.85))
@@ -178,6 +188,39 @@ func setup(patience_bonus: float) -> void:
 	else:
 		_walk_speed = randf_range(1.05, 1.5)
 	patience_left = patience_max
+
+
+func set_personality(kind: String, regular: bool = false) -> void:
+	personality = kind
+	is_regular = regular
+	var bubble_color := Color(1.0, 0.98, 0.92, 0.96)
+	var tag := ""
+	match kind:
+		"impatient":
+			bubble_color = Color(1.0, 0.88, 0.78, 0.96)
+			tag = "HURRY!"
+			patience_max *= 0.75
+			patience_left = patience_max
+		"foodie":
+			bubble_color = Color(0.94, 0.86, 1.0, 0.96)
+			tag = "FOODIE"
+		"tourist":
+			bubble_color = Color(0.86, 0.96, 1.0, 0.96)
+			tag = "TOURIST"
+		"regular":
+			bubble_color = Color(0.86, 1.0, 0.88, 0.96)
+			tag = "REGULAR"
+	if is_regular:
+		tag = "REGULAR"
+	if _bubble_bg != null:
+		var mat := StandardMaterial3D.new()
+		mat.albedo_color = bubble_color
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+		_bubble_bg.material_override = mat
+	if _badge != null:
+		_badge.text = tag
+		_badge.visible = tag != ""
 
 
 func walk_to(position: Vector3, index: int) -> void:
@@ -261,6 +304,8 @@ func leave(exit_position: Vector3) -> void:
 	_bubble_bg.visible = false
 	_bar_fill.visible = false
 	_bar_bg.visible = false
+	if _badge:
+		_badge.visible = false
 
 
 func _process(delta: float) -> void:

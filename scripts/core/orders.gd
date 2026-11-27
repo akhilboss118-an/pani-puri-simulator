@@ -64,12 +64,12 @@ func break_combo() -> void:
 	Events.combo_changed.emit(combo, combo_multiplier())
 
 
-func tip_for(score: float, quantity: int, patience_ratio: float, price: int) -> int:
+func tip_for(score: float, quantity: int, patience_ratio: float, price: int, tip_mult: float = 1.0) -> int:
 	if score < 0.55 or quantity <= 0:
 		return 0
 	var base := float(price * quantity)
 	var factor := lerpf(0.4, 1.1, clampf(patience_ratio, 0.0, 1.0))
-	var amount := base * 0.12 * clampf(score, 0.0, 1.0) * factor * combo_multiplier()
+	var amount := base * 0.12 * clampf(score, 0.0, 1.0) * factor * combo_multiplier() * maxf(0.5, tip_mult)
 	return maxi(0, int(round(amount)))
 
 
@@ -127,6 +127,12 @@ func generate_order(customer_name: String = "Customer", vip: bool = false) -> Di
 	elif randf() < 0.14:
 		order.sweet = not order.sweet
 		order.note = "Extra sweet chutney" if order.sweet else "Skip the sweet chutney"
+
+	if Game.weather() == "rain" and randf() < 0.35:
+		order.spice = 2
+		order.note = "Something hot, please!"
+	elif Game.weather() == "heat":
+		order.quantity = int(order.quantity) + 1
 
 	return order
 
@@ -186,12 +192,12 @@ func evaluate_plate(puris: Array, order: Dictionary, patience_ratio: float = 1.0
 
 ## Called when an order is fully served one-puri-at-a-time. Updates day
 ## statistics and pays a speed/accuracy tip without re-adding the puri payments.
-func register_completion(score: float, quantity: int, patience_ratio: float = 1.0, price: int = 30) -> int:
+func register_completion(score: float, quantity: int, patience_ratio: float = 1.0, price: int = 30, tip_mult: float = 1.0) -> int:
 	day_served += quantity
 	_rating_sum += score
 	_rating_count += 1
 	day_rating = _rating_sum / maxi(1.0, float(_rating_count))
-	var tip := tip_for(score, quantity, patience_ratio, price)
+	var tip := tip_for(score, quantity, patience_ratio, price, tip_mult)
 	if tip > 0:
 		day_tips += tip
 		Economy.add_cash(tip, "Tip")
@@ -207,6 +213,12 @@ func serve_single_puri(puri_data: PuriData, order: Dictionary, patience_ratio: f
 	var patience_factor := lerpf(0.78, 1.04, clampf(patience_ratio, 0.0, 1.0))
 	_register_puri_score(score)
 	Goals.on_puri_served(score)
+	Achievements.on_puri_served(
+		score,
+		String(order.get("recipe_id", "classic")),
+		bool(puri_data.auto_filled) if puri_data is PuriData else false,
+		bool(order.get("vip", false))
+	)
 	var payment := int(round(float(price) * (0.45 + 0.55 * score) * patience_factor * combo_multiplier()))
 	order["quantity"] = maxi(0, remaining - 1)
 	var complete := remaining <= 1

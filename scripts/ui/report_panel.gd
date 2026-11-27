@@ -67,6 +67,7 @@ func _refresh() -> void:
 	_row("Best combo", "x%d" % int(report.get("best_combo", 0)), UIKit.TEAL)
 	_row("Average rating", "%d%%" % int(round(rating * 100.0)), UIKit.CREAM)
 	_row("Reputation", "%d / 100" % int(round(rep)), UIKit.ORANGE)
+	_row("Day theme", String(report.get("theme", "CLEAR DAY")), UIKit.GOLD)
 	var xp_gained := int(report.get("xp_gained", 0))
 	var level := int(report.get("level", Progression.level))
 	_row("XP earned", "%d (+ %d / %d XP)" % [xp_gained, Progression.xp, Progression.xp_to_next()], UIKit.TEAL)

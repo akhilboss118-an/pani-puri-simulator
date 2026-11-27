@@ -11,6 +11,7 @@ var pani: String = "none"         # none / mint / garlic
 var spice: int = 0                # 0 mild, 1 medium, 2 hot
 var sweet: bool = false
 var dropped: bool = false
+var auto_filled: bool = false
 
 
 func copy() -> PuriData:
@@ -21,6 +22,7 @@ func copy() -> PuriData:
 	d.spice = spice
 	d.sweet = sweet
 	d.dropped = dropped
+	d.auto_filled = auto_filled
 	return d
 
 

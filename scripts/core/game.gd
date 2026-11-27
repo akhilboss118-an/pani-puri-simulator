@@ -8,7 +8,7 @@ extends Node
 enum State { MENU, PLAYING, PAUSED, DAY_END }
 
 const SETTINGS_PATH := "user://settings.cfg"
-const VERSION := "1.1.1"
+const VERSION := "1.2.0"
 
 var state: State = State.MENU
 var day: int = 1
@@ -45,6 +45,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("toggle_goals") and state == State.PLAYING:
 		if root:
 			root.call("open_goals")
+	elif event.is_action_pressed("toggle_collection") and state == State.PLAYING:
+		if root:
+			root.call("open_collection")
 
 
 # ---------------------------------------------------------------- input setup
@@ -61,6 +64,7 @@ func _setup_input() -> void:
 	_bind_keys("toggle_upgrades", [KEY_U])
 	_bind_keys("toggle_report", [KEY_R])
 	_bind_keys("toggle_goals", [KEY_G])
+	_bind_keys("toggle_collection", [KEY_B])
 	_bind_joy_button("interact", JOY_BUTTON_A)
 	_bind_joy_button("pause", JOY_BUTTON_START)
 	_bind_joy_axis("move_left", JOY_AXIS_LEFT_X, -1.0)
@@ -113,6 +117,7 @@ func start_new_game() -> void:
 	Progression.reset()
 	Orders.reset()
 	Clock.reset()
+	Achievements.reset()
 	pending_tutorial = not bool(settings.get("tutorial_done", false)) and not _dev_run()
 	if root:
 		root.world.sync_upgrades()
@@ -173,6 +178,7 @@ func end_day(closed_by_player: bool = false) -> void:
 		"tips": Orders.day_tips,
 		"best_combo": Orders.best_combo,
 		"goals": Goals.to_dict(),
+		"theme": GameData.theme_label(day),
 		"reputation": Progression.reputation,
 		"closed_by_player": closed_by_player,
 	}
@@ -186,6 +192,7 @@ func end_day(closed_by_player: bool = false) -> void:
 	report["xp"] = Progression.xp
 	report["xp_to_next"] = Progression.xp_to_next()
 	set_state(State.DAY_END)
+	Achievements.on_day_end(report)
 	Events.day_ended.emit(report)
 
 
@@ -231,6 +238,22 @@ func apply_setting(key: String, value: Variant) -> void:
 
 func quality_name() -> String:
 	return _quality_names[clampi(int(settings.quality), 0, 2)]
+
+
+func weather() -> String:
+	return GameData.weather_for_day(day)
+
+
+func festival() -> String:
+	return GameData.festival_for_day(day)
+
+
+func rep_multiplier() -> float:
+	return 2.0 if festival() == "Diwali" else 1.0
+
+
+func xp_multiplier() -> float:
+	return 1.5 if festival() == "Holi" else 1.0
 
 
 func is_mobile() -> bool:

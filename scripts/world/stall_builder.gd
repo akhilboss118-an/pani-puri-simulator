@@ -67,6 +67,10 @@ static func build(parent: Node3D) -> Dictionary:
 	trash.position = Vector3(2.6, 0.12, 9.5)
 	root.add_child(trash)
 
+	var potato_machine := PotatoMachine.new()
+	potato_machine.position = Vector3(3.2, 0.12, 9.1)
+	root.add_child(potato_machine)
+
 	return {
 		"root": root,
 		"plate": plate,
@@ -80,6 +84,7 @@ static func build(parent: Node3D) -> Dictionary:
 		"pani_garlic": pani_garlic,
 		"chutney": chutney,
 		"trash": trash,
+		"potato_machine": potato_machine,
 		"sign": sign_data.sign,
 		"menu_label": sign_data.menu_label,
 	}

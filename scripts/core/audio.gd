@@ -10,6 +10,8 @@ var _streams: Dictionary = {}
 var _players: Array[AudioStreamPlayer] = []
 var _next := 0
 var _ambience: AudioStreamPlayer
+var _music: AudioStreamPlayer
+var _music_track: String = ""
 
 
 func _ready() -> void:
@@ -24,6 +26,10 @@ func _ready() -> void:
 	_ambience.stream = _streams["ambience"]
 	_ambience.volume_db = -22.0
 	add_child(_ambience)
+	_music = AudioStreamPlayer.new()
+	_music.bus = "Master"
+	_music.volume_db = -17.0
+	add_child(_music)
 
 
 func play(id: String, pitch: float = 1.0, db: float = -6.0) -> void:
@@ -47,9 +53,52 @@ func stop_ambience() -> void:
 		_ambience.stop()
 
 
+func play_music(track: String) -> void:
+	if _music == null or track == _music_track:
+		return
+	var key := "music_" + track
+	if not _streams.has(key):
+		return
+	_music_track = track
+	_music.stream = _streams[key]
+	_music.volume_db = -17.0
+	_music.play()
+
+
+func stop_music() -> void:
+	if _music:
+		_music.stop()
+	_music_track = ""
+
+
+## One-shot positional sound. Lives in the 3D world, then cleans itself up.
+func play_at(id: String, world_position: Vector3, db: float = -8.0) -> void:
+	if not _streams.has(id) or Game.root == null or Game.root.world == null:
+		return
+	var player := AudioStreamPlayer3D.new()
+	player.stream = _streams[id]
+	player.volume_db = db
+	player.max_distance = 18.0
+	player.attenuation_model = AudioStreamPlayer3D.ATTENUATION_INVERSE_DISTANCE
+	Game.root.world.add_child(player)
+	player.global_position = world_position
+	player.play()
+	var stream := player.stream as AudioStream
+	var length := stream.get_length() if stream != null else 0.4
+	var tween := player.create_tween()
+	tween.tween_interval(maxf(0.2, length + 0.2))
+	tween.tween_callback(player.queue_free)
+
+
 func apply_volume(value: float) -> void:
 	volume = clampf(value, 0.0, 1.0)
 	AudioServer.set_bus_volume_db(0, linear_to_db(maxf(0.0001, volume)))
+
+
+## Light haptics on Android; a harmless no-op on desktop/web.
+func haptic(milliseconds: int) -> void:
+	if OS.has_feature("android") and Input.has_method("vibrate"):
+		Input.call("vibrate", milliseconds)
 
 
 # ------------------------------------------------------------------ synthesis
@@ -66,7 +115,11 @@ func _build_streams() -> void:
 	_streams["waste"] = _noise(0.3, 14.0, 0.4, 3.0)
 	_streams["dayend"] = _chime([261.63, 329.63, 392.0, 523.25], 0.18)
 	_streams["bell"] = _tone(0.5, 1318.5, 0.35, 5.0)
+	_streams["chatter"] = _noise(0.35, 6.0, 0.12, 2.5)
 	_streams["ambience"] = _ambience_loop()
+	_streams["music_menu"] = _music_loop("menu")
+	_streams["music_day"] = _music_loop("day")
+	_streams["music_rush"] = _music_loop("rush")
 
 
 func _tone(duration: float, freq: float, amp: float, decay: float) -> AudioStreamWAV:
@@ -156,6 +209,38 @@ func _ambience_loop() -> AudioStreamWAV:
 		brown = clampf(brown + rng.randf_range(-0.08, 0.08), -1.0, 1.0) * 0.995
 		var swell := 0.55 + 0.45 * sin(TAU * 0.12 * t)
 		samples[i] = brown * 0.32 * swell
+	return _wav(samples, true)
+
+
+func _music_loop(kind: String) -> AudioStreamWAV:
+	var duration := 4.0
+	var count := int(RATE * duration)
+	var samples := PackedFloat32Array()
+	samples.resize(count)
+	var bpm := 90.0 if kind == "menu" else (112.0 if kind == "day" else 140.0)
+	var beat := 60.0 / bpm
+	var bass := [110.0, 130.81, 146.83, 98.0]
+	var arp := [261.63, 329.63, 392.0, 523.25]
+	if kind == "rush":
+		bass = [98.0, 98.0, 130.81, 146.83]
+	elif kind == "day":
+		bass = [130.81, 164.81, 196.0, 164.81]
+	for i in count:
+		var t := float(i) / RATE
+		var value := 0.0
+		var bass_step := int(t / (beat * 2.0)) % bass.size()
+		var bass_local := fmod(t, beat * 2.0)
+		value += sin(TAU * bass[bass_step] * t) * 0.13 * exp(-1.6 * bass_local)
+		var arp_step := int(t / (beat * 0.5)) % arp.size()
+		var arp_local := fmod(t, beat * 0.5)
+		value += sin(TAU * arp[arp_step] * t) * 0.045 * exp(-7.0 * arp_local)
+		var kick_local := fmod(t, beat)
+		if kick_local < 0.12:
+			value += sin(TAU * 58.0 * kick_local) * 0.22 * exp(-20.0 * kick_local)
+		var hat_local := fmod(t, beat * 0.5)
+		if hat_local < 0.03:
+			value += sin(TAU * 5200.0 * hat_local) * 0.018 * exp(-70.0 * hat_local)
+		samples[i] = clampf(value, -1.0, 1.0)
 	return _wav(samples, true)
 
 

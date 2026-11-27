@@ -44,6 +44,17 @@ func consume(id: String, amount: int = 1) -> bool:
 	return true
 
 
+func add_stock(id: String, amount: int = 1) -> int:
+	if amount <= 0:
+		return 0
+	var before := get_stock(id)
+	stock[id] = mini(get_capacity(id), before + amount)
+	var added := int(stock[id]) - before
+	if added > 0:
+		Events.stock_changed.emit(id)
+	return added
+
+
 func missing_for_step(id: String) -> String:
 	var def := GameData.ingredient(id)
 	if def == null:

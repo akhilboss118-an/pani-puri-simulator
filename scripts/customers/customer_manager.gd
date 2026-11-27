@@ -15,6 +15,7 @@ var _timer: float = 2.0
 var _running: bool = false
 var _serial: int = 0
 var _tutorial_customer: Customer = null
+var regulars: Dictionary = {}   # name -> {visits, recipe_id, order}
 
 
 func _ready() -> void:
@@ -77,6 +78,7 @@ func spawn_tutorial_customer() -> Customer:
 	customer.is_vip = false
 	add_child(customer)
 	customer.setup(4.0)
+	customer.set_personality("tourist", false)
 	customer.exit_position = exit_point
 	var spot := _queue_slot(0)
 	customer.global_position = spot
@@ -101,6 +103,8 @@ func spawn_tutorial_customer() -> Customer:
 		"price": Progression.price_for(recipe),
 		"customer": "Customer 1",
 		"note": "One puri, please!",
+		"vip": false,
+		"tip_mult": 1.0,
 	}
 	customer.begin_order(order)
 	Orders.set_active(order, customer)
@@ -131,6 +135,21 @@ func _spawn() -> void:
 	customer.is_vip = randf() < Progression.vip_chance()
 	add_child(customer)
 	customer.setup(Progression.patience_bonus())
+
+	var returning := false
+	if not regulars.is_empty() and randf() < 0.35:
+		var keys: Array = regulars.keys()
+		var key := String(keys[randi() % keys.size()])
+		var saved: Dictionary = regulars[key]
+		customer.customer_name = key
+		customer.is_regular = true
+		customer.visits = int(saved.get("visits", 1)) + 1
+		customer.favourite_recipe = String(saved.get("recipe_id", "classic"))
+		customer.set_personality("regular", true)
+		returning = true
+	else:
+		var kinds: Array[String] = ["tourist", "foodie", "impatient"]
+		customer.set_personality(kinds[randi() % kinds.size()], false)
 	customer.exit_position = exit_point
 	customer.global_position = spawn_point + Vector3(randf_range(-1.2, 1.2), 0, randf_range(-0.5, 0.5))
 	customer.departed.connect(_on_departed)
@@ -139,6 +158,9 @@ func _spawn() -> void:
 	queue.append(customer)
 	customer.walk_to(_queue_slot(queue.size() - 1), queue.size() - 1)
 	Audio.play("bell", randf_range(0.9, 1.1), -22.0)
+	Audio.play_at("chatter", customer.global_position, -14.0)
+	if returning:
+		Events.toast.emit("%s is back for the usual!" % customer.customer_name, "info")
 	if customer.is_vip:
 		Events.toast.emit("A VIP customer has arrived!", "good")
 
@@ -151,10 +173,31 @@ func _queue_slot(index: int) -> Vector3:
 
 func _promote(customer: Customer) -> void:
 	active = customer
-	var order := Orders.generate_order(customer.customer_name, customer.is_vip)
+	var order: Dictionary
+	if customer.is_regular and regulars.has(customer.customer_name) and not customer.is_vip:
+		var saved: Variant = (regulars[customer.customer_name] as Dictionary).get("order", {})
+		order = (saved as Dictionary).duplicate() if typeof(saved) == TYPE_DICTIONARY else Orders.generate_order(customer.customer_name, false)
+		order["customer"] = customer.customer_name
+		order["quantity"] = clampi(int(order.get("quantity", 3)), 2, 5)
+		order["note"] = "The usual, please!"
+	else:
+		order = Orders.generate_order(customer.customer_name, customer.is_vip)
 	if customer.is_vip:
 		order.price = int(order.price * 1.5)
 		order.name = "VIP: " + order.name
+	order["vip"] = customer.is_vip
+	var tip_mult := 1.0
+	match customer.personality:
+		"impatient":
+			tip_mult = 1.3
+		"foodie":
+			tip_mult = 1.2
+		"regular":
+			tip_mult = 1.15
+	order["tip_mult"] = tip_mult
+	if customer.personality == "tourist" and String(order.get("note", "")) == "":
+		var notes: Array[String] = ["Just visiting!", "Tell me what's good.", "One for the road!"]
+		order["note"] = notes[randi() % notes.size()]
 	customer.begin_order(order)
 	Orders.set_active(order, customer)
 	Events.toast.emit("%s wants %d puris." % [customer.customer_name, int(order.quantity)], "info")
@@ -224,19 +267,34 @@ func serve_plate(puris: Array[PuriData]) -> bool:
 			complete = true
 			break
 	Economy.add_cash(total_payment, "Order served")
-	Progression.add_reputation((total_score / maxi(1, count) - 0.55) * 5.0)
-	var xp_gain := 8 + int(round(total_score * 8.0)) + count
+	Progression.add_reputation((total_score / maxi(1, count) - 0.55) * 5.0 * Game.rep_multiplier())
+	var xp_gain := int(round((8 + int(round(total_score * 8.0)) + count) * Game.xp_multiplier()))
 	Progression.add_xp(xp_gain)
 	var avg_score := total_score / maxi(1, count)
 	var tip := 0
 	if complete:
 		var patience := active.patience_ratio() if is_instance_valid(active) else 0.0
-		tip = Orders.register_completion(avg_score, order_quantity, patience, int(order.get("price", 30)))
+		tip = Orders.register_completion(
+			avg_score, order_quantity, patience,
+			int(order.get("price", 30)), float(order.get("tip_mult", 1.0))
+		)
+		if Game.festival() != "":
+			Achievements.on_festival_served()
+		if active != null and is_instance_valid(active) and active != _tutorial_customer and not active.is_vip:
+			regulars[active.customer_name] = {
+				"visits": active.visits,
+				"recipe_id": String(order.get("recipe_id", "classic")),
+				"order": order.duplicate(true),
+			}
+			if active.is_regular:
+				Events.toast.emit("%s's usual is saved for next time." % active.customer_name, "info")
 	_spawn_money_text(active.global_position + Vector3(0, 2.0, 0), total_payment, xp_gain, tip)
 	var message := final_message + "  +Rs %d" % total_payment
 	if tip > 0:
 		message += "  +Rs %d tip!" % tip
 	Events.toast.emit(message, "good" if avg_score >= 0.6 else "bad")
+	if avg_score >= 0.9:
+		Audio.haptic(35)
 	if complete:
 		active.receive(avg_score, final_message)
 		active.leave(active.exit_position)
@@ -272,5 +330,16 @@ func _spawn_money_text(world_position: Vector3, amount: int, xp_gain: int = 0, t
 
 func waiting_count() -> int:
 	return queue.size()
+
+
+func to_dict() -> Dictionary:
+	return regulars.duplicate(true)
+
+
+func from_dict(data: Dictionary) -> void:
+	regulars.clear()
+	for key in data.keys():
+		if typeof(data[key]) == TYPE_DICTIONARY:
+			regulars[String(key)] = (data[key] as Dictionary).duplicate(true)
 
 

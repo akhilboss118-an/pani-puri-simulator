@@ -25,6 +25,8 @@ func save_game() -> bool:
 		"progress": Progression.to_dict(),
 		"clock": Clock.to_dict(),
 		"goals": Goals.to_dict(),
+		"achievements": Achievements.to_dict(),
+		"regulars": Game.root.world.customer_manager.to_dict() if Game.root != null and Game.root.world != null else {},
 	}
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if file == null:
@@ -64,6 +66,14 @@ func load_game() -> bool:
 		Goals.from_dict(goals_data)
 	else:
 		Goals.begin_day(Game.day)
+	var badges: Variant = data.get("achievements", {})
+	if typeof(badges) == TYPE_DICTIONARY:
+		Achievements.from_dict(badges)
+	else:
+		Achievements.reset()
+	var regulars_data: Variant = data.get("regulars", {})
+	if typeof(regulars_data) == TYPE_DICTIONARY and Game.root != null and Game.root.world != null:
+		Game.root.world.customer_manager.from_dict(regulars_data)
 
 	Economy.reset()
 	Economy.cash = maxi(0, int(data.get("cash", 500)))

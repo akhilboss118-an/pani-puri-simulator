@@ -14,6 +14,7 @@ var settings_panel: SettingsPanel
 var pause_panel: PausePanel
 var report_panel: ReportPanel
 var goals_panel: GoalsPanel
+var collection_panel: CollectionPanel
 var tutorial: Tutorial
 
 var _menu_camera: Camera3D
@@ -52,6 +53,7 @@ func _ready() -> void:
 	_build_world()
 	_build_ui()
 	Events.day_ended.connect(_on_day_ended)
+	Events.rush_hour_changed.connect(_on_rush_music)
 	show_menu()
 	if "--smoke" in OS.get_cmdline_user_args():
 		_run_smoke_test.call_deferred()
@@ -109,7 +111,8 @@ func _build_ui() -> void:
 	pause_panel = PausePanel.new()
 	report_panel = ReportPanel.new()
 	goals_panel = GoalsPanel.new()
-	for panel in [inventory_panel, upgrades_panel, settings_panel, pause_panel, report_panel, goals_panel]:
+	collection_panel = CollectionPanel.new()
+	for panel in [inventory_panel, upgrades_panel, settings_panel, pause_panel, report_panel, goals_panel, collection_panel]:
 		ui_layer.add_child(panel)
 
 	tutorial = Tutorial.new()
@@ -137,6 +140,7 @@ func show_menu() -> void:
 	hud.visible = false
 	Game.set_state(Game.State.MENU)
 	Audio.stop_ambience()
+	Audio.play_music("menu")
 	if not Game.is_mobile():
 		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 
@@ -167,9 +171,11 @@ func on_day_started(day: int) -> void:
 	if world:
 		world.customer_manager.begin_day()
 		world.plate.clear_plate()
+		world.apply_day_theme(day)
 	Game.overlay_open = false
 	get_tree().paused = false
 	Audio.start_ambience()
+	Audio.play_music("day")
 	if Game.pending_tutorial:
 		Game.pending_tutorial = false
 		tutorial.start()
@@ -210,6 +216,10 @@ func open_goals() -> void:
 	_open_only(goals_panel)
 
 
+func open_collection() -> void:
+	_open_only(collection_panel)
+
+
 func _open_only(panel: OverlayPanel) -> void:
 	if Game.state != Game.State.PLAYING:
 		return
@@ -218,7 +228,7 @@ func _open_only(panel: OverlayPanel) -> void:
 
 
 func _close_panels() -> void:
-	for panel in [inventory_panel, upgrades_panel, settings_panel, pause_panel, report_panel, goals_panel]:
+	for panel in [inventory_panel, upgrades_panel, settings_panel, pause_panel, report_panel, goals_panel, collection_panel]:
 		if panel != null and panel.visible:
 			panel.close()
 
@@ -239,6 +249,12 @@ func _on_day_ended(report: Dictionary) -> void:
 	report_panel.set_report(report)
 	report_panel.open()
 	Audio.play("dayend", 1.0, -4.0)
+	Audio.play_music("menu")
+
+
+func _on_rush_music(active: bool) -> void:
+	if Game.state == Game.State.PLAYING:
+		Audio.play_music("rush" if active else "day")
 
 
 func _process(delta: float) -> void:
@@ -616,6 +632,32 @@ func _run_screenshot_tour() -> void:
 	await get_tree().create_timer(0.3).timeout
 	await _capture(out_dir, "12_world_tour")
 
+	open_collection()
+	await get_tree().create_timer(0.3).timeout
+	await _capture(out_dir, "13_collection")
+	collection_panel.close()
+
+	_grant_machine_upgrades()
+	world.sync_upgrades()
+	player.global_position = Vector3(2.0, 0.2, 10.6)
+	player.rotation.y = -0.2
+	player.camera.rotation.x = -0.18
+	await get_tree().create_timer(0.4).timeout
+	await _capture(out_dir, "14_machine")
+
+	Game.day = 3
+	world.apply_day_theme(3)
+	player.global_position = Vector3(0.0, 0.2, 4.5)
+	player.rotation.y = PI
+	player.camera.rotation.x = 0.02
+	await get_tree().create_timer(0.5).timeout
+	await _capture(out_dir, "15_rain")
+
+	Game.day = 5
+	world.apply_day_theme(5)
+	await get_tree().create_timer(0.5).timeout
+	await _capture(out_dir, "16_diwali")
+
 	Game.end_day(true)
 	await get_tree().create_timer(0.3).timeout
 	await _capture(out_dir, "08_report")
@@ -642,6 +684,19 @@ func _grant_restaurant_upgrades() -> void:
 	Economy.cash = maxi(Economy.cash, 300000)
 	Progression.level = Progression.MAX_LEVEL
 	for id in ["restaurant_reno", "fine_dining", "pani_puri_palace", "franchise_hq", "world_tour"]:
+		Progression.buy(id)
+	Economy.cash = original_cash
+	Progression.level = original_level
+
+
+func _grant_machine_upgrades() -> void:
+	if player == null:
+		return
+	var original_cash := Economy.cash
+	var original_level := Progression.level
+	Economy.cash = maxi(Economy.cash, 150000)
+	Progression.level = Progression.MAX_LEVEL
+	for id in ["potato_machine", "turbo_peeler", "auto_fill_arm"]:
 		Progression.buy(id)
 	Economy.cash = original_cash
 	Progression.level = original_level

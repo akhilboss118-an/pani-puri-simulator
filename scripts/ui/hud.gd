@@ -7,6 +7,7 @@ var player: Player
 
 var _money_label: Label
 var _day_label: Label
+var _theme_label: Label
 var _rep_label: Label
 var _level_label: Label
 var _xp_bar: ProgressBar
@@ -19,6 +20,7 @@ var _rush_label: Label
 var _combo_label: Label
 var _tips_label: Label
 var _goals_label: Label
+var _badge_label: Label
 var _order_card: PanelContainer
 var _order_title: Label
 var _order_body: Label
@@ -79,6 +81,9 @@ func _build() -> void:
 	Events.combo_changed.connect(_on_combo_changed)
 	Events.tip_earned.connect(_on_tip_earned)
 	Events.goals_changed.connect(_on_goals_changed)
+	Events.achievement_unlocked.connect(_on_achievement_changed)
+	Events.achievement_progress.connect(_on_achievement_changed_broad)
+	Events.day_theme_changed.connect(_on_theme_changed)
 
 	_on_money_changed(Economy.cash)
 	_on_reputation_changed(Progression.reputation)
@@ -89,6 +94,8 @@ func _build() -> void:
 	_on_combo_changed(Orders.combo, Orders.combo_multiplier())
 	_on_tip_earned(0, Orders.day_tips)
 	_on_goals_changed(Goals.to_dict())
+	_on_achievement_changed_broad("", 0)
+	_on_theme_changed(Game.weather(), GameData.theme_label(Game.day))
 	_on_prompt_changed("")
 	_on_held_changed("")
 
@@ -118,6 +125,8 @@ func _build_top_left() -> void:
 	box.add_child(_money_label)
 	_day_label = UIKit.label("Day 1  -  9:00 AM", 14, UIKit.MUTED)
 	box.add_child(_day_label)
+	_theme_label = UIKit.label("CLEAR DAY", 12, UIKit.GOLD)
+	box.add_child(_theme_label)
 
 	var xp_row := HBoxContainer.new()
 	xp_row.add_theme_constant_override("separation", 6)
@@ -147,12 +156,14 @@ func _build_top_left() -> void:
 	box.add_child(_tips_label)
 	_goals_label = UIKit.label("GOALS  0/3  (G)", 12, UIKit.TEAL)
 	box.add_child(_goals_label)
+	_badge_label = UIKit.label("BADGES  0/18  (B)", 12, UIKit.GOLD)
+	box.add_child(_badge_label)
 
 
 func _build_top_right() -> void:
 	var row := HBoxContainer.new()
 	row.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	row.offset_left = -580
+	row.offset_left = -700
 	row.offset_right = -20
 	row.offset_top = 18
 	row.offset_bottom = 70
@@ -178,6 +189,9 @@ func _build_top_right() -> void:
 	var goals_button := UIKit.button("Goals", 40)
 	goals_button.pressed.connect(func(): Game.root.call("open_goals"))
 	row.add_child(goals_button)
+	var badges_button := UIKit.button("Badges", 40)
+	badges_button.pressed.connect(func(): Game.root.call("open_collection"))
+	row.add_child(badges_button)
 	var menu_button := UIKit.button("Menu", 40)
 	menu_button.pressed.connect(func(): Game.root.call("open_pause"))
 	row.add_child(menu_button)
@@ -414,6 +428,25 @@ func _on_goals_changed(data: Dictionary) -> void:
 		return
 	var all: Array = data.get("goals", [])
 	_goals_label.text = "GOALS  %d/%d  (G)" % [int(data.get("completed", 0)), all.size()]
+
+
+func _refresh_badges() -> void:
+	if _badge_label == null:
+		return
+	_badge_label.text = "BADGES  %d/%d  (B)" % [Achievements.unlocked_count(), Achievements.DEFS.size()]
+
+
+func _on_theme_changed(_weather: String, label: String) -> void:
+	if _theme_label:
+		_theme_label.text = label
+
+
+func _on_achievement_changed(_id: String, _title: String, _cash: int, _xp: int) -> void:
+	_refresh_badges()
+
+
+func _on_achievement_changed_broad(_id: String, _value: int) -> void:
+	_refresh_badges()
 
 
 func _on_prompt_changed(text: String) -> void:

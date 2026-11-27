@@ -10,6 +10,7 @@ var level: int = 1
 var xp: int = 0
 var lifetime_xp: int = 0
 var purchased: Dictionary = {}
+var recipe_stats: Dictionary = {}   # recipe_id -> {serves, best, stars}
 
 var _rush_was_active: bool = false
 
@@ -29,6 +30,7 @@ func reset() -> void:
 	xp = 0
 	lifetime_xp = 0
 	purchased.clear()
+	recipe_stats.clear()
 	Events.reputation_changed.emit(reputation)
 	Events.price_changed.emit(price_per_puri)
 	_emit_xp()
@@ -70,6 +72,7 @@ func add_xp(amount: int) -> int:
 		Events.level_up.emit(level)
 		Events.toast.emit("Level %d!  %s" % [level, level_reward_text(level)], "good")
 		Audio.play("good", 1.15, -6.0)
+		Audio.haptic(60)
 	if level >= MAX_LEVEL:
 		xp = 0
 	_emit_xp()
@@ -134,7 +137,37 @@ func set_price(value: int) -> void:
 
 func price_for(recipe: RecipeDef) -> int:
 	var premium := maxi(0, recipe.base_price - 30)
-	return price_per_puri + premium
+	var price := price_per_puri + premium
+	if recipe_stars(recipe.id) >= 3:
+		price += int(round(float(recipe.base_price) * 0.1))
+	return price
+
+
+func recipe_stars(recipe_id: String) -> int:
+	var entry: Dictionary = recipe_stats.get(recipe_id, {})
+	var serves := int(entry.get("serves", 0))
+	var best := float(entry.get("best", 0.0))
+	if serves >= 40 and best >= 0.85:
+		return 3
+	if serves >= 15 and best >= 0.7:
+		return 2
+	if serves >= 5:
+		return 1
+	return 0
+
+
+func record_recipe_serve(recipe_id: String, score: float) -> void:
+	var entry: Dictionary = (recipe_stats.get(recipe_id, {"serves": 0, "best": 0.0, "stars": 0}) as Dictionary).duplicate()
+	entry["serves"] = int(entry.get("serves", 0)) + 1
+	entry["best"] = maxf(float(entry.get("best", 0.0)), score)
+	var stars := recipe_stars(recipe_id)
+	if stars > int(entry.get("stars", 0)):
+		entry["stars"] = stars
+		Events.recipe_mastery_changed.emit(recipe_id, stars)
+		Events.toast.emit("Recipe mastered: %s - %d star%s!" % [
+			GameData.recipe(recipe_id).display_name, stars, "" if stars == 1 else "s",
+		], "good")
+	recipe_stats[recipe_id] = entry
 
 
 # ----------------------------------------------------------------- upgrades
@@ -258,7 +291,17 @@ func arrival_interval() -> float:
 	base *= maxf(0.72, 1.0 - float(level - 1) * 0.025)
 	base *= [1.0, 0.94, 0.88, 0.82, 0.76, 0.70][restaurant_tier()]
 	base *= rush_multiplier()
+	if Game.weather() == "rain":
+		base *= 1.3
+	elif Game.weather() == "heat":
+		base *= 0.95
 	return maxf(2.2, base)
+
+
+func machine_interval() -> float:
+	if not has_upgrade("potato_machine"):
+		return 0.0
+	return 4.0 if has_upgrade("turbo_peeler") else 8.0
 
 
 func available_pani() -> Array[String]:
@@ -339,6 +382,7 @@ func to_dict() -> Dictionary:
 		"level": level,
 		"xp": xp,
 		"lifetime_xp": lifetime_xp,
+		"recipe_stats": recipe_stats.duplicate(true),
 	}
 
 
@@ -351,6 +395,11 @@ func from_dict(data: Dictionary) -> void:
 	purchased.clear()
 	for id in data.get("upgrades", []):
 		purchased[String(id)] = true
+	recipe_stats.clear()
+	var stored: Variant = data.get("recipe_stats", {})
+	if typeof(stored) == TYPE_DICTIONARY:
+		for key in (stored as Dictionary).keys():
+			recipe_stats[String(key)] = (stored as Dictionary)[key]
 	Events.reputation_changed.emit(reputation)
 	Events.price_changed.emit(price_per_puri)
 	_emit_xp()
