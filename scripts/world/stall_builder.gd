@@ -14,54 +14,56 @@ static func build(parent: Node3D) -> Dictionary:
 	var sign_data := _signage(root, counter_z)
 	_side_table(root)
 
-	# --- stations on the counter -------------------------------------------
+	# --- stations on the counter (arranged like the reference stall layout) ---
 	var puri_box := PuriBoxStation.new()
-	puri_box.position = Vector3(-1.85, 0.98, counter_z)
+	puri_box.position = Vector3(-1.68, 0.96, counter_z - 0.02)
 	root.add_child(puri_box)
 
+	# Back row: Potato, Chickpeas, Mint Pani, Garlic Pani (when unlocked), Sweet Chutney
 	var potato := BowlStation.new()
-	potato.configure("potato", 2, 0.105)
-	potato.position = Vector3(-1.4, 0.98, counter_z)
+	potato.configure("potato", 2, 0.145)
+	potato.position = Vector3(-1.02, 0.96, counter_z - 0.14)
 	root.add_child(potato)
 
 	var chickpea := BowlStation.new()
-	chickpea.configure("chickpea", 2, 0.095)
-	chickpea.position = Vector3(-1.07, 0.98, counter_z)
+	chickpea.configure("chickpea", 2, 0.14)
+	chickpea.position = Vector3(-0.56, 0.96, counter_z - 0.14)
 	root.add_child(chickpea)
-
-	var onion := BowlStation.new()
-	onion.configure("onion", 2, 0.09)
-	onion.position = Vector3(-0.76, 0.98, counter_z)
-	root.add_child(onion)
-
-	var coriander := BowlStation.new()
-	coriander.configure("coriander", 2, 0.085)
-	coriander.position = Vector3(-0.47, 0.98, counter_z)
-	root.add_child(coriander)
-
-	var masala := BowlStation.new()
-	masala.configure("masala", 2, 0.08)
-	masala.position = Vector3(-0.2, 0.98, counter_z)
-	root.add_child(masala)
 
 	var pani_mint := PaniStation.new()
 	pani_mint.configure("mint")
-	pani_mint.position = Vector3(0.3, 0.98, counter_z)
+	pani_mint.position = Vector3(-0.04, 0.96, counter_z - 0.14)
 	root.add_child(pani_mint)
 
 	var pani_garlic := PaniStation.new()
 	pani_garlic.configure("garlic")
-	pani_garlic.position = Vector3(0.72, 0.98, counter_z)
+	pani_garlic.position = Vector3(0.40, 0.96, counter_z - 0.14)
 	root.add_child(pani_garlic)
 	pani_garlic.set_enabled(Progression.has_upgrade("garlic_pani"))
 
 	var chutney := ChutneyStation.new()
-	chutney.position = Vector3(1.08, 0.98, counter_z)
+	chutney.position = Vector3(0.84, 0.96, counter_z - 0.14)
 	root.add_child(chutney)
 
+	# Front row: Serving plate centered + 3 small katori bowls (onion, coriander, masala)
 	var plate := PlateStation.new()
-	plate.position = Vector3(1.72, 0.98, counter_z)
+	plate.position = Vector3(-0.48, 0.96, counter_z + 0.24)
 	root.add_child(plate)
+
+	var onion := BowlStation.new()
+	onion.configure("onion", 2, 0.08)
+	onion.position = Vector3(0.16, 0.96, counter_z + 0.23)
+	root.add_child(onion)
+
+	var coriander := BowlStation.new()
+	coriander.configure("coriander", 2, 0.08)
+	coriander.position = Vector3(0.44, 0.96, counter_z + 0.23)
+	root.add_child(coriander)
+
+	var masala := BowlStation.new()
+	masala.configure("masala", 2, 0.08)
+	masala.position = Vector3(0.72, 0.96, counter_z + 0.23)
+	root.add_child(masala)
 
 	var trash := TrashStation.new()
 	trash.position = Vector3(2.6, 0.12, 9.5)
@@ -70,6 +72,8 @@ static func build(parent: Node3D) -> Dictionary:
 	var potato_machine := PotatoMachine.new()
 	potato_machine.position = Vector3(3.2, 0.12, 9.1)
 	root.add_child(potato_machine)
+
+	var counter_chalk := _counter_chalkboard(root, counter_z)
 
 	return {
 		"root": root,
@@ -86,21 +90,106 @@ static func build(parent: Node3D) -> Dictionary:
 		"trash": trash,
 		"potato_machine": potato_machine,
 		"sign": sign_data.sign,
+		"sub_sign": sign_data.sub_sign,
 		"menu_label": sign_data.menu_label,
+		"chalk_label": counter_chalk,
 	}
 
 
 static func _counter(root: Node3D, z: float) -> void:
-	MeshFactory.box(root, Vector3(4.2, 0.86, 0.7), Vector3(0, 0.43, z), GameData.C_WOOD, "Counter")
-	MeshFactory.box(root, Vector3(4.2, 0.09, 0.72), Vector3(0, 0.905, z), GameData.C_STEEL, "CounterTop", 0.0, false)
-	MeshFactory.box(root, Vector3(3.9, 0.5, 0.04), Vector3(0, 0.42, z - 0.37), GameData.C_TEAL, "FrontPanel")
-	MeshFactory.box(root, Vector3(3.9, 0.05, 0.04), Vector3(0, 0.7, z - 0.37), GameData.C_ORANGE, "Trim", 0.0, false)
+	var wood_tex := MeshFactory.noise_texture("counter_wood", Color("7a4c28"), 0.045, 96, 33)
+	var wood_top_mat := StandardMaterial3D.new()
+	wood_top_mat.albedo_texture = wood_tex
+	wood_top_mat.uv1_scale = Vector3(4, 1.5, 1)
+	wood_top_mat.roughness = 0.62
+	wood_top_mat.metallic = 0.04
+	var wood_mat := MeshFactory.material(Color("633e24"), 0.72, 0.04)
+	var wood_dark := MeshFactory.material(Color("452a17"), 0.78, 0.04)
+	var steel_mat := MeshFactory.material(Color("bfc5ca"), 0.28, 0.78)
+	var brass_mat := MeshFactory.material(Color("d6a449"), 0.26, 0.84)
+
+	var body := MeshFactory.box(root, Vector3(4.3, 0.86, 0.86), Vector3(0, 0.43, z), GameData.C_WOOD, "Counter")
+	body.material_override = wood_mat
+	# Warm oiled wooden counter plank top (matching the rich timber counter in the reference!)
+	var top := MeshFactory.box(root, Vector3(4.42, 0.085, 0.94), Vector3(0, 0.915, z), Color("7a4c28"), "CounterTop", 0.0, false)
+	top.material_override = wood_top_mat
+	MeshFactory.box(root, Vector3(4.44, 0.032, 0.045), Vector3(0, 0.94, z + 0.46), Color("d6a449"), "CounterLip", 0.0, false).material_override = brass_mat
+	MeshFactory.box(root, Vector3(4.44, 0.032, 0.045), Vector3(0, 0.94, z - 0.46), Color("d6a449"), "CounterFrontLip", 0.0, false).material_override = brass_mat
+
+	# Customer-facing front panel (z - 0.44): teal wainscot + warm brass crest
+	MeshFactory.box(root, Vector3(4.02, 0.54, 0.05), Vector3(0, 0.45, z - 0.44), GameData.C_TEAL, "FrontPanel")
+	MeshFactory.box(root, Vector3(4.06, 0.05, 0.06), Vector3(0, 0.74, z - 0.44), GameData.C_ORANGE, "Trim", 0.0, false)
+	var front_crest := Label3D.new()
+	front_crest.text = "PANI PURI"
+	front_crest.font = UIKit.display_font(800)
+	front_crest.font_size = 40
+	front_crest.pixel_size = 0.0038
+	front_crest.position = Vector3(-0.85, 0.5, z - 0.475)
+	front_crest.rotation.y = PI
+	front_crest.modulate = Color("fff0cf")
+	front_crest.outline_size = 3
+	front_crest.outline_modulate = Color("2a1a10")
+	front_crest.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	front_crest.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	root.add_child(front_crest)
+
+	# Vendor-facing side (z + 0.43): clean slatted timber + brass foot rail
+	MeshFactory.box(root, Vector3(4.0, 0.64, 0.05), Vector3(0, 0.46, z + 0.425), Color("4a3222"), "NearPanel").material_override = wood_dark
+	for i in 7:
+		MeshFactory.box(root, Vector3(0.04, 0.58, 0.02), Vector3(-1.75 + i * 0.58, 0.45, z + 0.455), Color("352115"), "NearSlat", 0.0, false)
+	MeshFactory.box(root, Vector3(4.06, 0.035, 0.07), Vector3(0, 0.80, z + 0.43), Color("d6a449"), "NearTrim", 0.0, false).material_override = brass_mat
+	var rail := MeshFactory.cylinder(root, 0.022, 3.8, Vector3(0, 0.28, z + 0.49), Color("d6a449"), "BrassRail", 8, false)
+	rail.rotation.z = PI / 2.0
+	rail.material_override = brass_mat
+
+	# Stack of green banana-leaf dona bowls next to the puri jar (matching reference!)
+	for i in 8:
+		var dona := MeshFactory.cylinder(root, 0.095 + i * 0.002, 0.011, Vector3(-1.28, 0.965 + i * 0.012, z + 0.22), Color("70863a").lightened(i * 0.02), "LeafPlate", 14, false)
+		dona.material_override = MeshFactory.material(Color("70863a"), 0.82, 0.0)
+
+	# Stack of spare foil/steel serving trays on the right side of the counter
+	for i in 8:
+		var tray := MeshFactory.box(root, Vector3(0.24, 0.01, 0.18), Vector3(1.16, 0.965 + i * 0.012, z + 0.12), Color("cfd5da"), "SpareTray", 0.06, false)
+		tray.material_override = steel_mat
+
 	# wheels
-	for sx in [-1.8, 1.8]:
-		for sz in [-0.2, 0.2]:
-			var wheel := MeshFactory.cylinder(root, 0.16, 0.1, Vector3(sx, 0.16, z + sz), Color("2b2622"), "Wheel", 10, false)
+	for sx in [-1.85, 1.85]:
+		for sz in [-0.26, 0.26]:
+			var wheel := MeshFactory.cylinder(root, 0.16, 0.1, Vector3(sx, 0.16, z + sz), Color("24201d"), "Wheel", 12, false)
 			wheel.rotation.z = PI / 2.0
-	MeshFactory.add_box_collider(root, Vector3(4.2, 0.95, 0.7), Vector3(0, 0.475, z), 1)
+			var hub := MeshFactory.cylinder(root, 0.075, 0.112, Vector3(sx, 0.16, z + sz), Color("d6a449"), "WheelHub", 10, false)
+			hub.rotation.z = PI / 2.0
+			hub.material_override = brass_mat
+	MeshFactory.add_box_collider(root, Vector3(4.3, 0.95, 0.88), Vector3(0, 0.475, z), 1)
+
+
+static func _counter_chalkboard(root: Node3D, z: float) -> Label3D:
+	# Angled wooden-framed chalkboard standing right on the right side of the counter
+	var board := Node3D.new()
+	board.name = "CounterChalkboard"
+	board.position = Vector3(1.68, 0.96, z - 0.04)
+	board.rotation.y = -0.32
+	root.add_child(board)
+	var frame_mat := MeshFactory.material(Color("6b4423"), 0.72, 0.03)
+	var slate := MeshFactory.box(board, Vector3(0.46, 0.56, 0.03), Vector3(0, 0.30, 0), Color("1b221e"), "Slate", 0.0, false)
+	slate.rotation.x = -0.18
+	MeshFactory.box(board, Vector3(0.50, 0.035, 0.045), Vector3(0, 0.58, -0.05), Color("6b4423"), "TopFrame", 0.0, false).material_override = frame_mat
+	MeshFactory.box(board, Vector3(0.50, 0.035, 0.045), Vector3(0, 0.02, 0.05), Color("6b4423"), "BotFrame", 0.0, false).material_override = frame_mat
+	MeshFactory.box(board, Vector3(0.035, 0.58, 0.045), Vector3(-0.235, 0.30, 0), Color("6b4423"), "LFrame", 0.0, false).material_override = frame_mat
+	MeshFactory.box(board, Vector3(0.035, 0.58, 0.045), Vector3(0.235, 0.30, 0), Color("6b4423"), "RFrame", 0.0, false).material_override = frame_mat
+	var lbl := Label3D.new()
+	lbl.text = "Pani Puri\n₹%d/-\n(6 Pcs)" % Progression.price_per_puri
+	lbl.font = UIKit.display_font(700)
+	lbl.font_size = 40
+	lbl.pixel_size = 0.00175
+	lbl.position = Vector3(0, 0.31, 0.022)
+	lbl.rotation.x = -0.18
+	lbl.modulate = Color("f8ecd2")
+	lbl.outline_size = 0
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	board.add_child(lbl)
+	return lbl
 
 
 static func _canopy(root: Node3D) -> void:
@@ -139,12 +228,13 @@ static func _signage(root: Node3D, z: float) -> Dictionary:
 	# Smaller board hanging under the valance, still above eye level.
 	var sub_sign := MeshFactory.signboard(root, "GOLGAPPA  -  CHAAT", Vector3(0, 2.36, z - 0.73), 2.6, GameData.C_TEAL, Color("fff4dc"), 0.2, PI)
 	sub_sign.name = "SubSign"
-	MeshFactory.box(root, Vector3(2.3, 0.52, 0.03), Vector3(0, 0.42, z - 0.39), Color("211812"), "Menu", 0.0, false)
+	MeshFactory.box(root, Vector3(1.85, 0.46, 0.03), Vector3(0.95, 0.46, z - 0.405), Color("211812"), "Menu", 0.0, false)
 	var label := Label3D.new()
 	label.text = "PANI PURI  Rs 30\nEXTRA PURI  Rs 30"
-	label.font_size = 40
-	label.pixel_size = 0.004
-	label.position = Vector3(0, 0.42, z - 0.41)
+	label.font = UIKit.ui_font(700, 1)
+	label.font_size = 36
+	label.pixel_size = 0.0036
+	label.position = Vector3(0.95, 0.46, z - 0.425)
 	label.rotation.y = PI
 	label.modulate = Color("f7e6c4")
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

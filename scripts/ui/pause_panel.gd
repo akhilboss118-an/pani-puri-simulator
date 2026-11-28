@@ -14,7 +14,7 @@ func _build_content() -> void:
 	content.add_child(_info)
 	content.add_child(UIKit.hsep(4))
 
-	var resume := UIKit.button("Resume shift", 50)
+	var resume := UIKit.primary_button("Resume shift", 50)
 	resume.pressed.connect(close)
 	content.add_child(resume)
 
@@ -50,7 +50,7 @@ func _build_content() -> void:
 
 
 func _on_open() -> void:
-	_info.text = "Day %d  -  %s\nCash Rs %d  -  Reputation %d" % [
+	_info.text = "Day %d  •  %s\nCash ₹%d  •  Reputation %d" % [
 		Game.day, Clock.time_string(), Economy.cash, int(round(Progression.reputation)),
 	]
 

@@ -3,6 +3,8 @@ extends OverlayPanel
 ## Stock overview and restocking. Refills are the main daily expense, so the
 ## cost is shown per ingredient and for the whole basket.
 
+const UIIcons := preload("res://scripts/ui/ui_icons.gd")
+
 var _money_label: Label
 var _list: VBoxContainer
 var _refill_all: Button
@@ -25,19 +27,38 @@ func _ready() -> void:
 
 
 func _build_content() -> void:
-	_money_label = UIKit.label("Cash: Rs 0", 19, UIKit.ORANGE)
-	content.add_child(_money_label)
+	var summary := PanelContainer.new()
+	summary.add_theme_stylebox_override("panel", UIKit.style(UIKit.PANEL_2, 12, UIKit.BORDER, 1, 12))
+	content.add_child(summary)
+	var sum_row := HBoxContainer.new()
+	sum_row.add_theme_constant_override("separation", 12)
+	summary.add_child(sum_row)
+
+	var left_sum := VBoxContainer.new()
+	left_sum.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	left_sum.add_theme_constant_override("separation", 2)
+	sum_row.add_child(left_sum)
+	left_sum.add_child(UIKit.gold_pill("Business Management", UIKit.GOLD, UIKit.INK, 10))
+	_money_label = UIKit.label("Cash: ₹0", 19, UIKit.CREAM)
+	_money_label.add_theme_font_override("font", UIKit.ui_font(700, 0))
+	left_sum.add_child(_money_label)
+	var profit_lbl := UIKit.label("Daily Profit: ₹%d" % (Economy.day_revenue - Economy.day_expenses), 14, UIKit.GREEN)
+	profit_lbl.name = "ProfitLabel"
+	left_sum.add_child(profit_lbl)
+
+	sum_row.add_child(UIIcons.IconGlyph.new("chart", Vector2(46, 36)))
 
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(0, 330)
+	scroll.custom_minimum_size = Vector2(0, 310)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	content.add_child(scroll)
+	fit_to_viewport(scroll, 0.34, 320.0)
 	_list = VBoxContainer.new()
 	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_list.add_theme_constant_override("separation", 6)
 	scroll.add_child(_list)
 
-	_refill_all = UIKit.button("Refill everything", 48)
+	_refill_all = UIKit.action_button("Refill everything", 48)
 	_refill_all.pressed.connect(func(): Inventory.refill_all())
 	content.add_child(_refill_all)
 
@@ -49,12 +70,17 @@ func _on_open() -> void:
 func _refresh() -> void:
 	if _list == null:
 		return
-	_money_label.text = "Cash: Rs %d" % Economy.cash
+	_money_label.text = "Cash: ₹%d" % Economy.cash
+	var pl := find_child("ProfitLabel", true, false) as Label
+	if pl:
+		var profit := Economy.day_revenue - Economy.day_expenses
+		pl.text = "Daily Profit: ₹%d" % profit
+		pl.add_theme_color_override("font_color", UIKit.GREEN if profit >= 0 else Color("ff8a6a"))
 	for child in _list.get_children():
 		child.queue_free()
 	for def in GameData.ingredients():
 		_list.add_child(_make_row(def))
-	_refill_all.text = "Refill everything (Rs %d)" % _basket_cost()
+	_refill_all.text = "Refill everything (₹%d)" % _basket_cost()
 	_refill_all.disabled = _basket_cost() == 0 or not Economy.can_afford(_basket_cost())
 
 
@@ -91,7 +117,7 @@ func _make_row(def: IngredientDef) -> Control:
 	row.add_child(count)
 
 	var cost := Inventory.refill_cost(def.id)
-	var button := UIKit.button("+%d  Rs %d" % [def.refill_amount, cost], 38)
+	var button := UIKit.action_button("+%d  ₹%d" % [def.refill_amount, cost], 38)
 	button.custom_minimum_size = Vector2(130, 38)
 	button.disabled = stock >= capacity or not Economy.can_afford(cost)
 	button.pressed.connect(_on_refill.bind(def.id))

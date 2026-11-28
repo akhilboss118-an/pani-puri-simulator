@@ -44,6 +44,7 @@ var _arm_r: Node3D
 var _head: Node3D
 var _bubble: Label3D
 var _bubble_bg: MeshInstance3D
+var _bubble_frame: MeshInstance3D
 var _badge: Label3D
 var _bar_fill: MeshInstance3D
 var _bar_bg: MeshInstance3D
@@ -58,6 +59,7 @@ func _ready() -> void:
 	_build()
 	_bubble.visible = false
 	_bubble_bg.visible = false
+	_bubble_frame.visible = false
 	_bar_fill.visible = false
 	_bar_bg.visible = false
 	if _badge:
@@ -167,23 +169,38 @@ func _build_procedural_body() -> void:
 
 
 func _build_order_overlay() -> void:
-	# order bubble
-	_bubble_bg = MeshFactory.quad(self, Vector2(1.25, 0.36), Vector3(0, 2.08, 0), Color(1, 0.98, 0.92, 0.96))
+	# Compact sleek badge above the customer's head (full order details live in the HUD ticket)
+	_bubble_frame = MeshFactory.quad(self, Vector2(0.84, 0.25), Vector3(0, 2.02, -0.006), Color(0.90, 0.72, 0.42, 0.96))
+	var frame_mat := _bubble_frame.material_override as StandardMaterial3D
+	frame_mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	frame_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	_bubble_bg = MeshFactory.quad(self, Vector2(0.79, 0.20), Vector3(0, 2.02, 0), Color(0.11, 0.08, 0.06, 0.92))
 	var mat := _bubble_bg.material_override as StandardMaterial3D
 	mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	_bubble = MeshFactory.label(self, "", Vector3(0, 2.08, 0.01), 26, Color("241a12"), 0.003)
-	_bubble.width = 400
-	_bubble.autowrap_mode = TextServer.AUTOWRAP_OFF
-	_badge = MeshFactory.label(self, "", Vector3(0.9, 2.12, 0.01), 17, Color("241a12"), 0.0024)
+	_bubble = Label3D.new()
+	_bubble.text = ""
+	_bubble.position = Vector3(0, 2.02, 0.012)
+	_bubble.font = UIKit.ui_font(800)
+	_bubble.font_size = 30
+	_bubble.pixel_size = 0.0024
+	_bubble.modulate = Color("fff2d8")
+	_bubble.outline_size = 0
+	_bubble.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_bubble.width = 280
+	_bubble.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_bubble.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_bubble.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	add_child(_bubble)
+	_badge = MeshFactory.label(self, "", Vector3(0.0, 2.24, 0.012), 20, Color("f2cb6b"), 0.0024)
 	_badge.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_badge.visible = false
 
-	# patience bar
-	_bar_bg = MeshFactory.quad(self, Vector2(0.5, 0.06), Vector3(0, 1.84, 0), Color(0.15, 0.12, 0.1, 0.85))
+	# Compact high-contrast patience bar
+	_bar_bg = MeshFactory.quad(self, Vector2(0.56, 0.06), Vector3(0, 1.84, 0), Color(0.1, 0.08, 0.06, 0.9))
 	(_bar_bg.material_override as StandardMaterial3D).billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
 	(_bar_bg.material_override as StandardMaterial3D).transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	_bar_fill = MeshFactory.quad(self, Vector2(0.48, 0.04), Vector3(0, 1.84, 0.002), Color("6fbf5f"))
+	_bar_fill = MeshFactory.quad(self, Vector2(0.52, 0.036), Vector3(0, 1.84, 0.002), Color("77c86a"))
 	(_bar_fill.material_override as StandardMaterial3D).billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
 
 
@@ -200,33 +217,38 @@ func setup(patience_bonus: float) -> void:
 func set_personality(kind: String, regular: bool = false) -> void:
 	personality = kind
 	is_regular = regular
-	var bubble_color := Color(1.0, 0.98, 0.92, 0.96)
+	var accent := Color(0.90, 0.72, 0.42, 0.96)
 	var tag := ""
 	match kind:
 		"impatient":
-			bubble_color = Color(1.0, 0.88, 0.78, 0.96)
+			accent = Color("f0913f")
 			tag = "HURRY!"
 			patience_max *= 0.75
 			patience_left = patience_max
 		"foodie":
-			bubble_color = Color(0.94, 0.86, 1.0, 0.96)
+			accent = Color("b685e6")
 			tag = "FOODIE"
 		"tourist":
-			bubble_color = Color(0.86, 0.96, 1.0, 0.96)
+			accent = Color("5ec8d9")
 			tag = "TOURIST"
 		"regular":
-			bubble_color = Color(0.86, 1.0, 0.88, 0.96)
+			accent = Color("77c86a")
 			tag = "REGULAR"
 	if is_regular:
 		tag = "REGULAR"
-	if _bubble_bg != null:
-		var mat := StandardMaterial3D.new()
-		mat.albedo_color = bubble_color
-		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
-		_bubble_bg.material_override = mat
+	if is_vip:
+		accent = Color("ffd264")
+		tag = "VIP"
+	if _bubble_frame != null:
+		var fmat := StandardMaterial3D.new()
+		fmat.albedo_color = accent
+		fmat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		fmat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+		fmat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		_bubble_frame.material_override = fmat
 	if _badge != null:
 		_badge.text = tag
+		_badge.modulate = accent
 		_badge.visible = tag != ""
 
 
@@ -252,6 +274,7 @@ func begin_order(order_data: Dictionary) -> void:
 	_bubble.text = order_text()
 	_bubble.visible = true
 	_bubble_bg.visible = true
+	_bubble_frame.visible = true
 	_bar_fill.visible = true
 	_bar_bg.visible = true
 	Audio.play("bell", 1.2, -18.0)
@@ -265,20 +288,7 @@ func order_text() -> String:
 		return ""
 	var qty := int(order.get("quantity", 0))
 	var spice := int(order.get("spice", 1))
-	var lines: Array[String] = []
-	lines.append("%d x %s" % [qty, String(order.get("name", "Pani Puri"))])
-	var prefs: Array[String] = []
-	prefs.append(GameData.SPICE_NAMES[clampi(spice, 0, 2)])
-	if bool(order.get("sweet", false)):
-		prefs.append("sweet")
-	if bool(order.get("onion", false)):
-		prefs.append("onion")
-	else:
-		prefs.append("no onion")
-	lines.append(" - ".join(prefs))
-	if String(order.get("note", "")) != "":
-		lines.append(String(order.note))
-	return "\n".join(lines)
+	return "%d x %s" % [qty, GameData.SPICE_NAMES[clampi(spice, 0, 2)]]
 
 
 func patience_ratio() -> float:
@@ -291,6 +301,7 @@ func receive(score: float, message: String) -> void:
 	_bubble.text = message
 	_bubble.visible = true
 	_bubble_bg.visible = true
+	_bubble_frame.visible = true
 	_bar_fill.visible = false
 	_bar_bg.visible = false
 	Audio.play("good" if score >= 0.6 else "bad", 1.0, -8.0)
@@ -316,6 +327,7 @@ func leave(exit_position: Vector3) -> void:
 	_play_animation("walk")
 	_bubble.visible = false
 	_bubble_bg.visible = false
+	_bubble_frame.visible = false
 	_bar_fill.visible = false
 	_bar_bg.visible = false
 	if _badge:
@@ -417,5 +429,6 @@ func _patience_tick(delta: float) -> void:
 		_bubble.text = "Too slow!"
 		_bubble.visible = true
 		_bubble_bg.visible = true
+		_bubble_frame.visible = true
 		Audio.play_dialogue("walkout", global_position)
 		walked_out.emit(self)

@@ -4,6 +4,8 @@ extends OverlayPanel
 ## the stall visibly grows: bigger plate, signboard, garlic pani, then a full
 ## restaurant with a terrace, balcony and palace marquee.
 
+const UIIcons := preload("res://scripts/ui/ui_icons.gd")
+
 var _level_label: Label
 var _xp_bar: ProgressBar
 var _xp_text: Label
@@ -71,12 +73,12 @@ func _build_content() -> void:
 	_price_slider.custom_minimum_size = Vector2(240, 32)
 	_price_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	price_row.add_child(_price_slider)
-	_price_label = UIKit.label("Rs 30", 17, UIKit.CREAM)
+	_price_label = UIKit.label("₹30", 17, UIKit.CREAM)
 	price_row.add_child(_price_label)
 	content.add_child(price_row)
 	_price_slider.value_changed.connect(func(value: float):
 		Progression.set_price(int(value))
-		_price_label.text = "Rs %d" % int(value)
+		_price_label.text = "₹%d" % int(value)
 	)
 
 	content.add_child(UIKit.label("Customers pay less when the price is high for their taste.", 13, UIKit.MUTED))
@@ -101,6 +103,7 @@ func _build_content() -> void:
 	scroll.custom_minimum_size = Vector2(0, 300)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	content.add_child(scroll)
+	fit_to_viewport(scroll, 0.3, 300.0)
 	_list = VBoxContainer.new()
 	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_list.add_theme_constant_override("separation", 6)
@@ -112,7 +115,7 @@ func _build_content() -> void:
 
 func _on_open() -> void:
 	_price_slider.value = Progression.price_per_puri
-	_price_label.text = "Rs %d" % Progression.price_per_puri
+	_price_label.text = "₹%d" % Progression.price_per_puri
 	_refresh()
 
 
@@ -146,10 +149,10 @@ func _refresh() -> void:
 
 
 func _section_label(text: String) -> Control:
-	var label := UIKit.label(text, 12, UIKit.ORANGE)
-	label.custom_minimum_size = Vector2(0, 24)
-	label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
-	return label
+	var wrap := HBoxContainer.new()
+	wrap.custom_minimum_size = Vector2(0, 30)
+	wrap.add_child(UIKit.gold_pill(text, UIKit.GOLD, UIKit.INK, 10))
+	return wrap
 
 
 func _make_row(data: Dictionary) -> Control:
@@ -162,6 +165,16 @@ func _make_row(data: Dictionary) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 10)
 	panel.add_child(row)
+
+	var icon_name := "stall"
+	match String(data.get("icon", "stall")):
+		"pot":
+			icon_name = "pani"
+		"sign", "chandelier", "palace":
+			icon_name = "decor"
+		"restaurant", "office", "globe":
+			icon_name = "upgrades"
+	row.add_child(UIIcons.IconGlyph.new(icon_name, Vector2(34, 34)))
 
 	var text_box := VBoxContainer.new()
 	text_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -178,28 +191,25 @@ func _make_row(data: Dictionary) -> Control:
 		title_row.add_child(badge)
 	text_box.add_child(title_row)
 
-	var desc := UIKit.label(String(data.description), 13, UIKit.MUTED)
+	var desc := UIKit.label(String(data.description), 12, UIKit.MUTED)
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	desc.custom_minimum_size = Vector2(330, 0)
+	desc.custom_minimum_size = Vector2(280, 0)
 	text_box.add_child(desc)
 
 	if owned:
-		var owned_label := UIKit.label("OWNED", 15, UIKit.GREEN)
-		owned_label.custom_minimum_size = Vector2(110, 0)
-		owned_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		owned_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		row.add_child(owned_label)
+		var owned_pill := UIKit.gold_pill("OWNED", Color(0.14, 0.38, 0.22, 0.95), UIKit.GREEN, 12)
+		row.add_child(owned_pill)
 	elif locked_reason != "":
-		var locked := UIKit.label(locked_reason, 12, UIKit.MUTED)
-		locked.custom_minimum_size = Vector2(110, 0)
+		var locked := UIKit.label(locked_reason, 12, Color("b4a28b"))
+		locked.custom_minimum_size = Vector2(115, 0)
 		locked.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		locked.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		locked.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		row.add_child(locked)
 	else:
 		var cost := int(data.cost)
-		var button := UIKit.button("Rs %d" % cost, 44)
-		button.custom_minimum_size = Vector2(118, 44)
+		var button := UIKit.action_button("Buy  ₹%d" % cost, 42)
+		button.custom_minimum_size = Vector2(124, 42)
 		button.disabled = not Economy.can_afford(cost)
 		button.pressed.connect(_on_buy.bind(id))
 		row.add_child(button)

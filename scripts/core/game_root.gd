@@ -5,6 +5,7 @@ extends Node
 var world: WorldBuilder
 var player: Player
 var ui_layer: CanvasLayer
+var post_fx: CanvasLayer
 
 var menu: MainMenu
 var hud: HUD
@@ -115,16 +116,22 @@ func _build_world() -> void:
 
 	_menu_camera = Camera3D.new()
 	_menu_camera.name = "MenuCamera"
-	_menu_camera.fov = 60.0
+	_menu_camera.fov = 56.0
 	add_child(_menu_camera)
-	_menu_camera.position = Vector3(4.8, 2.45, 4.6)
-	_menu_camera.look_at(Vector3(0.2, 1.5, 8.8))
+	_menu_camera.position = Vector3(-9.6, 2.5, 1.6)
+	_menu_camera.look_at(Vector3(18.0, 2.6, 0.2))
 	_menu_camera.current = true
 
 
 func _build_ui() -> void:
+	post_fx = preload("res://scripts/ui/post_fx.gd").new()
+	post_fx.name = "PostFX"
+	add_child(post_fx)
+	post_fx.call("apply_quality", int(Game.settings.quality))
+
 	ui_layer = CanvasLayer.new()
 	ui_layer.name = "UI"
+	ui_layer.layer = 10
 	add_child(ui_layer)
 
 	hud = HUD.new()
@@ -221,10 +228,9 @@ func on_day_started(day: int) -> void:
 
 
 func _reset_player() -> void:
-	if player.held_item != null:
-		player.held_item.queue_free()
-		player.held_item = null
-	Events.held_changed.emit("")
+	var old_item := player.take_held_item()
+	if old_item != null:
+		old_item.queue_free()
 	player.global_position = world.player_spawn
 	player.rotation = Vector3.ZERO
 	player.camera.rotation = Vector3.ZERO
@@ -281,6 +287,8 @@ func _close_panels() -> void:
 func apply_quality() -> void:
 	if world:
 		world.apply_quality(int(Game.settings.quality))
+	if post_fx:
+		post_fx.call("apply_quality", int(Game.settings.quality))
 
 
 func _on_day_ended(report: Dictionary) -> void:
@@ -307,9 +315,12 @@ func _process(delta: float) -> void:
 		_film_tick(delta)
 	if Game.state == Game.State.MENU and _menu_camera != null:
 		_menu_time += delta
-		var drift := sin(_menu_time * 0.11) * 0.55
-		_menu_camera.position = Vector3(4.8 + drift, 2.45 + sin(_menu_time * 0.07) * 0.1, 4.6 - drift * 0.3)
-		_menu_camera.look_at(Vector3(0.2, 1.5, 8.8))
+		var drift := sin(_menu_time * 0.09) * 0.22
+		_menu_camera.position = Vector3(
+			-9.6 + drift * 0.4,
+			2.5 + sin(_menu_time * 0.06) * 0.05,
+			1.6 + drift * 0.4)
+		_menu_camera.look_at(Vector3(18.0, 2.6, 0.2 + drift * 0.2))
 
 
 # ---------------------------------------------------------------- promo film
@@ -361,8 +372,8 @@ func film_menu() -> void:
 	hud.visible = false
 	if _menu_camera:
 		_menu_camera.current = true
-		_menu_camera.position = Vector3(2.0, 2.2, 3.5)
-		_menu_camera.look_at(Vector3(0.0, 1.4, 8.9))
+		_menu_camera.position = Vector3(-9.6, 2.5, 1.6)
+		_menu_camera.look_at(Vector3(18.0, 2.6, 0.2))
 	_menu_time = 0.0
 
 
@@ -638,14 +649,14 @@ func _run_screenshot_tour() -> void:
 	if not world.customer_manager.queue.is_empty():
 		var customer: Customer = world.customer_manager.queue[0]
 		world.customer_manager.call("_promote", customer)
-		customer.global_position = Vector3(1.55, 0.14, 7.35)
-		customer.target_position = Vector3(1.55, 0.14, 7.35)
+		customer.global_position = Vector3(-0.1, 0.14, 7.45)
+		customer.target_position = Vector3(-0.1, 0.14, 7.45)
 		customer.has_arrived = true
 		customer.state = Customer.State.ORDER
 		customer.face_towards(player.global_position)
-	player.global_position = Vector3(1.15, 0.2, 10.55)
-	player.rotation.y = -0.1
-	player.camera.rotation.x = -0.1
+	player.global_position = Vector3(-0.1, 0.2, 10.45)
+	player.rotation.y = 0.0
+	player.camera.rotation.x = -0.14
 	await get_tree().create_timer(0.4).timeout
 	await _capture(out_dir, "04_customer")
 
@@ -660,9 +671,9 @@ func _run_screenshot_tour() -> void:
 		potato.interact(player)
 		pani.interact(player)
 		plate.interact(player)
-	player.global_position = Vector3(1.5, 0.2, 10.55)
-	player.rotation.y = -0.06
-	player.camera.rotation.x = -0.38
+	player.global_position = Vector3(-0.25, 0.2, 10.45)
+	player.rotation.y = 0.05
+	player.camera.rotation.x = -0.34
 	await _capture(out_dir, "05_plate")
 
 	open_inventory()

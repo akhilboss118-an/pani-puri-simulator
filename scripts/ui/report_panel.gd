@@ -15,15 +15,21 @@ func _init() -> void:
 func _build_content() -> void:
 	_headline = UIKit.label("", 22, UIKit.CREAM)
 	content.add_child(_headline)
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(0, 320)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	content.add_child(scroll)
+	fit_to_viewport(scroll, 0.46, 360.0)
 	_body = VBoxContainer.new()
-	_body.add_theme_constant_override("separation", 4)
-	content.add_child(_body)
-	content.add_child(UIKit.hsep(6))
+	_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_body.add_theme_constant_override("separation", 5)
+	scroll.add_child(_body)
+	content.add_child(UIKit.hsep(4))
 
-	var next_button := UIKit.button("Start next day", 50)
+	var next_button := UIKit.primary_button("Start next day", 48)
 	next_button.pressed.connect(_on_next_day)
 	content.add_child(next_button)
-	var menu_button := UIKit.button("Back to main menu", 44)
+	var menu_button := UIKit.ghost_button("Back to main menu", 42)
 	menu_button.pressed.connect(_on_menu)
 	content.add_child(menu_button)
 
@@ -58,12 +64,12 @@ func _refresh() -> void:
 	else:
 		_headline.add_theme_color_override("font_color", Color("ff8a6a"))
 
-	_row("Sales revenue", "Rs %d" % revenue, UIKit.CREAM)
-	_row("Supplies & upgrades", "- Rs %d" % expenses, UIKit.MUTED)
-	_row("Net profit", "Rs %d" % profit, UIKit.GREEN if profit >= 0 else Color("ff8a6a"))
+	_row("Sales revenue", "₹%d" % revenue, UIKit.CREAM)
+	_row("Supplies & upgrades", "- ₹%d" % expenses, UIKit.MUTED)
+	_row("Net profit", "₹%d" % profit, UIKit.GREEN if profit >= 0 else Color("ff8a6a"))
 	_row("Puris served", str(served), UIKit.CREAM)
 	_row("Customers lost", str(lost), UIKit.RED if lost > 0 else UIKit.MUTED)
-	_row("Tips earned", "Rs %d" % int(report.get("tips", 0)), UIKit.GOLD)
+	_row("Tips earned", "₹%d" % int(report.get("tips", 0)), UIKit.GOLD)
 	_row("Best combo", "x%d" % int(report.get("best_combo", 0)), UIKit.TEAL)
 	_row("Average rating", "%d%%" % int(round(rating * 100.0)), UIKit.CREAM)
 	_row("Reputation", "%d / 100" % int(round(rep)), UIKit.ORANGE)

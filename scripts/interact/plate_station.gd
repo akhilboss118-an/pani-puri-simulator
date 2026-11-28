@@ -19,19 +19,21 @@ func _build() -> void:
 	_plate_root = Node3D.new()
 	_plate_root.name = "Plate"
 	add_child(_plate_root)
-	MeshFactory.cylinder(self, 0.24, 0.018, Vector3(0, 0.01, 0), Color("d5d9dc"), "Plate", 20)
+	var steel := MeshFactory.material(Color("cfd5da"), 0.2, 0.88)
+	var plate_base := MeshFactory.cylinder(_plate_root, 0.24, 0.018, Vector3(0, 0.01, 0), Color("d5d9dc"), "Plate", 24)
+	plate_base.material_override = steel
 	var rim := TorusMesh.new()
-	rim.inner_radius = 0.215
-	rim.outer_radius = 0.245
-	rim.rings = 16
-	rim.ring_segments = 6
+	rim.inner_radius = 0.22
+	rim.outer_radius = 0.252
+	rim.rings = 20
+	rim.ring_segments = 8
 	var rim_mi := MeshInstance3D.new()
 	rim_mi.mesh = rim
-	rim_mi.position = Vector3(0, 0.02, 0)
-	rim_mi.material_override = MeshFactory.material(Color("c2c7ca"), 0.4, 0.6)
+	rim_mi.position = Vector3(0, 0.022, 0)
+	rim_mi.material_override = steel
 	rim_mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(rim_mi)
-	_count_label = MeshFactory.label(self, "0 / %d" % Progression.plate_capacity(), Vector3(0, 0.2, 0), 36, Color.WHITE, 0.0025)
+	_plate_root.add_child(rim_mi)
+	_count_label = MeshFactory.label(self, "0 / %d" % Progression.plate_capacity(), Vector3(0, 0.22, 0), 34, Color("fff2d4"), 0.0024)
 	_count_label.visible = false
 
 
@@ -75,10 +77,28 @@ func interact(player: Node) -> void:
 		var item: PuriItem = player.call("take_held_item")
 		if item == null:
 			return
+		var start_global := item.global_position
+		var slot_idx := puris.size()
+		var target_local := _slot_position(slot_idx)
+		var target_rot := randf_range(-PI, PI)
 		item.reparent(_plate_root)
-		item.transform = Transform3D(Basis(Vector3.UP, randf_range(-PI, PI)), _slot_position(puris.size()))
-		item.scale = Vector3.ONE
 		puris.append(item)
+		if player.has_method("play_hand_action"):
+			player.call("play_hand_action", "place")
+		if Game.settings.get("reduced_motion", false):
+			item.transform = Transform3D(Basis(Vector3.UP, target_rot), target_local)
+			item.scale = Vector3.ONE
+		else:
+			item.global_position = start_global
+			item.scale = Vector3(1.25, 1.25, 1.25)
+			var mid_local := (item.position + target_local) * 0.5 + Vector3(0, 0.14, 0)
+			var tw := item.create_tween()
+			tw.tween_property(item, "position", mid_local, 0.09).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+			tw.parallel().tween_property(item, "scale", Vector3(1.08, 1.08, 1.08), 0.09)
+			tw.parallel().tween_property(item, "rotation", Vector3(0, target_rot, 0), 0.18)
+			tw.tween_property(item, "position", target_local, 0.1).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+			tw.parallel().tween_property(item, "scale", Vector3(1.0, 0.85, 1.0), 0.1)
+			tw.tween_property(item, "scale", Vector3.ONE, 0.12).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 		Audio.play("click", 1.3, -14.0)
 		_refresh_label()
 		return
@@ -92,6 +112,12 @@ func interact(player: Node) -> void:
 			data_list.append(item.data)
 		var served: bool = manager.call("serve_plate", data_list)
 		if served:
+			if player.has_method("play_hand_action"):
+				player.call("play_hand_action", "serve")
+			if not Game.settings.get("reduced_motion", false) and _plate_root != null:
+				var ptw := create_tween()
+				ptw.tween_property(_plate_root, "position:z", -0.14, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+				ptw.tween_property(_plate_root, "position:z", 0.0, 0.16).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 			for item in puris:
 				item.queue_free()
 			puris.clear()

@@ -34,7 +34,7 @@ Expected: `Verifies`, v2 and v3 schemes true, one signer.
 | Field | Value |
 | --- | --- |
 | Package | `com.panipurisimulator.game` |
-| Version | `1.4.0` (versionCode `7`) |
+| Version | `1.6.0` (versionCode `9`) |
 | Min SDK | 24 (Android 7.0) |
 | Target SDK | 36 |
 | ABI | `arm64-v8a` |

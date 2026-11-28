@@ -7,10 +7,10 @@ const SPICE_NAMES := ["Mild", "Medium", "Hot"]
 const SPICE_COLORS := [Color("7fbf6a"), Color("e8a13c"), Color("d9532f")]
 
 # --- world palette (warm, dusty Indian street) -------------------------------
-const C_ROAD := Color("4a4440")
-const C_ROAD_LINE := Color("d9cdb2")
-const C_PAVEMENT := Color("8a7d68")
-const C_CURB := Color("c2b49a")
+const C_ROAD := Color("3a3633")
+const C_ROAD_LINE := Color("c2b69c")
+const C_PAVEMENT := Color("6f6455")
+const C_CURB := Color("a99b81")
 const C_WALL_A := Color("d8a86a")
 const C_WALL_B := Color("c47f63")
 const C_WALL_C := Color("a9b6a0")
