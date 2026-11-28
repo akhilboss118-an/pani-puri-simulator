@@ -2,19 +2,19 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://byp11xhebsi2q"
-path="res://.godot/imported/customer_8_Ch14_1001_Diffuse.jpg-053bcb90dd84a298d13c6eed4d04f744.ctex"
+uid="uid://dn1fefss7wipo"
+path="res://.godot/imported/customer_1_file4.jpg-5460c17d0a3aafed77ea39b8107738fb.ctex"
 metadata={
 "vram_texture": false
 }
 generator_parameters={
-"md5": "54a281424727f69c0fac9f33bd23f1bc"
+"md5": "376f9af284e7d194988ffeae1b0f281b"
 }
 
 [deps]
 
-source_file="res://assets/models/customers/customer_8_Ch14_1001_Diffuse.jpg"
-dest_files=["res://.godot/imported/customer_8_Ch14_1001_Diffuse.jpg-053bcb90dd84a298d13c6eed4d04f744.ctex"]
+source_file="res://assets/models/customers/customer_1_file4.jpg"
+dest_files=["res://.godot/imported/customer_1_file4.jpg-5460c17d0a3aafed77ea39b8107738fb.ctex"]
 
 [params]
 

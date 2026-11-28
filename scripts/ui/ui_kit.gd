@@ -25,6 +25,18 @@ const COPPER := Color("c68042")
 const PAPER := Color("faecd0")
 const PAPER_INK := Color("26180f")
 
+## AAA layer: smoked glass slabs, aged-gold filigree and cinematic fades.
+const SMOKE := Color("0b0908")
+const SMOKE_2 := Color("131010")
+const FILIGREE := Color("c9a35c")
+const FILIGREE_DIM := Color("8a6a3a")
+const STEEL := Color("a9b6c2")
+const EMBER := Color("ff8a3c")
+
+## Sharp corners everywhere - rounded pills read as casual, square slabs read
+## as cinematic. Screens that want a softer edge pass their own radius.
+const SHARP := 2
+
 ## A little vertical rhythm helper: the value is added on top of the default
 ## label size so headers and notes can share a single source of truth.
 const HDR := 4
@@ -81,17 +93,17 @@ static func theme() -> Theme:
 	t.set_stylebox("background", "Panel", style(PANEL_3, 8, BORDER, 1, 8))
 
 	# buttons -------------------------------------------------------------
-	t.set_stylebox("normal", "Button", button_style(PANEL_2, BORDER, CREAM))
-	t.set_stylebox("hover", "Button", button_style(Color("3c2b1e"), GOLD, Color.WHITE))
+	t.set_stylebox("normal", "Button", button_style(Color(0.05, 0.04, 0.032, 0.80), Color(FILIGREE.r, FILIGREE.g, FILIGREE.b, 0.38), CREAM))
+	t.set_stylebox("hover", "Button", button_style(Color(0.79, 0.64, 0.36, 0.20), FILIGREE, Color.WHITE))
 	t.set_stylebox("pressed", "Button", button_style(GOLD, GOLD.lightened(0.2), INK))
-	t.set_stylebox("disabled", "Button", button_style(Color("221a15"), Color("46382c"), Color("948371")))
-	t.set_stylebox("focus", "Button", style(Color(0, 0, 0, 0), 12, Color(0, 0, 0, 0), 0, 14))
-	t.set_color("font_color", "Button", CREAM)
+	t.set_stylebox("disabled", "Button", button_style(Color(0.04, 0.034, 0.03, 0.6), Color(1, 1, 1, 0.08), Color("948371")))
+	t.set_stylebox("focus", "Button", style(Color(0, 0, 0, 0), SHARP, Color(0, 0, 0, 0), 0, 14))
+	t.set_color("font_color", "Button", Color(0.93, 0.89, 0.82))
 	t.set_color("font_hover_color", "Button", Color.WHITE)
 	t.set_color("font_pressed_color", "Button", INK)
 	t.set_color("font_disabled_color", "Button", Color("948371"))
-	t.set_font("font", "Button", ui_font(700, 1))
-	t.set_font_size("font_size", "Button", 17)
+	t.set_font("font", "Button", ui_font(700, 2))
+	t.set_font_size("font_size", "Button", 14)
 	t.set_constant("outline_size", "Button", 0)
 	t.set_constant("h_separation", "Button", 8)
 
@@ -139,39 +151,23 @@ static func theme() -> Theme:
 
 
 static func panel_style(margin: int = 18) -> StyleBoxFlat:
-	var sb := style(Color(0.145, 0.095, 0.062, 0.96), 18, Color("7d522c"), 2, margin)
-	sb.shadow_color = Color(0, 0, 0, 0.58)
-	sb.shadow_size = 24
+	var sb := style(Color(0.035, 0.028, 0.024, 0.95), SHARP, Color(FILIGREE.r, FILIGREE.g, FILIGREE.b, 0.34), 1, margin)
+	sb.shadow_color = Color(0, 0, 0, 0.66)
+	sb.shadow_size = 26
 	sb.shadow_offset = Vector2(0, 10)
 	sb.anti_aliasing = true
 	return sb
 
 
-## Warm amber caramel wood button matching the Main Menu button style.
+## Legacy name kept for the credits/controls modals: now an AAA action slab.
 static func wood_menu_button(text: String, min_height: int = 50) -> Button:
-	var b := button(text, min_height)
-	var norm := style(Color("cf8033"), 10, Color("5a2e0e"), 2, 12)
-	norm.shadow_color = Color(0, 0, 0, 0.45)
-	norm.shadow_size = 6
-	norm.shadow_offset = Vector2(0, 3)
-	var hov := style(Color("e29342"), 10, Color("ffd452"), 2, 12)
-	var prs := style(Color("aa6322"), 10, Color("4a240a"), 2, 12)
-	var dis := style(Color("4f3622"), 10, Color("382516"), 2, 12)
-	b.add_theme_stylebox_override("normal", norm)
-	b.add_theme_stylebox_override("hover", hov)
-	b.add_theme_stylebox_override("pressed", prs)
-	b.add_theme_stylebox_override("disabled", dis)
-	b.add_theme_color_override("font_color", Color("fff4dc"))
-	b.add_theme_color_override("font_hover_color", Color.WHITE)
-	b.add_theme_color_override("font_pressed_color", Color("fff4dc"))
-	b.add_theme_color_override("font_disabled_color", Color("9c866d"))
-	b.add_theme_font_override("font", ui_font(700, 0))
-	b.add_theme_font_size_override("font_size", 20)
+	var b := slab_button(text, FILIGREE, min_height)
+	b.add_theme_font_size_override("font_size", 17)
 	return b
 
 
 static func button_style(bg: Color, border: Color, _font_color: Color) -> StyleBoxFlat:
-	var sb := style(bg, 12, border, 1, 15)
+	var sb := style(bg, SHARP, border, 1, 15)
 	sb.content_margin_top = 10
 	sb.content_margin_bottom = 10
 	sb.shadow_color = Color(0, 0, 0, 0.32)
@@ -252,7 +248,7 @@ static func kicker(text: String, color: Color = TEAL, size: int = 12) -> Label:
 
 static func button(text: String, min_height: int = 46) -> Button:
 	var b := Button.new()
-	b.text = I18n.t(text)
+	b.text = I18n.t(text).to_upper()
 	b.custom_minimum_size = Vector2(0, min_height)
 	b.focus_mode = Control.FOCUS_NONE
 	b.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -295,11 +291,11 @@ static func gold_pill(text: String, bg: Color = GOLD, fg: Color = INK, size: int
 	var p := PanelContainer.new()
 	p.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	p.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	var sb := style(bg, 999, bg.lightened(0.25), 1, 0)
-	sb.content_margin_left = 12
-	sb.content_margin_right = 12
-	sb.content_margin_top = 4
-	sb.content_margin_bottom = 4
+	var sb := style(bg, SHARP, bg.lightened(0.25), 1, 0)
+	sb.content_margin_left = 10
+	sb.content_margin_right = 10
+	sb.content_margin_top = 3
+	sb.content_margin_bottom = 3
 	sb.shadow_color = Color(0, 0, 0, 0.28)
 	sb.shadow_size = 6
 	sb.shadow_offset = Vector2(0, 2)
@@ -316,14 +312,14 @@ static func gold_pill(text: String, bg: Color = GOLD, fg: Color = INK, size: int
 ## Quiet secondary action: hairline border, no fill.
 static func ghost_button(text: String, min_height: int = 44) -> Button:
 	var b := button(text, min_height)
-	var normal := style(Color(1, 1, 1, 0.03), 12, Color(1, 0.95, 0.85, 0.16), 1, 15)
-	var hover := style(Color(1, 0.9, 0.75, 0.08), 12, GOLD, 1, 15)
+	var normal := style(Color(1, 1, 1, 0.03), SHARP, Color(1, 0.95, 0.85, 0.16), 1, 15)
+	var hover := style(Color(1, 0.9, 0.75, 0.08), SHARP, GOLD, 1, 15)
 	b.add_theme_stylebox_override("normal", normal)
 	b.add_theme_stylebox_override("hover", hover)
-	b.add_theme_stylebox_override("pressed", style(Color(1, 0.9, 0.75, 0.14), 12, GOLD, 1, 15))
+	b.add_theme_stylebox_override("pressed", style(Color(1, 0.9, 0.75, 0.14), SHARP, GOLD, 1, 15))
 	b.add_theme_color_override("font_color", Color(0.95, 0.9, 0.82))
 	b.add_theme_color_override("font_hover_color", Color.WHITE)
-	b.add_theme_font_override("font", ui_font(600, 1))
+	b.add_theme_font_override("font", ui_font(600, 2))
 	return b
 
 
@@ -430,11 +426,228 @@ static func panel(margin: int = 16) -> PanelContainer:
 static func chip(text: String, color: Color = GOLD, size: int = 12) -> PanelContainer:
 	var p := PanelContainer.new()
 	p.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	var sb := style(Color(0.09, 0.07, 0.055, 0.88), 999, Color(color.r, color.g, color.b, 0.58), 1, 0)
-	sb.content_margin_left = 12
-	sb.content_margin_right = 12
-	sb.content_margin_top = 4
-	sb.content_margin_bottom = 4
+	var sb := style(Color(0.09, 0.07, 0.055, 0.88), SHARP, Color(color.r, color.g, color.b, 0.58), 1, 0)
+	sb.content_margin_left = 10
+	sb.content_margin_right = 10
+	sb.content_margin_top = 3
+	sb.content_margin_bottom = 3
 	p.add_theme_stylebox_override("panel", sb)
 	p.add_child(kicker(text, color, size))
 	return p
+
+
+# --------------------------------------------------------- AAA primitives
+#
+# The look is "cinematic dark UI": smoked glass, square slabs, a single aged
+# gold hairline per surface, tapered filigree rules and corner brackets. Motion
+# is slow and weighty rather than bouncy.
+
+## Tapered gold rule with a small diamond at its centre. Reads as an engraved
+## divider at any width and costs one _draw() call.
+class Ornament extends Control:
+	var color: Color = Color("c9a35c")
+	var line_alpha: float = 0.6
+	var with_diamond: bool = true
+	var diamond_size: float = 4.0
+
+	func _init() -> void:
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		custom_minimum_size = Vector2(0, 9)
+
+	func _draw() -> void:
+		var w := size.x
+		var cy := floorf(size.y * 0.5) + 0.5
+		if w <= 4.0:
+			return
+		var half := w * 0.5
+		var cols := int(maxf(half, 8.0))
+		for i in cols:
+			var t := float(i) / float(cols)
+			var a := line_alpha * (1.0 - t) * (1.0 - t * 0.25)
+			var c := Color(color.r, color.g, color.b, a)
+			draw_rect(Rect2(half - float(i) - 1.0, cy, 1.0, 1.0), c, true)
+			draw_rect(Rect2(half + float(i), cy, 1.0, 1.0), c, true)
+		if with_diamond:
+			var d := diamond_size
+			draw_colored_polygon(PackedVector2Array([
+				Vector2(half, cy - d),
+				Vector2(half + d, cy),
+				Vector2(half, cy + d),
+				Vector2(half - d, cy),
+			]), Color(color.r, color.g, color.b, minf(line_alpha + 0.3, 1.0)))
+
+
+## Four L-shaped corner brackets. Sits on top of a panel as a sibling and is
+## purely decorative - mouse input passes straight through.
+class CornerFrame extends Control:
+	var color: Color = Color("c9a35c")
+	var alpha: float = 0.5
+	var inset: float = 6.0
+	var arm: float = 16.0
+
+	func _init() -> void:
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	func _draw() -> void:
+		var r := Rect2(Vector2(inset, inset), size - Vector2(inset, inset) * 2.0)
+		if r.size.x <= arm * 2.0 or r.size.y <= arm * 2.0:
+			return
+		var c := Color(color.r, color.g, color.b, alpha)
+		var a := minf(arm, minf(r.size.x, r.size.y) * 0.35)
+		var p := r.position
+		var e := r.position + r.size
+		draw_line(Vector2(p.x, p.y + a), p, c, 1.0)
+		draw_line(p, Vector2(p.x + a, p.y), c, 1.0)
+		draw_line(Vector2(e.x - a, p.y), Vector2(e.x, p.y), c, 1.0)
+		draw_line(Vector2(e.x, p.y), Vector2(e.x, p.y + a), c, 1.0)
+		draw_line(Vector2(p.x, e.y - a), Vector2(p.x, e.y), c, 1.0)
+		draw_line(Vector2(p.x, e.y), Vector2(p.x + a, e.y), c, 1.0)
+		draw_line(Vector2(e.x - a, e.y), e, c, 1.0)
+		draw_line(e, Vector2(e.x, e.y - a), c, 1.0)
+
+
+## Thin slab used for every HUD surface: near-black, one hairline, no rounding.
+static func slab_style(alpha: float = 0.82, margin: int = 10, border: Color = FILIGREE_DIM) -> StyleBoxFlat:
+	var sb := style(Color(0.035, 0.028, 0.024, alpha), SHARP, Color(border.r, border.g, border.b, 0.55), 1, margin)
+	sb.shadow_color = Color(0, 0, 0, 0.5)
+	sb.shadow_size = 10
+	sb.shadow_offset = Vector2(0, 3)
+	sb.anti_aliasing = true
+	return sb
+
+
+## Modal surface: smoked glass, gold hairline, deep shadow.
+static func frame_style(margin: int = 26) -> StyleBoxFlat:
+	var sb := style(Color(0.032, 0.026, 0.022, 0.955), 3, Color(FILIGREE.r, FILIGREE.g, FILIGREE.b, 0.42), 1, margin)
+	sb.shadow_color = Color(0, 0, 0, 0.7)
+	sb.shadow_size = 34
+	sb.shadow_offset = Vector2(0, 14)
+	sb.anti_aliasing = true
+	return sb
+
+
+## Big, quiet action slab: square, one gold edge, uppercase tracking.
+static func slab_button(text: String, accent: Color = FILIGREE, min_height: int = 52) -> Button:
+	var b := button(text, min_height)
+	b.text = I18n.t(text).to_upper()
+	var normal := style(Color(0.05, 0.04, 0.032, 0.78), SHARP, Color(accent.r, accent.g, accent.b, 0.55), 1, 20)
+	normal.border_width_left = 3
+	var hover := style(Color(accent.r, accent.g, accent.b, 0.16), SHARP, accent, 1, 20)
+	hover.border_width_left = 3
+	var pressed := style(Color(accent.r, accent.g, accent.b, 0.9), SHARP, accent.lightened(0.25), 1, 20)
+	pressed.border_width_left = 3
+	b.add_theme_stylebox_override("normal", normal)
+	b.add_theme_stylebox_override("hover", hover)
+	b.add_theme_stylebox_override("pressed", pressed)
+	b.add_theme_stylebox_override("disabled", style(Color(0.04, 0.034, 0.03, 0.6), SHARP, Color(1, 1, 1, 0.08), 1, 20))
+	b.add_theme_color_override("font_color", Color(0.93, 0.89, 0.82))
+	b.add_theme_color_override("font_hover_color", Color.WHITE)
+	b.add_theme_color_override("font_pressed_color", INK)
+	b.add_theme_color_override("font_disabled_color", Color(0.55, 0.5, 0.44))
+	b.add_theme_font_override("font", ui_font(700, 2))
+	b.add_theme_font_size_override("font_size", 16)
+	return b
+
+
+## The one filled call to action on a screen.
+static func gold_slab(text: String, min_height: int = 54) -> Button:
+	var b := slab_button(text, GOLD, min_height)
+	b.add_theme_stylebox_override("normal", style(Color(GOLD.r, GOLD.g, GOLD.b, 0.92), SHARP, GOLD.lightened(0.25), 1, 20))
+	b.add_theme_stylebox_override("hover", style(GOLD.lightened(0.12), SHARP, CREAM, 1, 20))
+	b.add_theme_stylebox_override("pressed", style(COPPER, SHARP, GOLD, 1, 20))
+	b.add_theme_color_override("font_color", INK)
+	b.add_theme_color_override("font_hover_color", INK)
+	b.add_theme_color_override("font_pressed_color", INK)
+	b.add_theme_font_override("font", ui_font(800, 2))
+	return b
+
+
+## Small caps section marker with a hairline trailing off to the right.
+static func section_header(text: String, color: Color = FILIGREE) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	var l := kicker(text, color, 10)
+	row.add_child(l)
+	var rule := Ornament.new()
+	rule.color = color
+	rule.line_alpha = 0.28
+	rule.with_diamond = false
+	rule.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	rule.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	rule.custom_minimum_size = Vector2(24, 7)
+	row.add_child(rule)
+	return row
+
+
+## Thin cinematic progress bar (3px, square, bright leading edge).
+static func thin_bar(fill: Color, height: int = 3) -> StyleBoxFlat:
+	var sb := style(fill, 1, Color(fill.r, fill.g, fill.b, 0.9), 0, 0)
+	sb.content_margin_left = 0
+	sb.content_margin_right = 0
+	sb.content_margin_top = 0
+	sb.content_margin_bottom = 0
+	sb.shadow_color = Color(fill.r, fill.g, fill.b, 0.45)
+	sb.shadow_size = 3
+	sb.anti_aliasing = false
+	return sb
+
+
+static func bar_track(height: int = 3) -> StyleBoxFlat:
+	var sb := style(Color(1, 1, 1, 0.10), 1, Color(1, 1, 1, 0.06), 0, 0)
+	sb.content_margin_left = 0
+	sb.content_margin_right = 0
+	sb.content_margin_top = 0
+	sb.content_margin_bottom = 0
+	sb.anti_aliasing = false
+	return sb
+
+
+static var _grain_tex: ImageTexture
+
+
+## Deterministic film grain, tiled. One 96x96 texture for the whole game.
+static func grain_texture() -> ImageTexture:
+	if _grain_tex != null:
+		return _grain_tex
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 20261128
+	var n := 96
+	var img := Image.create(n, n, false, Image.FORMAT_RGBA8)
+	for y in n:
+		for x in n:
+			var v := rng.randf()
+			img.set_pixel(x, y, Color(v, v, v, 1.0))
+	_grain_tex = ImageTexture.create_from_image(img)
+	return _grain_tex
+
+
+## Full-rect grain layer. `alpha` is the strength, `scale_px` the tile size.
+static func grain_overlay(alpha: float = 0.045, scale_px: float = 220.0) -> TextureRect:
+	var r := TextureRect.new()
+	r.texture = grain_texture()
+	r.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	r.stretch_mode = TextureRect.STRETCH_TILE
+	r.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
+	r.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	r.modulate = Color(1, 1, 1, alpha)
+	r.set_meta("tile_px", scale_px)
+	return r
+
+
+## Cinematic entrance: fade in with a barely-there scale settle. Alpha and
+## scale are safe to animate inside a Container (position is not).
+static func fade_in(node: CanvasItem, delay: float = 0.0, settle: float = 0.985) -> void:
+	if node == null or not is_instance_valid(node):
+		return
+	var target_alpha := node.modulate.a
+	node.modulate.a = 0.0
+	var control := node as Control
+	if control != null:
+		control.pivot_offset = control.size * 0.5
+		control.scale = Vector2(settle, settle)
+	var tween := node.create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(node, "modulate:a", target_alpha, 0.5).set_delay(delay).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	if control != null:
+		tween.tween_property(control, "scale", Vector2.ONE, 0.6).set_delay(delay).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)

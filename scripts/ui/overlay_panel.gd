@@ -15,6 +15,8 @@ var pause_game: bool = true
 var _title_label: Label
 var _dim: ColorRect
 var _center: CenterContainer
+var _brackets: UIKit.CornerFrame
+var _fit_scale: float = 1.0
 var _fit_targets: Array[Dictionary] = []
 
 
@@ -26,7 +28,7 @@ func _ready() -> void:
 	theme = UIKit.theme()
 
 	_dim = ColorRect.new()
-	_dim.color = Color(0.02, 0.015, 0.012, 0.68)
+	_dim.color = Color(0.012, 0.010, 0.008, 0.80)
 	_dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_dim.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(_dim)
@@ -35,14 +37,17 @@ func _ready() -> void:
 	var vignette := TextureRect.new()
 	vignette.texture = UIKit.radial_texture([
 		[0.0, Color(0, 0, 0, 0.0)],
-		[0.7, Color(0, 0, 0, 0.12)],
-		[1.0, Color(0, 0, 0, 0.55)],
-	], Vector2(0.5, 0.45), 0.72, 96)
+		[0.55, Color(0, 0, 0, 0.10)],
+		[0.82, Color(0, 0, 0, 0.42)],
+		[1.0, Color(0.01, 0.008, 0.006, 0.82)],
+	], Vector2(0.5, 0.45), 0.74, 128)
 	vignette.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	vignette.stretch_mode = TextureRect.STRETCH_SCALE
 	vignette.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	vignette.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(vignette)
+
+	add_child(UIKit.grain_overlay(0.05, 180.0))
 
 	_center = CenterContainer.new()
 	_center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -50,8 +55,17 @@ func _ready() -> void:
 	add_child(_center)
 
 	panel_box = PanelContainer.new()
-	panel_box.add_theme_stylebox_override("panel", UIKit.panel_style(26))
+	panel_box.add_theme_stylebox_override("panel", UIKit.frame_style(28))
 	_center.add_child(panel_box)
+
+	# Decorative corner brackets sit on top of the card, inset from its edge.
+	_brackets = UIKit.CornerFrame.new()
+	_brackets.color = UIKit.FILIGREE
+	_brackets.alpha = 0.38
+	_brackets.inset = 7.0
+	_brackets.arm = 18.0
+	_brackets.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	panel_box.add_child(_brackets)
 
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 8)
@@ -69,24 +83,24 @@ func _ready() -> void:
 	content.add_child(header)
 
 	var titles := VBoxContainer.new()
-	titles.add_theme_constant_override("separation", 1)
+	titles.add_theme_constant_override("separation", 2)
 	titles.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(titles)
 
-	titles.add_child(UIKit.gold_pill("Pani Puri Simulator", UIKit.GOLD, UIKit.INK, 10))
-	_title_label = UIKit.heading(title_text, 32, UIKit.CREAM)
+	titles.add_child(UIKit.kicker("Pani Puri Simulator", UIKit.FILIGREE_DIM, 10))
+	_title_label = UIKit.heading(title_text, 34, UIKit.CREAM)
 	titles.add_child(_title_label)
 	if subtitle_text != "":
 		titles.add_child(UIKit.label(subtitle_text, 13, UIKit.MUTED))
 
-	var close_button := UIKit.ghost_button("Close", 38)
-	close_button.custom_minimum_size = Vector2(84, 38)
-	close_button.add_theme_font_size_override("font_size", 14)
+	var close_button := UIKit.ghost_button("Close", 36)
+	close_button.custom_minimum_size = Vector2(88, 36)
+	close_button.add_theme_font_size_override("font_size", 13)
 	close_button.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	close_button.pressed.connect(close)
 	header.add_child(close_button)
 
-	content.add_child(UIKit.divider(UIKit.GOLD, 0.5))
+	content.add_child(UIKit.divider(UIKit.FILIGREE, 0.35))
 
 	_build_content()
 
@@ -103,6 +117,20 @@ func _resize_card() -> void:
 	panel_box.custom_minimum_size = Vector2(target, 0)
 	content.custom_minimum_size = Vector2(target - 68.0, 0)
 	_apply_fits()
+	_fit_height.call_deferred()
+
+
+## If a panel is taller than the screen (720p, phones, web) shrink the whole
+## card proportionally instead of clipping it. `_fit_scale` is remembered so the
+## entrance tween settles to the fitted size rather than blowing it back up.
+func _fit_height() -> void:
+	if panel_box == null:
+		return
+	var max_h := get_viewport_rect().size.y * 0.92
+	var needed := panel_box.get_combined_minimum_size().y
+	_fit_scale = clampf(max_h / needed, 0.55, 1.0) if needed > max_h else 1.0
+	panel_box.pivot_offset = panel_box.size * 0.5
+	panel_box.scale = Vector2(_fit_scale, _fit_scale)
 
 
 ## Keeps a tall list inside the card on short screens (720p, phones, web).
@@ -140,14 +168,16 @@ func open() -> void:
 
 func _animate_in() -> void:
 	if Game.settings.get("reduced_motion", false):
+		panel_box.pivot_offset = panel_box.size * 0.5
+		panel_box.scale = Vector2(_fit_scale, _fit_scale)
 		return
 	panel_box.pivot_offset = panel_box.size * 0.5
-	panel_box.scale = Vector2(0.975, 0.975)
+	panel_box.scale = Vector2(_fit_scale * 0.982, _fit_scale * 0.982)
 	panel_box.modulate.a = 0.0
 	var tween := create_tween().set_parallel(true)
 	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
-	tween.tween_property(panel_box, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	tween.tween_property(panel_box, "modulate:a", 1.0, 0.16)
+	tween.tween_property(panel_box, "scale", Vector2(_fit_scale, _fit_scale), 0.32).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tween.tween_property(panel_box, "modulate:a", 1.0, 0.26)
 
 
 func close() -> void:

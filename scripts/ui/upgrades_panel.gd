@@ -43,28 +43,32 @@ func _ready() -> void:
 func _build_content() -> void:
 	var meta := HBoxContainer.new()
 	meta.add_theme_constant_override("separation", 10)
-	_level_label = UIKit.label("Level 1 - Street Cart", 18, UIKit.TEAL)
+	_level_label = UIKit.label("Level 1 - Street Cart", 18, UIKit.FILIGREE)
+	_level_label.add_theme_font_override("font", UIKit.ui_font(700, 2))
 	_level_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	meta.add_child(_level_label)
-	_rep_label = UIKit.label("Reputation: 20", 16, UIKit.ORANGE)
+	_rep_label = UIKit.kicker("Reputation: 20", UIKit.MUTED, 12)
 	meta.add_child(_rep_label)
 	content.add_child(meta)
 
 	var xp_row := HBoxContainer.new()
 	xp_row.add_theme_constant_override("separation", 10)
 	_xp_bar = ProgressBar.new()
-	_xp_bar.custom_minimum_size = Vector2(0, 9)
+	_xp_bar.custom_minimum_size = Vector2(0, 3)
 	_xp_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_xp_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_xp_bar.show_percentage = false
+	_xp_bar.add_theme_stylebox_override("background", UIKit.bar_track(3))
+	_xp_bar.add_theme_stylebox_override("fill", UIKit.thin_bar(UIKit.GOLD, 3))
 	xp_row.add_child(_xp_bar)
-	_xp_text = UIKit.label("0 / 90 XP", 13, UIKit.MUTED)
+	_xp_text = UIKit.kicker("0 / 90 XP", UIKit.MUTED, 11)
 	xp_row.add_child(_xp_text)
 	content.add_child(xp_row)
 
+	content.add_child(UIKit.section_header("Pricing", UIKit.FILIGREE))
 	var price_row := HBoxContainer.new()
 	price_row.add_theme_constant_override("separation", 12)
-	price_row.add_child(UIKit.label("Price per puri", 17))
+	price_row.add_child(UIKit.kicker("Price per puri", UIKit.MUTED, 12))
 	_price_slider = HSlider.new()
 	_price_slider.min_value = 20
 	_price_slider.max_value = 50
@@ -81,16 +85,19 @@ func _build_content() -> void:
 		_price_label.text = "₹%d" % int(value)
 	)
 
-	content.add_child(UIKit.label("Customers pay less when the price is high for their taste.", 13, UIKit.MUTED))
+	var note := UIKit.label("Customers pay less when the price is high for their taste.", 13, UIKit.MUTED)
+	note.add_theme_font_override("font", UIKit.ui_font(600, 2))
+	content.add_child(note)
 
+	content.add_child(UIKit.section_header("Prestige", UIKit.FILIGREE_DIM))
 	var prestige_row := HBoxContainer.new()
 	prestige_row.add_theme_constant_override("separation", 10)
 	var prestige_text := VBoxContainer.new()
 	prestige_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	prestige_text.add_child(UIKit.label("PRESTIGE  %d  -  +%d%% prices" % [Progression.prestige_level, int(round((Progression.prestige_multiplier() - 1.0) * 100.0))], 16, UIKit.GOLD))
+	prestige_text.add_child(UIKit.label("PRESTIGE  %d  -  +%d%% PRICES" % [Progression.prestige_level, int(round((Progression.prestige_multiplier() - 1.0) * 100.0))], 16, UIKit.GOLD))
 	prestige_text.add_child(UIKit.label("Reach level %d, then open a new branch. Resets day/cash/level; keeps upgrades." % Progression.MAX_LEVEL, 12, UIKit.MUTED))
 	prestige_row.add_child(prestige_text)
-	var prestige_button := UIKit.button("Open new branch", 40)
+	var prestige_button := UIKit.slab_button("Open new branch", UIKit.FILIGREE, 40)
 	prestige_button.disabled = not Progression.can_prestige()
 	prestige_button.pressed.connect(func():
 		if Progression.prestige():
@@ -109,7 +116,8 @@ func _build_content() -> void:
 	_list.add_theme_constant_override("separation", 6)
 	scroll.add_child(_list)
 
-	_hint = UIKit.label("", 14, UIKit.TEAL)
+	_hint = UIKit.label("", 12, UIKit.FILIGREE)
+	_hint.add_theme_font_override("font", UIKit.ui_font(600, 2))
 	content.add_child(_hint)
 
 
@@ -150,8 +158,8 @@ func _refresh() -> void:
 
 func _section_label(text: String) -> Control:
 	var wrap := HBoxContainer.new()
-	wrap.custom_minimum_size = Vector2(0, 30)
-	wrap.add_child(UIKit.gold_pill(text, UIKit.GOLD, UIKit.INK, 10))
+	wrap.custom_minimum_size = Vector2(0, 22)
+	wrap.add_child(UIKit.section_header(text, UIKit.FILIGREE))
 	return wrap
 
 
@@ -161,7 +169,8 @@ func _make_row(data: Dictionary) -> Control:
 	var locked_reason := Progression.upgrade_lock_reason(id)
 	var required_level := int(data.get("level", 1))
 	var panel := PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", UIKit.style(UIKit.PANEL_2, 10, UIKit.GREEN if owned else UIKit.BORDER, 1, 8))
+	panel.add_theme_stylebox_override("panel", UIKit.slab_style(0.8, 9,
+		UIKit.GREEN if owned else UIKit.FILIGREE_DIM))
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 10)
 	panel.add_child(row)
@@ -185,7 +194,7 @@ func _make_row(data: Dictionary) -> Control:
 	title_row.add_theme_constant_override("separation", 6)
 	title_row.add_child(UIKit.label(String(data.name), 16, UIKit.CREAM))
 	if required_level > 1:
-		var badge := UIKit.label("LV %d" % required_level, 11, UIKit.GREEN if owned else UIKit.TEAL)
+		var badge := UIKit.kicker("LV %d" % required_level, UIKit.GREEN if owned else UIKit.FILIGREE, 11)
 		badge.custom_minimum_size = Vector2(44, 0)
 		badge.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		title_row.add_child(badge)
@@ -208,7 +217,7 @@ func _make_row(data: Dictionary) -> Control:
 		row.add_child(locked)
 	else:
 		var cost := int(data.cost)
-		var button := UIKit.action_button("Buy  ₹%d" % cost, 42)
+		var button := UIKit.slab_button("Buy  ₹%d" % cost, UIKit.GOLD, 42)
 		button.custom_minimum_size = Vector2(124, 42)
 		button.disabled = not Economy.can_afford(cost)
 		button.pressed.connect(_on_buy.bind(id))

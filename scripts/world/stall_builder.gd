@@ -248,4 +248,8 @@ static func _side_table(root: Node3D) -> void:
 	MeshFactory.cylinder(root, 0.26, 0.2, Vector3(-2.85, 0.72, 8.9), Color("3a3330"), "Kadai", 14)
 	MeshFactory.cylinder(root, 0.23, 0.04, Vector3(-2.85, 0.8, 8.9), Color("6b4a1f"), "Oil", 14, false)
 	for i in 3:
-		MeshFactory.box(root, Vector3(0.34, 0.3, 0.34), Vector3(-2.4 + i * 0.05, 0.15 + i * 0.3, 9.55), Color("a97b4a").darkened(i * 0.08), "Crate", 0.2 * i)
+		var bx := -2.35 + (i % 2) * 0.06
+		var by := 0.12 + float(i) * 0.425
+		var bz := 9.55 + (i % 2) * 0.03
+		if EnvironmentLoader.spawn_prop(root, "res://assets/environment/props/box_b.glb", Vector3(bx, by, bz), 0.28 * i, 2.5, true) == null:
+			MeshFactory.box(root, Vector3(0.34, 0.3, 0.34), Vector3(bx, by + 0.15, bz), Color("a97b4a").darkened(i * 0.08), "Crate", 0.2 * i)

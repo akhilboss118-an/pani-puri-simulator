@@ -48,6 +48,7 @@ func build(quality: int) -> void:
 	_string_lights()
 	_build_stall()
 	_stall_details()
+	_contact_shadows()
 	restaurant = RestaurantBuilder.build(self, _quality)
 	EnvironmentLoader.apply(self)
 	_build_customers()
@@ -80,30 +81,32 @@ func _setup_environment() -> void:
 	env.background_mode = Environment.BG_SKY
 	var sky := Sky.new()
 	var sky_mat := ProceduralSkyMaterial.new()
-	sky_mat.sky_top_color = Color("2e6ba6")
-	sky_mat.sky_horizon_color = Color("f4c188")
-	sky_mat.ground_bottom_color = Color("3b2b20")
-	sky_mat.ground_horizon_color = Color("c99667")
-	sky_mat.sun_angle_max = 16.0
-	sky_mat.sky_energy_multiplier = 1.05
-	sky_mat.ground_energy_multiplier = 0.82
+	sky_mat.sky_top_color = Color("1e4a72")
+	sky_mat.sky_horizon_color = Color("f7bd7f")
+	sky_mat.ground_bottom_color = Color("2e2119")
+	sky_mat.ground_horizon_color = Color("c08a58")
+	sky_mat.sun_angle_max = 14.0
+	sky_mat.sky_energy_multiplier = 1.1
+	sky_mat.ground_energy_multiplier = 0.7
 	sky.sky_material = sky_mat
 	_sky_mat = sky_mat
 	env.sky = sky
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
-	env.ambient_light_energy = 0.46
+	env.ambient_light_energy = 0.34
 	env.tonemap_mode = Environment.TONE_MAPPER_ACES
-	env.tonemap_exposure = 0.96
+	env.tonemap_exposure = 0.84
 	env.tonemap_white = 6.0
 	env.fog_enabled = true
-	env.fog_light_color = Color("e0b88e")
-	env.fog_density = 0.0018
-	env.fog_sky_affect = 0.28
-	env.fog_aerial_perspective = 0.14
+	env.fog_light_color = Color("d9a97a")
+	env.fog_density = 0.0022
+	env.fog_sky_affect = 0.24
+	env.fog_aerial_perspective = 0.12
+	# Sekiro-ish grade: deeper blacks, warm highlights, cool shadows, restrained
+	# saturation in the mids so the food colours still pop.
 	env.adjustment_enabled = true
-	env.adjustment_brightness = 1.02
-	env.adjustment_contrast = 1.09
-	env.adjustment_saturation = 1.15
+	env.adjustment_brightness = 1.0
+	env.adjustment_contrast = 1.18
+	env.adjustment_saturation = 1.1
 	world_env.environment = env
 	add_child(world_env)
 	_world_env = world_env
@@ -111,10 +114,10 @@ func _setup_environment() -> void:
 
 	_sun = DirectionalLight3D.new()
 	_sun.name = "Sun"
-	_sun.rotation_degrees = Vector3(-40, 208, 0)
-	_sun.light_color = Color("ffe6c4")
-	_sun.light_energy = 1.25
-	_sun.light_angular_distance = 1.2
+	_sun.rotation_degrees = Vector3(-34, 206, 0)
+	_sun.light_color = Color("ffd9a8")
+	_sun.light_energy = 1.45
+	_sun.light_angular_distance = 1.6
 	_sun.shadow_enabled = _quality >= 1
 	_sun.shadow_blur = 1.3
 	_sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
@@ -126,10 +129,21 @@ func _setup_environment() -> void:
 	_rim = DirectionalLight3D.new()
 	_rim.name = "Rim"
 	_rim.rotation_degrees = Vector3(-22, 24, 0)
-	_rim.light_color = Color("a7ccf2")
-	_rim.light_energy = 0.45
+	_rim.light_color = Color("8fb8e0")
+	_rim.light_energy = 0.55
 	_rim.shadow_enabled = false
 	add_child(_rim)
+
+	# Warm bounce off the sunlit pavement. Sells the Forza-style low sun.
+	var bounce := DirectionalLight3D.new()
+	bounce.name = "Bounce"
+	bounce.rotation_degrees = Vector3(118, 20, 0)
+	bounce.light_color = Color("e8b078")
+	bounce.light_energy = 0.12
+	bounce.shadow_enabled = false
+	add_child(bounce)
+
+	_build_sun_flare()
 
 	# Warm practicals under the canopy, no shadows.
 	for x in [-1.35, 0.0, 1.35]:
@@ -168,6 +182,100 @@ func _setup_environment() -> void:
 	_lamp_bulb_mat.emission_energy_multiplier = 0.8
 
 
+# ------------------------------------------------------------------ sun flare
+#
+# Compatibility renderer has no bloom or lens flare, so the sun gets a pair of
+# additive billboards parked far down the light direction. Two draw calls, no
+# screen reads, and it is what sells the "golden hour" read at a glance.
+
+func _build_sun_flare() -> void:
+	if _quality < 1:
+		return
+	var dir := -(_sun.global_transform.basis.z)
+	var flare_root := Node3D.new()
+	flare_root.name = "SunFlare"
+	add_child(flare_root)
+
+	# Warm, tight core: a white sun desaturates the teal sky into grey. Keep the
+	# halo amber and small so the Sekiro-style cool/warm contrast survives.
+	_flare_sprite(flare_root, dir * 240.0, 84.0, Color(1.0, 0.72, 0.36, 0.22), [
+		[0.0, Color(1, 0.84, 0.54, 1.0)],
+		[0.24, Color(1, 0.66, 0.28, 0.52)],
+		[0.58, Color(0.96, 0.46, 0.16, 0.12)],
+		[1.0, Color(0.8, 0.34, 0.12, 0.0)],
+	])
+	_flare_sprite(flare_root, dir * 238.0, 30.0, Color(1.0, 0.88, 0.62, 0.42), [
+		[0.0, Color(1, 0.96, 0.80, 1.0)],
+		[0.32, Color(1, 0.82, 0.48, 0.68)],
+		[1.0, Color(1, 0.70, 0.34, 0.0)],
+	])
+
+
+func _flare_sprite(parent: Node3D, pos: Vector3, diameter: float, tint: Color, stops: Array) -> void:
+	var quad := QuadMesh.new()
+	quad.size = Vector2(diameter, diameter)
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	mat.billboard_keep_scale = true
+	mat.no_depth_test = true
+	mat.disable_receive_shadows = true
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mat.albedo_texture = UIKit.radial_texture(stops, Vector2(0.5, 0.5), 0.5, 96)
+	mat.albedo_color = tint
+	var mi := MeshInstance3D.new()
+	mi.name = "Flare"
+	mi.mesh = quad
+	mi.material_override = mat
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.position = pos
+	mi.extra_cull_margin = 400.0
+	parent.add_child(mi)
+
+
+## Soft contact shadow used to ground props and people. Cheap fake AO: one
+## unshaded radial quad lying flat on the ground. `depth` squashes it along Z
+## so carts and counters get an elliptical pool instead of a circle.
+func blob_shadow(parent: Node3D, pos: Vector3, radius: float, alpha: float = 0.34, depth: float = 1.0) -> MeshInstance3D:
+	var quad := QuadMesh.new()
+	quad.size = Vector2(radius * 2.0, radius * 2.0 * depth)
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.albedo_texture = UIKit.radial_texture([
+		[0.0, Color(0, 0, 0, alpha)],
+		[0.45, Color(0, 0, 0, alpha * 0.72)],
+		[0.78, Color(0, 0, 0, alpha * 0.24)],
+		[1.0, Color(0, 0, 0, 0.0)],
+	], Vector2(0.5, 0.5), 0.5, 64)
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mat.disable_receive_shadows = true
+	var mi := MeshInstance3D.new()
+	mi.name = "ContactShadow"
+	mi.mesh = quad
+	mi.material_override = mat
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.position = pos
+	mi.rotation.x = -PI * 0.5
+	parent.add_child(mi)
+	return mi
+
+
+## Ground the cart and its dressing so nothing looks pasted onto the pavement.
+func _contact_shadows() -> void:
+	var ground_y := 0.126
+	# Long pool under the cart, plus a denser one right at the wheels.
+	blob_shadow(self, Vector3(0.0, ground_y, 8.85), 2.35, 0.42, 0.46)
+	blob_shadow(self, Vector3(0.0, ground_y + 0.002, 8.55), 1.9, 0.34, 0.34)
+	# Side props.
+	blob_shadow(self, Vector3(-3.35, ground_y, 9.7), 0.55, 0.38)
+	blob_shadow(self, Vector3(-4.25, ground_y, 9.85), 0.62, 0.34, 0.72)
+	blob_shadow(self, Vector3(2.62, ground_y, 9.5), 0.48, 0.38)
+	blob_shadow(self, Vector3(3.2, ground_y, 9.1), 0.52, 0.36)
+
+
 # -------------------------------------------------------------------- ground
 
 func _ground() -> void:
@@ -177,8 +285,9 @@ func _ground() -> void:
 	_road_mat = StandardMaterial3D.new()
 	_road_mat.albedo_texture = road_tex
 	_road_mat.uv1_scale = Vector3(26, 6, 1)
-	_road_mat.roughness = 0.88
-	_road_mat.metallic = 0.04
+	# Damp tarmac: a broad warm sheen down the road sells the low sun.
+	_road_mat.roughness = 0.64
+	_road_mat.metallic = 0.12
 	var road := MeshFactory.box(self, Vector3(76, 0.12, 11.0), Vector3(0, 0.06, 0), GameData.C_ROAD, "Road", 0.0, false)
 	road.material_override = _road_mat
 
@@ -186,7 +295,8 @@ func _ground() -> void:
 	var pave_mat := StandardMaterial3D.new()
 	pave_mat.albedo_texture = pave_tex
 	pave_mat.uv1_scale = Vector3(28, 4, 1)
-	pave_mat.roughness = 0.9
+	pave_mat.roughness = 0.76
+	pave_mat.metallic = 0.06
 
 	var pave_near := MeshFactory.box(self, Vector3(76, 0.12, 6.4), Vector3(0, 0.06, 8.7), GameData.C_PAVEMENT, "PavementNear", 0.0, false)
 	pave_near.material_override = pave_mat
@@ -209,6 +319,41 @@ func _ground() -> void:
 	for z_off in [-1.8, -0.9, 0.0, 0.9, 1.8]:
 		MeshFactory.box(self, Vector3(1.9, 0.012, 0.36), Vector3(-9.5, 0.127, z_off), Color("e6d7b8"), "CrosswalkL", 0.0, false)
 		MeshFactory.box(self, Vector3(1.9, 0.012, 0.36), Vector3(9.5, 0.127, z_off), Color("e6d7b8"), "CrosswalkR", 0.0, false)
+
+	_puddles()
+
+
+## Shallow rain puddles. Compatibility has no screen-space reflections, so each
+## puddle is a near-black, very smooth quad that catches the sun as a bright
+## streak - the cheapest convincing wet-road read.
+func _puddles() -> void:
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.035, 0.045, 0.055, 0.72)
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.roughness = 0.07
+	mat.metallic = 0.55
+	mat.disable_receive_shadows = true
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+
+	var spots := [
+		[-13.5, 2.9, 2.1, 0.9],
+		[-6.2, -3.2, 1.7, 0.75],
+		[2.4, 3.4, 2.4, 1.0],
+		[8.6, -2.6, 1.5, 0.7],
+		[15.2, 3.1, 2.0, 0.85],
+		[-18.4, -3.4, 1.4, 0.65],
+	]
+	for spot in spots:
+		var quad := QuadMesh.new()
+		quad.size = Vector2(float(spot[2]), float(spot[3]))
+		var mi := MeshInstance3D.new()
+		mi.name = "Puddle"
+		mi.mesh = quad
+		mi.material_override = mat
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mi.position = Vector3(float(spot[0]), 0.129, float(spot[1]))
+		mi.rotation.x = -PI * 0.5
+		add_child(mi)
 
 
 # --------------------------------------------------------------------- shops
@@ -234,14 +379,26 @@ func _shops() -> void:
 	for shop in near:
 		_shop(float(shop.x), 12.6, -1.0, float(shop.w), float(shop.h), 6.0, shop.c, shop.a, String(shop.n))
 
-	# Layered distant bazaar skyline so the street feels embedded in a lively Indian town
-	var skyline_colors := [Color("c9a47e"), Color("b88b6d"), Color("9d9f90"), Color("d4b68c")]
-	for i in 12:
-		var h := randf_range(9.0, 18.0)
-		var sx := -38.0 + i * 7.2
-		var sc: Color = skyline_colors[i % skyline_colors.size()].darkened(randf_range(0.05, 0.22))
-		MeshFactory.box(self, Vector3(randf_range(5.2, 8.2), h, 6.0), Vector3(sx, h * 0.5, -26.0 - (i % 2) * 5.0), sc, "Skyline", 0.0, false)
-		MeshFactory.box(self, Vector3(randf_range(5.2, 8.2), h * 0.85, 6.0), Vector3(sx, h * 0.42, 26.0 + (i % 2) * 4.0), sc, "SkylineBack", 0.0, false)
+	# Detailed multi-story Apartment GLBs forming the bazaar skyline & framing the street
+	var far_skyline := [
+		{"x": -22.0, "z": -19.2, "ry": 0.0, "s": 0.84},
+		{"x": -12.0, "z": -18.8, "ry": 0.0, "s": 0.94},
+		{"x": 6.5, "z": -18.8, "ry": 0.0, "s": 0.98},
+		{"x": 17.5, "z": -19.2, "ry": 0.0, "s": 0.88},
+		{"x": 29.0, "z": -15.5, "ry": -0.58, "s": 0.90},
+	]
+	var near_skyline := [
+		{"x": -29.5, "z": 14.0, "ry": 2.38, "s": 0.86},
+		{"x": -20.5, "z": 19.8, "ry": PI, "s": 0.88},
+		{"x": -8.5, "z": 20.4, "ry": PI, "s": 0.94},
+		{"x": 9.0, "z": 20.0, "ry": PI, "s": 0.92},
+		{"x": 20.5, "z": 19.6, "ry": PI, "s": 0.85},
+		{"x": 29.5, "z": 14.5, "ry": -2.42, "s": 0.86},
+	]
+	for entry in far_skyline + near_skyline:
+		var pos := Vector3(float(entry.x), 0.12, float(entry.z))
+		if EnvironmentLoader.spawn_prop(self, "res://assets/environment/props/apartment_building.glb", pos, float(entry.ry), float(entry.s), false) == null:
+			MeshFactory.box(self, Vector3(8.0, 14.0, 6.0), pos + Vector3(0, 7.0, 0), Color("c9a47e"), "Skyline", 0.0, false)
 
 
 func _landmarks() -> void:
@@ -386,20 +543,47 @@ func _street_props() -> void:
 	_tree(-14.0, 10.2, 0.85)
 	_tree(12.0, 10.4, 0.9)
 
-	# benches and bins
+	# benches and detailed Poly-by-Google waste bins along both curbs
 	_bench(-4.5, -7.9)
 	_bench(8.0, -7.9)
-	MeshFactory.cylinder(self, 0.22, 0.6, Vector3(4.5, 0.42, 6.4), Color("3f6b52"), "Bin", 10, false)
-	MeshFactory.cylinder(self, 0.22, 0.6, Vector3(-13.0, 0.42, -6.4), Color("3f6b52"), "Bin2", 10, false)
+	for bin_entry in [
+		{"x": 4.5, "z": 6.4, "ry": -2.75},
+		{"x": -13.0, "z": -6.4, "ry": 0.25},
+		{"x": -1.5, "z": -6.5, "ry": -0.2},
+		{"x": 13.8, "z": -6.5, "ry": 0.15},
+	]:
+		var bpos := Vector3(float(bin_entry.x), 0.146, float(bin_entry.z))
+		if EnvironmentLoader.spawn_prop(self, "res://assets/environment/props/garbage_bin.glb", bpos, float(bin_entry.ry), 0.28, true) == null:
+			MeshFactory.cylinder(self, 0.22, 0.6, Vector3(bpos.x, 0.42, bpos.z), Color("3f6b52"), "Bin", 10, false)
 
-	_scooter(-5.2, 6.4, GameData.C_RED)
-	_scooter(6.8, 6.5, GameData.C_TEAL)
+	# Parked MiniPoly scooters/bikes along the near & far bazaar curbs
+	for bike_entry in [
+		{"x": -5.3, "z": 6.45, "ry": 1.38},
+		{"x": 6.8, "z": 6.5, "ry": -1.42},
+		{"x": -9.2, "z": -6.4, "ry": -1.32},
+		{"x": 5.4, "z": -6.4, "ry": 1.35},
+	]:
+		var bk_pos := Vector3(float(bike_entry.x), 0.123, float(bike_entry.z))
+		if EnvironmentLoader.spawn_prop(self, "res://assets/environment/props/bike.glb", bk_pos, float(bike_entry.ry), 0.165, true) == null:
+			_scooter(bk_pos.x, bk_pos.z, GameData.C_TEAL)
+
 	_rickshaw(9.5, -3.6)
 	_rickshaw(-11.5, 3.6)
 
-	# crates and sacks beside the stall
-	MeshFactory.box(self, Vector3(0.5, 0.5, 0.5), Vector3(-3.5, 0.37, 9.9), Color("a97b4a"), "Crate", 0.2)
-	MeshFactory.box(self, Vector3(0.45, 0.35, 0.4), Vector3(-3.4, 0.8, 9.85), Color("b98b5a"), "Crate2", 0.5)
+	# Stacked Kay Lousberg Box B supply crates beside the stall and shopfronts
+	var crate_clusters := [
+		{"x": -3.55, "z": 9.85, "count": 2, "s": 2.6},
+		{"x": -23.2, "z": -10.5, "count": 3, "s": 2.6},
+		{"x": 2.6, "z": -10.5, "count": 2, "s": 2.5},
+		{"x": 11.4, "z": -10.5, "count": 3, "s": 2.6},
+	]
+	for cl in crate_clusters:
+		var bs := float(cl.s)
+		var step_h := 0.17 * bs
+		for ci in int(cl.count):
+			var cpos := Vector3(float(cl.x) + (ci % 2) * 0.05, 0.12 + float(ci) * step_h, float(cl.z) - (ci % 2) * 0.04)
+			if EnvironmentLoader.spawn_prop(self, "res://assets/environment/props/box_b.glb", cpos, 0.22 + 0.35 * ci, bs, true) == null:
+				MeshFactory.box(self, Vector3(0.45, 0.4, 0.45), cpos + Vector3(0, 0.2, 0), Color("a97b4a"), "Crate", 0.2)
 	MeshFactory.sphere(self, 0.3, Vector3(3.4, 0.42, 9.7), Color("c9b48a"), "Sack", 8, false)
 
 
@@ -689,9 +873,10 @@ func _build_customers() -> void:
 
 	for i in 2:
 		var walker := Pedestrian.new()
+		walker.model_index = (i % Customer.MODEL_COUNT) + 1
 		walker.point_a = Vector3(-19.0, 0.14, -8.6 - i * 0.6)
 		walker.point_b = Vector3(19.0, 0.14, -8.6 - i * 0.6)
-		walker.speed = randf_range(0.85, 1.25)
+		walker.speed = randf_range(0.95, 1.25)
 		add_child(walker)
 
 

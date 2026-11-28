@@ -12,12 +12,14 @@ const PROPS_DIR := "res://assets/environment/props"
 
 var root: Node3D
 var loaded: int = 0
+var _cache: Dictionary = {}
 
 
 func apply(world: Node3D) -> void:
 	root = Node3D.new()
 	root.name = "ImportedProps"
 	world.add_child(root)
+	loaded = 0
 	var parsed := _read_manifest()
 	if parsed.is_empty():
 		return
@@ -25,7 +27,6 @@ func apply(world: Node3D) -> void:
 	for entry in entries:
 		if not _spawn(entry):
 			continue
-	loaded = loaded
 	print("EnvironmentLoader: loaded ", loaded, " imported prop(s)")
 
 
@@ -51,31 +52,44 @@ func anchor_position(anchor: String) -> Vector3:
 			return Vector3.ZERO
 
 
+func spawn_prop(parent: Node3D, path: String, pos: Vector3, rot_y: float = 0.0, prop_scale: float = 1.0, cast_shadows: bool = true) -> Node3D:
+	if parent == null or path == "":
+		return null
+	if not _cache.has(path):
+		if not ResourceLoader.exists(path):
+			push_warning("EnvironmentLoader: missing " + path)
+			_cache[path] = null
+		else:
+			_cache[path] = load(path)
+	var packed := _cache[path] as PackedScene
+	if packed == null:
+		return null
+	var node3d := packed.instantiate() as Node3D
+	if node3d == null:
+		return null
+	node3d.position = pos
+	node3d.rotation.y = rot_y
+	if not is_equal_approx(prop_scale, 1.0):
+		node3d.scale = Vector3.ONE * prop_scale
+	var shadow_mode := GeometryInstance3D.SHADOW_CASTING_SETTING_ON if cast_shadows else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	for mesh in node3d.find_children("*", "MeshInstance3D", true, false):
+		(mesh as MeshInstance3D).cast_shadow = shadow_mode
+	parent.add_child(node3d)
+	return node3d
+
+
 func _spawn(entry: Dictionary) -> bool:
 	if not bool(entry.get("enabled", false)):
 		return false
 	var path := String(entry.get("file", ""))
 	if path == "":
 		return false
-	if not ResourceLoader.exists(path):
-		push_warning("EnvironmentLoader: missing " + path)
-		return false
-	var scene: Resource = load(path)
-	var packed := scene as PackedScene
-	if packed == null:
-		return false
-	var node3d := packed.instantiate() as Node3D
+	var pos := anchor_position(String(entry.get("anchor", "entrance"))) + _vec3_from(entry.get("offset", [0, 0, 0]))
+	var rot := _vec3_from(entry.get("rotation_deg", [0, 0, 0]))
+	var node3d := spawn_prop(root, path, pos, deg_to_rad(rot.y), float(entry.get("scale", 1.0)), true)
 	if node3d == null:
 		return false
-	node3d.position = anchor_position(String(entry.get("anchor", "entrance")))
-	node3d.position += _vec3_from(entry.get("offset", [0, 0, 0]))
-	node3d.rotation_degrees = _vec3_from(entry.get("rotation_deg", [0, 0, 0]))
-	var scale := float(entry.get("scale", 1.0))
-	if scale != 1.0:
-		node3d.scale = Vector3(scale, scale, scale)
-	for mesh in node3d.find_children("*", "MeshInstance3D", true, false):
-		mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
-	root.add_child(node3d)
+	node3d.rotation_degrees = rot
 	loaded += 1
 	return true
 

@@ -10,41 +10,44 @@ func _init() -> void:
 
 
 func _build_content() -> void:
-	_info = UIKit.label("", 16, UIKit.MUTED)
+	_info = UIKit.label("", 14, UIKit.MUTED)
 	content.add_child(_info)
-	content.add_child(UIKit.hsep(4))
+	content.add_child(UIKit.hsep(2))
 
-	var resume := UIKit.primary_button("Resume shift", 50)
+	content.add_child(UIKit.section_header("Shift", UIKit.FILIGREE))
+
+	var resume := UIKit.gold_slab("Resume shift", 50)
 	resume.pressed.connect(close)
 	content.add_child(resume)
 
-	var stock := UIKit.button("Stock & restock", 46)
+	content.add_child(UIKit.section_header("Manage", UIKit.FILIGREE_DIM))
+
+	var stock := UIKit.slab_button("Stock & restock", UIKit.FILIGREE, 44)
 	stock.pressed.connect(_open_other.bind("inventory"))
 	content.add_child(stock)
 
-	var upgrades := UIKit.button("Upgrades & pricing", 46)
+	var upgrades := UIKit.slab_button("Upgrades & pricing", UIKit.FILIGREE, 44)
 	upgrades.pressed.connect(_open_other.bind("upgrades"))
 	content.add_child(upgrades)
 
-	var settings := UIKit.button("Settings", 46)
+	var settings := UIKit.slab_button("Settings", UIKit.FILIGREE, 44)
 	settings.pressed.connect(_open_other.bind("settings"))
 	content.add_child(settings)
 
-	var cloud := UIKit.button("Save & Leaderboards", 46)
+	var cloud := UIKit.slab_button("Save & leaderboards", UIKit.FILIGREE, 44)
 	cloud.pressed.connect(func():
 		close()
 		Game.root.call("open_cloud")
 	)
 	content.add_child(cloud)
 
-	content.add_child(UIKit.hsep(6))
+	content.add_child(UIKit.hsep(4))
 
-	var close_stall := UIKit.button("Close stall for today", 46)
-	close_stall.add_theme_stylebox_override("normal", UIKit.style(Color("4a2a1c"), 12, Color("8a4a2a"), 1, 16))
+	var close_stall := UIKit.slab_button("Close stall for today", UIKit.EMBER, 44)
 	close_stall.pressed.connect(_on_close_stall)
 	content.add_child(close_stall)
 
-	var quit := UIKit.button("Quit to main menu", 46)
+	var quit := UIKit.slab_button("Quit to main menu", UIKit.FILIGREE_DIM, 44)
 	quit.pressed.connect(_on_quit)
 	content.add_child(quit)
 

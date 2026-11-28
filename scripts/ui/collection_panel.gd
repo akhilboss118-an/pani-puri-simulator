@@ -11,9 +11,12 @@ func _init() -> void:
 
 
 func _build_content() -> void:
-	_hint = UIKit.label("", 15, UIKit.MUTED)
+	_hint = UIKit.label("", 13, UIKit.MUTED)
+	_hint.add_theme_font_override("font", UIKit.ui_font(600, 2))
 	_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	content.add_child(_hint)
+	content.add_child(UIKit.hsep(4))
+
 	var scroll := ScrollContainer.new()
 	scroll.custom_minimum_size = Vector2(0, 520)
 	scroll.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -22,7 +25,8 @@ func _build_content() -> void:
 	_list = VBoxContainer.new()
 	_list.add_theme_constant_override("separation", 8)
 	scroll.add_child(_list)
-	var back := UIKit.button("Back to stall", 44)
+	content.add_child(UIKit.hsep(6))
+	var back := UIKit.slab_button("Back to stall", UIKit.FILIGREE_DIM, 44)
 	back.pressed.connect(close)
 	content.add_child(back)
 
@@ -53,8 +57,7 @@ func _refresh() -> void:
 		Achievements.unlocked_count(), Achievements.DEFS.size(),
 	]
 
-	var header := UIKit.label("ACHIEVEMENTS", 18, UIKit.ORANGE)
-	_list.add_child(header)
+	_list.add_child(UIKit.section_header("Achievements", UIKit.GOLD))
 	for def in Achievements.DEFS:
 		var entry: Dictionary = def
 		var id := String(entry["id"])
@@ -66,8 +69,7 @@ func _refresh() -> void:
 		_list.add_child(UIKit.label("        " + String(entry["desc"]), 13, UIKit.MUTED))
 
 	_list.add_child(UIKit.hsep(8))
-	var recipes_header := UIKit.label("RECIPE MASTERY", 18, UIKit.ORANGE)
-	_list.add_child(recipes_header)
+	_list.add_child(UIKit.section_header("Recipe mastery", UIKit.GOLD))
 	for recipe in GameData.recipes():
 		var stars := Progression.recipe_stars(recipe.id)
 		var stats: Dictionary = Progression.recipe_stats.get(recipe.id, {})

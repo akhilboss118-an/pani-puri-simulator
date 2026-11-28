@@ -2,19 +2,19 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://crt86v6tloxkq"
-path="res://.godot/imported/customer_1_0.jpg-645c6f1a42207b4e5fd606c7f846850e.ctex"
+uid="uid://dw2w5lg44jjxo"
+path="res://.godot/imported/customer_2_BrowsMAP1.png-2f58fc2c948e0e5cd409964ea61d0b2f.ctex"
 metadata={
 "vram_texture": false
 }
 generator_parameters={
-"md5": "a67e108fcfc56a685856a02d628268ed"
+"md5": "159bcc51ecfe255008bbbfa006cf3d0f"
 }
 
 [deps]
 
-source_file="res://assets/models/customers/customer_1_0.jpg"
-dest_files=["res://.godot/imported/customer_1_0.jpg-645c6f1a42207b4e5fd606c7f846850e.ctex"]
+source_file="res://assets/models/customers/customer_2_BrowsMAP1.png"
+dest_files=["res://.godot/imported/customer_2_BrowsMAP1.png-2f58fc2c948e0e5cd409964ea61d0b2f.ctex"]
 
 [params]
 

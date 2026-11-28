@@ -181,6 +181,18 @@ func _physics_process(delta: float) -> void:
 
 	# Spring-damper carry sway + hand action offset
 	_look_sway = _look_sway.lerp(Vector2.ZERO, delta * 10.0)
+	_update_hand_pose()
+	_update_target()
+
+
+func _process(_delta: float) -> void:
+	if not _active and camera != null and camera.current:
+		_update_hand_pose()
+		_update_target()
+
+
+func _update_hand_pose() -> void:
+	var reduced := bool(Game.settings.get("reduced_motion", false))
 	if hand_anchor:
 		var bob_sway := Vector3.ZERO
 		if not reduced:
@@ -188,8 +200,6 @@ func _physics_process(delta: float) -> void:
 		var sway_vec := Vector3(_look_sway.x, _look_sway.y, 0.0)
 		hand_anchor.position = BASE_HAND_POS + bob_sway + sway_vec + _hand_action_offset
 		hand_anchor.rotation = Vector3(_look_sway.y * 1.4, -_look_sway.x * 1.6, 0.0) + _hand_action_rot
-
-	_update_target()
 
 
 func _update_target() -> void:

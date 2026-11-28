@@ -2,19 +2,19 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cy8obrvx40wfd"
-path="res://.godot/imported/customer_9_Girl01_FacialAnimMap.png-a414691af8b8b9986866242fd643d89e.ctex"
+uid="uid://cvibdmjvgnv1q"
+path="res://.godot/imported/customer_2_file16.jpg-8c98992dfc5fe76c388d3386b1423246.ctex"
 metadata={
 "vram_texture": false
 }
 generator_parameters={
-"md5": "dae8101f6cae7c78bc896fa7aa26ce7f"
+"md5": "d5f71dc6f417139253fb20f3e2024922"
 }
 
 [deps]
 
-source_file="res://assets/models/customers/customer_9_Girl01_FacialAnimMap.png"
-dest_files=["res://.godot/imported/customer_9_Girl01_FacialAnimMap.png-a414691af8b8b9986866242fd643d89e.ctex"]
+source_file="res://assets/models/customers/customer_2_file16.jpg"
+dest_files=["res://.godot/imported/customer_2_file16.jpg-8c98992dfc5fe76c388d3386b1423246.ctex"]
 
 [params]
 

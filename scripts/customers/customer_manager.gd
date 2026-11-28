@@ -15,6 +15,7 @@ var _timer: float = 2.0
 var _running: bool = false
 var _serial: int = 0
 var _tutorial_customer: Customer = null
+var _eating_customer: Customer = null
 var regulars: Dictionary = {}   # name -> {visits, recipe_id, order}
 
 
@@ -33,6 +34,7 @@ func begin_day() -> void:
 	_timer = 2.5
 	_serial = 0
 	_tutorial_customer = null
+	_eating_customer = null
 	_running = true
 
 
@@ -86,6 +88,7 @@ func spawn_tutorial_customer(model_index: int = 1) -> Customer:
 	customer.has_arrived = true
 	customer.departed.connect(_on_departed)
 	customer.walked_out.connect(_on_walked_out)
+	customer.finished_eating.connect(_on_finished_eating)
 	customers.append(customer)
 	queue.append(customer)
 	_tutorial_customer = customer
@@ -122,7 +125,10 @@ func _process(delta: float) -> void:
 		_timer = Progression.arrival_interval() * randf_range(0.75, 1.25)
 		if queue.size() < Progression.queue_size() and customers.size() < Progression.max_customers():
 			_spawn()
-	if active == null and not queue.is_empty():
+	if _eating_customer != null and (not is_instance_valid(_eating_customer) or _eating_customer.state != Customer.State.REACTION):
+		_eating_customer = null
+		_refresh_queue()
+	if active == null and _eating_customer == null and not queue.is_empty():
 		var front := queue[0]
 		if is_instance_valid(front) and front.state == Customer.State.QUEUE and front.has_arrived:
 			_promote(front)
@@ -155,6 +161,7 @@ func _spawn() -> void:
 	customer.global_position = spawn_point + Vector3(randf_range(-1.2, 1.2), 0, randf_range(-0.5, 0.5))
 	customer.departed.connect(_on_departed)
 	customer.walked_out.connect(_on_walked_out)
+	customer.finished_eating.connect(_on_finished_eating)
 	customers.append(customer)
 	queue.append(customer)
 	customer.walk_to(_queue_slot(queue.size() - 1), queue.size() - 1)
@@ -258,9 +265,17 @@ func _on_departed(customer: Customer) -> void:
 	if active == customer:
 		active = null
 		Orders.clear_active()
+	if _eating_customer == customer:
+		_eating_customer = null
 	if is_instance_valid(customer):
 		customer.queue_free()
 	_refresh_queue()
+
+
+func _on_finished_eating(customer: Customer) -> void:
+	if _eating_customer == customer:
+		_eating_customer = null
+		_refresh_queue()
 
 
 func _refresh_queue() -> void:
@@ -329,13 +344,14 @@ func serve_plate(puris: Array[PuriData]) -> bool:
 	if avg_score >= 0.9:
 		Audio.haptic(35)
 	if complete:
-		active.receive(avg_score, final_message)
-		active.leave(active.exit_position)
 		var just_served := active
+		active.receive(avg_score, final_message)
+		_eating_customer = just_served
 		Orders.clear_active()
 		queue.erase(just_served)
 		active = null
-		_refresh_queue()
+	elif count > 0 and is_instance_valid(active):
+		active.snack()
 	return true
 
 

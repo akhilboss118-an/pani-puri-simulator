@@ -13,8 +13,12 @@ func _init() -> void:
 
 
 func _build_content() -> void:
-	_headline = UIKit.label("", 22, UIKit.CREAM)
+	content.add_child(UIKit.section_header("Summary", UIKit.FILIGREE))
+
+	_headline = UIKit.label("", 20, UIKit.CREAM)
+	_headline.add_theme_font_override("font", UIKit.ui_font(700, 2))
 	content.add_child(_headline)
+
 	var scroll := ScrollContainer.new()
 	scroll.custom_minimum_size = Vector2(0, 320)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -22,14 +26,16 @@ func _build_content() -> void:
 	fit_to_viewport(scroll, 0.46, 360.0)
 	_body = VBoxContainer.new()
 	_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_body.add_theme_constant_override("separation", 5)
+	_body.add_theme_constant_override("separation", 4)
 	scroll.add_child(_body)
-	content.add_child(UIKit.hsep(4))
+	content.add_child(UIKit.hsep(6))
 
-	var next_button := UIKit.primary_button("Start next day", 48)
+	content.add_child(UIKit.section_header("Close shift", UIKit.FILIGREE_DIM))
+
+	var next_button := UIKit.gold_slab("Start next day", 50)
 	next_button.pressed.connect(_on_next_day)
 	content.add_child(next_button)
-	var menu_button := UIKit.ghost_button("Back to main menu", 42)
+	var menu_button := UIKit.slab_button("Back to main menu", UIKit.FILIGREE_DIM, 44)
 	menu_button.pressed.connect(_on_menu)
 	content.add_child(menu_button)
 
@@ -111,7 +117,8 @@ func _add_goals(stored: Variant) -> void:
 
 func _row(label_text: String, value_text: String, value_color: Color) -> void:
 	var row := HBoxContainer.new()
-	var left := UIKit.label(label_text, 16, UIKit.MUTED)
+	row.add_theme_constant_override("separation", 10)
+	var left := UIKit.kicker(label_text, UIKit.MUTED, 12)
 	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(left)
 	var right := UIKit.label(value_text, 16, value_color)

@@ -105,8 +105,8 @@
       "offset": [0.4, 0, 0.2],
       "rotation_deg": [0, 0, 0],
       "scale": 2.1,
-      "enabled": true,
-      "notes": "Bin beside the serving side of the cart."
+      "enabled": false,
+      "notes": "Replaced by TrashStation's Poly-by-Google garbage_bin.glb."
     },
     {
       "file": "res://assets/environment/props/terrace_plant.glb",
@@ -164,37 +164,37 @@
     },
     {
       "file": "res://assets/environment/props/garbage_bin.glb",
-      "anchor": "counter_right",
-      "offset": [0.9, 0.15, 0.45],
-      "rotation_deg": [0, 0, 0],
-      "scale": 0.32,
+      "anchor": "terrace_right",
+      "offset": [1.7, 0.016, -1.35],
+      "rotation_deg": [0, -145, 0],
+      "scale": 0.28,
       "enabled": true,
-      "notes": "User-supplied Poly-by-Google garbage bin beside the serving side."
+      "notes": "User-supplied Poly-by-Google garbage bin by the terrace dining entrance."
     },
     {
       "file": "res://assets/environment/props/apartment_building.glb",
       "anchor": "street_far",
-      "offset": [27, 0, -16],
-      "rotation_deg": [0, 180, 0],
-      "scale": 0.55,
+      "offset": [-10.5, 0.02, -15.5],
+      "rotation_deg": [0, 35, 0],
+      "scale": 0.88,
       "enabled": true,
-      "notes": "User-supplied Poly-by-Google apartment building on the far pavement."
+      "notes": "User-supplied Poly-by-Google apartment building framing the west bazaar corner."
     },
     {
       "file": "res://assets/environment/props/bike.glb",
       "anchor": "entrance",
-      "offset": [-11, 0.14, 1.5],
-      "rotation_deg": [0, 35, 0],
-      "scale": 0.13,
+      "offset": [-2.8, -0.017, -1.8],
+      "rotation_deg": [0, 62, 0],
+      "scale": 0.165,
       "enabled": true,
-      "notes": "User-supplied MiniPoly bike parked near the restaurant."
+      "notes": "User-supplied MiniPoly bike parked cleanly at the lane entrance."
     },
     {
       "file": "res://assets/environment/props/box_b.glb",
       "anchor": "counter_left",
-      "offset": [-1.4, 0.12, 0.4],
-      "rotation_deg": [0, 15, 0],
-      "scale": 2.2,
+      "offset": [-0.95, 0.12, 0.45],
+      "rotation_deg": [0, 18, 0],
+      "scale": 2.6,
       "enabled": true,
       "notes": "User-supplied Kay Lousberg box beside the prep side."
     },

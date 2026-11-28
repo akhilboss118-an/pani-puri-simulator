@@ -1,20 +1,21 @@
 class_name Customer
 extends Node3D
-## One reusable low-poly customer. Walks in, queues, shows an order bubble,
-## waits with a visible patience bar, reacts, pays and leaves.
-##
-## The seven imported GLB characters are the primary look. If a model is
-## missing the procedural body below is used instead, so the game always runs.
+## Animated stall customer. Walks in, queues, faces the vendor, shows an order
+## bubble, eats when served, reacts, pays, and walks away.
 
 signal departed(customer: Customer)
 signal walked_out(customer: Customer)
+signal finished_eating(customer: Customer)
 
 enum State { WALK_IN, QUEUE, ORDER, REACTION, LEAVING }
 
-const MODEL_COUNT := 9
+const MODEL_COUNT := 2
 const MODEL_DIR := "res://assets/models/customers"
+const COUNTER_FACE_POINT := Vector3(0.0, 0.14, 10.65)
+const ANIM_BLEND := 0.22
 
 static var _model_cache: Dictionary = {}
+static var _shadow_tex: ImageTexture
 
 var order: Dictionary = {}
 var customer_name: String = "Customer"
@@ -52,10 +53,15 @@ var _phase: float = 0.0
 var _reaction_timer: float = 0.0
 var _walk_speed: float = 1.25
 var _leaving: bool = false
+var _idle_speed: float = 1.0
+var _face_target: Vector3 = COUNTER_FACE_POINT
+var _has_custom_face: bool = false
+var _eating_snack: bool = false
 
 
 func _ready() -> void:
 	add_to_group("customer")
+	_idle_speed = randf_range(0.94, 1.06)
 	_build()
 	_bubble.visible = false
 	_bubble_bg.visible = false
@@ -65,6 +71,12 @@ func _ready() -> void:
 	if _badge:
 		_badge.visible = false
 	_play_animation("idle")
+	if _animation_player != null:
+		var idle_name := _resolve_animation("idle")
+		if idle_name != &"":
+			var anim := _animation_player.get_animation(idle_name)
+			if anim != null and anim.length > 0.2:
+				_animation_player.seek(randf_range(0.0, anim.length), true)
 
 
 func _build() -> void:
@@ -72,33 +84,80 @@ func _build() -> void:
 	_body.name = "Body"
 	add_child(_body)
 
+	_build_contact_shadow()
 	if not _build_imported_model():
 		_build_procedural_body()
 	_build_order_overlay()
 
 
-func _build_imported_model() -> bool:
-	var key := "%s/customer_%d.glb" % [MODEL_DIR, clampi(model_index, 1, MODEL_COUNT)]
+## Fake contact shadow so the customer is planted on the pavement even when the
+## sun's shadow map is off on low quality. One alpha quad.
+func _build_contact_shadow() -> void:
+	if _shadow_tex == null:
+		_shadow_tex = UIKit.radial_texture([
+			[0.0, Color(0, 0, 0, 0.46)],
+			[0.40, Color(0, 0, 0, 0.34)],
+			[0.74, Color(0, 0, 0, 0.12)],
+			[1.0, Color(0, 0, 0, 0.0)],
+		], Vector2(0.5, 0.5), 0.5, 64)
+	var quad := QuadMesh.new()
+	quad.size = Vector2(1.15, 0.78)
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.albedo_texture = _shadow_tex
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mat.disable_receive_shadows = true
+	var mi := MeshInstance3D.new()
+	mi.name = "ContactShadow"
+	mi.mesh = quad
+	mi.material_override = mat
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.position = Vector3(0, -0.014, 0.04)
+	mi.rotation.x = -PI * 0.5
+	add_child(mi)
+
+
+static func load_model_scene(index: int) -> PackedScene:
+	var key := "%s/customer_%d.glb" % [MODEL_DIR, clampi(index, 1, MODEL_COUNT)]
 	if not _model_cache.has(key):
 		_model_cache[key] = load(key) if ResourceLoader.exists(key) else null
 	var packed: Resource = _model_cache[key]
-	if packed == null or not (packed is PackedScene):
-		print("Customer: GLB missing ", key, " - using procedural fallback")
+	return packed as PackedScene if packed is PackedScene else null
+
+
+static func configure_model_animations(anim_player: AnimationPlayer) -> void:
+	if anim_player == null:
+		return
+	for anim_name in anim_player.get_animation_list():
+		var anim := anim_player.get_animation(anim_name)
+		if anim == null:
+			continue
+		var lower := String(anim_name).to_lower()
+		anim.loop_mode = Animation.LOOP_NONE if lower.ends_with("eat") else Animation.LOOP_LINEAR
+
+
+func _build_imported_model() -> bool:
+	var packed := load_model_scene(model_index)
+	if packed == null:
+		print("Customer: GLB missing for index ", model_index, " - using procedural fallback")
 		return false
-	var instance: Node = (packed as PackedScene).instantiate()
+	var instance: Node = packed.instantiate()
 	if instance == null or not (instance is Node3D):
 		return false
-	print("Customer: GLB loaded ", key)
 	_model = instance as Node3D
 	_model.name = "ImportedModel"
-	var height_scale := randf_range(0.97, 1.03)
+	var height_scale := randf_range(0.98, 1.02)
 	_model.scale = Vector3.ONE * height_scale
 	_model_base_scale = height_scale
 	_body.add_child(_model)
 	var anim_players: Array[Node] = _model.find_children("*", "AnimationPlayer", true, false)
 	_animation_player = anim_players[0] as AnimationPlayer if not anim_players.is_empty() else null
 	_animated = _animation_player != null
-	_animated = _animation_player != null
+	if _animation_player != null:
+		configure_model_animations(_animation_player)
+		if not _animation_player.animation_finished.is_connected(_on_animation_finished):
+			_animation_player.animation_finished.connect(_on_animation_finished)
 	for node in _model.find_children("*", "MeshInstance3D", true, false):
 		var mesh := node as MeshInstance3D
 		mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
@@ -256,6 +315,7 @@ func walk_to(position: Vector3, index: int) -> void:
 	target_position = position
 	queue_index = index
 	has_arrived = false
+	_eating_snack = false
 	state = State.WALK_IN
 
 
@@ -263,24 +323,46 @@ func face_towards(world_position: Vector3) -> void:
 	if _body == null:
 		return
 	var flat := Vector3(world_position.x, global_position.y, world_position.z)
+	_face_target = flat
+	_has_custom_face = true
 	if flat.distance_to(global_position) > 0.05:
 		_body.look_at(flat, Vector3.UP)
+
+
+func _smooth_face_towards(world_position: Vector3, delta: float, rate: float = 9.0) -> void:
+	if _body == null:
+		return
+	var flat := Vector3(world_position.x, global_position.y, world_position.z)
+	var dir := flat - global_position
+	if dir.length_squared() < 0.0025:
+		return
+	var target_basis := Basis.looking_at(dir.normalized(), Vector3.UP)
+	_body.basis = _body.basis.orthonormalized().slerp(target_basis, minf(1.0, delta * rate))
 
 
 func begin_order(order_data: Dictionary) -> void:
 	order = order_data
 	state = State.ORDER
 	has_arrived = true
+	_eating_snack = false
 	_bubble.text = order_text()
 	_bubble.visible = true
 	_bubble_bg.visible = true
 	_bubble_frame.visible = true
 	_bar_fill.visible = true
 	_bar_bg.visible = true
+	_play_animation("idle")
 	Audio.play("bell", 1.2, -18.0)
 	var line := String(order_data.get("dialogue", ""))
 	if line != "":
 		Audio.play_dialogue(line, global_position)
+
+
+func snack() -> void:
+	if state != State.ORDER:
+		return
+	_eating_snack = true
+	_play_animation("eat", true)
 
 
 func order_text() -> String:
@@ -297,7 +379,8 @@ func patience_ratio() -> float:
 
 func receive(score: float, message: String) -> void:
 	state = State.REACTION
-	_reaction_timer = 1.6
+	_eating_snack = false
+	_reaction_timer = 2.6 if score >= 0.6 else 1.6
 	_bubble.text = message
 	_bubble.visible = true
 	_bubble_bg.visible = true
@@ -307,21 +390,26 @@ func receive(score: float, message: String) -> void:
 	Audio.play("good" if score >= 0.6 else "bad", 1.0, -8.0)
 	var reaction := "serve_bad" if score < 0.6 else ("serve_perfect" if score >= 0.9 else "serve_good")
 	Audio.play_dialogue(reaction, global_position)
-	_play_animation("eat")
 	if score >= 0.6:
-		var tween := create_tween()
-		tween.tween_property(_body, "position:y", 0.14, 0.12)
-		tween.tween_property(_body, "position:y", 0.0, 0.18)
+		_play_animation("eat", true)
 	else:
-		var tween2 := create_tween()
-		tween2.tween_property(_body, "rotation:z", 0.12, 0.08)
-		tween2.tween_property(_body, "rotation:z", -0.12, 0.12)
-		tween2.tween_property(_body, "rotation:z", 0.0, 0.08)
+		_play_animation("idle")
+	if not _animated:
+		if score >= 0.6:
+			var tween := create_tween()
+			tween.tween_property(_body, "position:y", 0.14, 0.12)
+			tween.tween_property(_body, "position:y", 0.0, 0.18)
+		else:
+			var tween2 := create_tween()
+			tween2.tween_property(_body, "rotation:z", 0.12, 0.08)
+			tween2.tween_property(_body, "rotation:z", -0.12, 0.12)
+			tween2.tween_property(_body, "rotation:z", 0.0, 0.08)
 
 
 func leave(exit_position: Vector3) -> void:
 	state = State.LEAVING
 	_leaving = true
+	_eating_snack = false
 	target_position = exit_position
 	has_arrived = false
 	_play_animation("walk")
@@ -342,10 +430,15 @@ func _process(delta: float) -> void:
 			_move(delta)
 		State.ORDER:
 			_patience_tick(delta)
+			_smooth_face_towards(_face_target if _has_custom_face else COUNTER_FACE_POINT, delta)
+			if not _eating_snack:
+				_play_animation("idle")
 			_idle_anim(delta)
 		State.REACTION:
+			_smooth_face_towards(_face_target if _has_custom_face else COUNTER_FACE_POINT, delta)
 			_reaction_timer -= delta
 			if _reaction_timer <= 0.0:
+				finished_eating.emit(self)
 				leave(exit_position)
 
 
@@ -353,12 +446,48 @@ func _active_state() -> bool:
 	return Game.state == Game.State.PLAYING
 
 
-func _play_animation(name: String) -> void:
-	if _animation_player == null or not _animation_player.has_animation(name):
+func _resolve_animation(target: String) -> StringName:
+	if _animation_player == null:
+		return &""
+	if _animation_player.has_animation(target):
+		return StringName(target)
+	var suffix := target.to_lower()
+	for anim_name in _animation_player.get_animation_list():
+		if String(anim_name).to_lower().ends_with(suffix):
+			return anim_name
+	return &""
+
+
+func _play_animation(anim_key: String, force_restart: bool = false) -> void:
+	var resolved := _resolve_animation(anim_key)
+	if resolved == &"":
 		return
-	if _animation_player.current_animation == name and _animation_player.is_playing():
+	var target_speed := 1.0
+	match anim_key:
+		"walk":
+			target_speed = clampf(_walk_speed / 1.15, 0.85, 1.45)
+		"eat":
+			target_speed = 1.35
+		_:
+			target_speed = _idle_speed
+	_animation_player.speed_scale = target_speed
+	if not force_restart and _animation_player.current_animation == resolved and _animation_player.is_playing():
 		return
-	_animation_player.play(name)
+	if force_restart:
+		_animation_player.play(resolved, 0.16)
+		_animation_player.seek(0.0, true)
+	else:
+		_animation_player.play(resolved, ANIM_BLEND)
+
+
+func _on_animation_finished(anim_name: StringName) -> void:
+	var lower := String(anim_name).to_lower()
+	if lower.ends_with("eat"):
+		_eating_snack = false
+		if state == State.ORDER:
+			_play_animation("idle")
+		elif state == State.REACTION:
+			_play_animation("idle")
 
 
 func _move(delta: float) -> void:
@@ -371,15 +500,15 @@ func _move(delta: float) -> void:
 				state = State.QUEUE
 			elif state == State.LEAVING:
 				departed.emit(self)
+		if state != State.LEAVING:
+			_smooth_face_towards(_face_target if _has_custom_face else COUNTER_FACE_POINT, delta)
 		_play_animation("walk" if state == State.LEAVING else "idle")
 		_idle_anim(delta)
 		return
 	_play_animation("walk")
 	var direction := (flat_target - global_position).normalized()
 	global_position += direction * _walk_speed * delta
-	var look_target := global_position + direction
-	if _body:
-		_body.look_at(look_target, Vector3.UP)
+	_smooth_face_towards(global_position + direction, delta, 10.0)
 	_phase += delta * 9.0
 	var swing := sin(_phase) * 0.5
 	if _leg_l and _leg_r:

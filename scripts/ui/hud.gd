@@ -128,15 +128,23 @@ func _build() -> void:
 
 # ------------------------------------------------------------------ styling
 
-func _glass(margin: int = 10, border: Color = Color("7d522c")) -> PanelContainer:
+func _glass(margin: int = 10, border: Color = UIKit.FILIGREE_DIM) -> PanelContainer:
 	var p := PanelContainer.new()
-	var sb := UIKit.style(Color(0.09, 0.06, 0.04, 0.86), 14, border, 2, margin)
-	sb.shadow_color = Color(0, 0, 0, 0.45)
-	sb.shadow_size = 14
-	sb.shadow_offset = Vector2(0, 4)
-	p.add_theme_stylebox_override("panel", sb)
+	p.add_theme_stylebox_override("panel", UIKit.slab_style(0.80, margin, border))
 	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return p
+
+
+## A 2px gold accent bar pinned to the left edge of a card - the Spider-Man 2
+## "active item" tell, done with a plain ColorRect so it costs nothing.
+func _accent_bar(parent: Control, color: Color = UIKit.GOLD, width: int = 2) -> void:
+	var bar := ColorRect.new()
+	bar.color = Color(color.r, color.g, color.b, 0.85)
+	bar.custom_minimum_size = Vector2(width, 0)
+	bar.size_flags_vertical = Control.SIZE_FILL
+	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(bar)
+	parent.move_child(bar, 0)
 
 
 func _build_top_left() -> void:
@@ -146,14 +154,19 @@ func _build_top_left() -> void:
 	_top_left_col.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_top_left_col)
 
-	# Cash Pill: [💵] ₹250
-	_cash_pill = _glass(8, Color("6c4a28"))
+	# Cash Pill: [icon] Rs 250
+	_cash_pill = _glass(8, UIKit.FILIGREE_DIM)
 	_cash_pill.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	_top_left_col.add_child(_cash_pill)
 	var cash_row := HBoxContainer.new()
 	cash_row.add_theme_constant_override("separation", 8)
 	_cash_pill.add_child(cash_row)
-	cash_row.add_child(UIIcons.IconGlyph.new("cash", Vector2(26, 20)))
+	var cash_accent := ColorRect.new()
+	cash_accent.color = Color(UIKit.GOLD.r, UIKit.GOLD.g, UIKit.GOLD.b, 0.9)
+	cash_accent.custom_minimum_size = Vector2(2, 18)
+	cash_accent.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	cash_row.add_child(cash_accent)
+	cash_row.add_child(UIIcons.IconGlyph.new("cash", Vector2(24, 18)))
 	_money_label = UIKit.heading("₹500", 24, UIKit.CREAM, 800)
 	_money_label.pivot_offset = Vector2(40, 14)
 	cash_row.add_child(_money_label)
@@ -164,17 +177,22 @@ func _build_top_left() -> void:
 	cash_row.add_child(_tips_label)
 
 	# UI Elements Card: Happiness / Reputation / Service Time + Minimap
-	_stats_card = _glass(10, Color("8a5a2e"))
-	_stats_card.custom_minimum_size = Vector2(310, 0)
+	_stats_card = _glass(11, UIKit.FILIGREE_DIM)
+	_stats_card.custom_minimum_size = Vector2(300, 0)
 	_top_left_col.add_child(_stats_card)
 
 	var main_row := HBoxContainer.new()
 	main_row.add_theme_constant_override("separation", 10)
 	_stats_card.add_child(main_row)
 
+	var accent := ColorRect.new()
+	accent.color = Color(UIKit.FILIGREE.r, UIKit.FILIGREE.g, UIKit.FILIGREE.b, 0.55)
+	accent.custom_minimum_size = Vector2(2, 0)
+	main_row.add_child(accent)
+
 	var bars := VBoxContainer.new()
 	bars.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	bars.add_theme_constant_override("separation", 6)
+	bars.add_theme_constant_override("separation", 7)
 	main_row.add_child(bars)
 
 	_happy_bar = _metric_row(bars, "happy", "Customer Happiness", Color("64c856"), 80.0)
@@ -222,17 +240,16 @@ func _metric_row(parent: VBoxContainer, icon_kind: String, title: String, fill_c
 	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	col.add_theme_constant_override("separation", 2)
 	row.add_child(col)
-	var lbl := UIKit.label(title, 11, UIKit.CREAM)
-	lbl.add_theme_font_override("font", UIKit.ui_font(600, 0))
+	var lbl := UIKit.kicker(title, UIKit.MUTED, 9)
 	col.add_child(lbl)
 	var bar := ProgressBar.new()
 	bar.min_value = 0
 	bar.max_value = 100
 	bar.value = initial_val
 	bar.show_percentage = false
-	bar.custom_minimum_size = Vector2(0, 7)
-	bar.add_theme_stylebox_override("background", UIKit.style(Color("241a12"), 4, Color(0, 0, 0, 0.3), 0, 0))
-	bar.add_theme_stylebox_override("fill", UIKit.bar_fill(fill_col, 4))
+	bar.custom_minimum_size = Vector2(0, 3)
+	bar.add_theme_stylebox_override("background", UIKit.bar_track(3))
+	bar.add_theme_stylebox_override("fill", UIKit.thin_bar(fill_col, 3))
 	col.add_child(bar)
 	return bar
 
@@ -271,48 +288,60 @@ func _build_top_right() -> void:
 
 
 func _hud_button(text: String, method: String) -> Button:
-	var b := UIKit.button(text, 34)
-	b.add_theme_font_override("font", UIKit.ui_font(700, 0))
-	b.add_theme_font_size_override("font_size", 12)
+	var b := UIKit.button(text.to_upper(), 34)
+	b.add_theme_font_override("font", UIKit.ui_font(700, 2))
+	b.add_theme_font_size_override("font_size", 11)
 	b.custom_minimum_size = Vector2(0, 34)
-	b.add_theme_stylebox_override("normal", UIKit.style(Color(0.11, 0.075, 0.05, 0.9), 10, Color("7d522c"), 1, 10))
-	b.add_theme_stylebox_override("hover", UIKit.style(Color(0.24, 0.16, 0.1, 0.96), 10, UIKit.GOLD, 1, 10))
-	b.add_theme_stylebox_override("pressed", UIKit.style(UIKit.GOLD, 10, UIKit.GOLD, 1, 10))
+	b.add_theme_stylebox_override("normal", UIKit.style(Color(0.04, 0.032, 0.026, 0.85), UIKit.SHARP, Color(0.79, 0.64, 0.36, 0.35), 1, 11))
+	b.add_theme_stylebox_override("hover", UIKit.style(Color(0.79, 0.64, 0.36, 0.18), UIKit.SHARP, UIKit.FILIGREE, 1, 11))
+	b.add_theme_stylebox_override("pressed", UIKit.style(UIKit.GOLD, UIKit.SHARP, UIKit.GOLD, 1, 11))
+	b.add_theme_color_override("font_color", Color(0.88, 0.84, 0.77))
 	b.add_theme_color_override("font_pressed_color", UIKit.INK)
 	b.pressed.connect(func(): Game.root.call(method))
 	return b
 
 
 func _build_order_card() -> void:
-	# Clean white speech-bubble style order card matching "Customer AI & Orders"
+	# Contract card: smoked glass, a single gold hairline, serif order line.
 	_order_card = PanelContainer.new()
-	var sb := UIKit.style(Color("faf6ee"), 16, Color("c8a97e"), 2, 14)
-	sb.shadow_color = Color(0, 0, 0, 0.45)
-	sb.shadow_size = 18
-	sb.shadow_offset = Vector2(0, 6)
-	_order_card.add_theme_stylebox_override("panel", sb)
+	_order_card.add_theme_stylebox_override("panel", UIKit.frame_style(14))
 	_order_card.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	_order_card.offset_left = -310
+	_order_card.offset_left = -318
 	_order_card.offset_right = -18
-	_order_card.offset_top = 66
-	_order_card.offset_bottom = 204
+	_order_card.offset_top = 62
+	_order_card.offset_bottom = 212
 	_order_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_order_card)
 
+	var root := HBoxContainer.new()
+	root.add_theme_constant_override("separation", 10)
+	_order_card.add_child(root)
+
+	var accent := ColorRect.new()
+	accent.color = Color(UIKit.GOLD.r, UIKit.GOLD.g, UIKit.GOLD.b, 0.9)
+	accent.custom_minimum_size = Vector2(2, 0)
+	accent.size_flags_vertical = Control.SIZE_FILL
+	accent.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(accent)
+
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 6)
-	_order_card.add_child(box)
+	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	root.add_child(box)
 
 	var head := HBoxContainer.new()
 	head.add_theme_constant_override("separation", 8)
-	_order_title = UIKit.kicker("Customer 1", Color("8f4e18"), 10)
+	_order_title = UIKit.kicker("Customer 1", UIKit.FILIGREE, 10)
 	_order_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(_order_title)
-	head.add_child(UIKit.gold_pill("ORDER", UIKit.GOLD, UIKit.INK, 9))
+	var order_tag := UIKit.kicker("Order", UIKit.FILIGREE_DIM, 9)
+	order_tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	head.add_child(order_tag)
 	box.add_child(head)
 
-	_order_qty = UIKit.label("3 Pani Puris!", 18, Color("24150c"))
-	_order_qty.add_theme_font_override("font", UIKit.ui_font(800, 0))
+	box.add_child(UIKit.divider(UIKit.FILIGREE, 0.30))
+
+	_order_qty = UIKit.heading("3 Pani Puris", 21, UIKit.CREAM, 700)
 	_order_qty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(_order_qty)
 
@@ -320,7 +349,7 @@ func _build_order_card() -> void:
 	_order_chips.add_theme_constant_override("separation", 5)
 	box.add_child(_order_chips)
 
-	_order_note = UIKit.label("", 12, Color("664830"))
+	_order_note = UIKit.label("", 12, UIKit.MUTED)
 	_order_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_order_note.visible = false
 	box.add_child(_order_note)
@@ -330,41 +359,40 @@ func _build_order_card() -> void:
 # ---------------------------------------------------- preparation mechanism
 
 func _build_prep_bar() -> void:
-	_prep_panel = _glass(7, Color("8a5a2e"))
+	_prep_panel = _glass(8, UIKit.FILIGREE_DIM)
 	_prep_panel.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-	_prep_panel.offset_left = -295
-	_prep_panel.offset_right = 295
-	_prep_panel.offset_top = -66
-	_prep_panel.offset_bottom = -10
+	_prep_panel.offset_left = -300
+	_prep_panel.offset_right = 300
+	_prep_panel.offset_top = -64
+	_prep_panel.offset_bottom = -12
 	add_child(_prep_panel)
 
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 5)
+	row.add_theme_constant_override("separation", 4)
 	_prep_panel.add_child(row)
 
 	var names := ["Take Puri", "Crack & Fill", "Add Chutney", "Add Pani", "Serve"]
 	for i in names.size():
 		var pill := PanelContainer.new()
-		var sb := UIKit.style(Color(0.14, 0.09, 0.06, 0.85), 10, Color(1, 0.9, 0.7, 0.14), 1, 0)
-		sb.content_margin_left = 7
-		sb.content_margin_right = 8
-		sb.content_margin_top = 3
-		sb.content_margin_bottom = 3
+		var sb := UIKit.style(Color(1, 1, 1, 0.03), UIKit.SHARP, Color(1, 1, 1, 0.10), 1, 0)
+		sb.content_margin_left = 8
+		sb.content_margin_right = 9
+		sb.content_margin_top = 4
+		sb.content_margin_bottom = 4
 		pill.add_theme_stylebox_override("panel", sb)
 		pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var hbox := HBoxContainer.new()
 		hbox.add_theme_constant_override("separation", 5)
 		pill.add_child(hbox)
-		hbox.add_child(UIIcons.IconGlyph.new("puri_%d" % i, Vector2(22, 22)))
-		var lbl := UIKit.label(names[i], 11, UIKit.MUTED)
-		lbl.add_theme_font_override("font", UIKit.ui_font(700, 0))
+		hbox.add_child(UIIcons.IconGlyph.new("puri_%d" % i, Vector2(20, 20)))
+		var lbl := UIKit.kicker(names[i], UIKit.MUTED, 9)
 		hbox.add_child(lbl)
 		row.add_child(pill)
 		_prep_steps.append(pill)
 		_prep_labels.append(lbl)
 		if i < names.size() - 1:
-			var arrow := UIKit.label("→", 12, Color("d8b272"))
+			var arrow := UIKit.label("›", 13, Color(0.72, 0.60, 0.40, 0.8))
 			row.add_child(arrow)
 
 
@@ -393,14 +421,14 @@ func _refresh_prep_bar() -> void:
 		var lbl := _prep_labels[i]
 		var done := i < stage
 		var current := i == stage
-		var bg := Color(0.14, 0.38, 0.20, 0.92) if done else (UIKit.GOLD if current else Color(0.14, 0.09, 0.06, 0.78))
-		var border := UIKit.GREEN if done else (UIKit.CREAM if current else Color(1, 0.9, 0.7, 0.14))
-		var fg := UIKit.CREAM if done else (UIKit.INK if current else UIKit.MUTED)
-		var sb := UIKit.style(bg, 10, border, 1, 0)
-		sb.content_margin_left = 7
-		sb.content_margin_right = 8
-		sb.content_margin_top = 3
-		sb.content_margin_bottom = 3
+		var bg := Color(0.80, 0.62, 0.30, 0.92) if current else (Color(0.16, 0.24, 0.18, 0.85) if done else Color(1, 1, 1, 0.03))
+		var border := UIKit.GOLD if current else (Color(0.40, 0.62, 0.42, 0.75) if done else Color(1, 1, 1, 0.10))
+		var fg := UIKit.INK if current else (Color(0.78, 0.88, 0.78) if done else UIKit.MUTED)
+		var sb := UIKit.style(bg, UIKit.SHARP, border, 1, 0)
+		sb.content_margin_left = 8
+		sb.content_margin_right = 9
+		sb.content_margin_top = 4
+		sb.content_margin_bottom = 4
 		pill.add_theme_stylebox_override("panel", sb)
 		lbl.add_theme_color_override("font_color", fg)
 
@@ -410,14 +438,11 @@ func _refresh_prep_bar() -> void:
 func _build_subtitle() -> void:
 	_subtitle_panel = UIKit.panel(10)
 	_subtitle_panel.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-	_subtitle_panel.offset_left = -330
-	_subtitle_panel.offset_right = 330
-	_subtitle_panel.offset_top = -188
-	_subtitle_panel.offset_bottom = -120
-	var sb := UIKit.style(Color(0.08, 0.055, 0.04, 0.9), 14, Color(0.95, 0.76, 0.36, 0.45), 1, 10)
-	sb.shadow_color = Color(0, 0, 0, 0.45)
-	sb.shadow_size = 14
-	_subtitle_panel.add_theme_stylebox_override("panel", sb)
+	_subtitle_panel.offset_left = -340
+	_subtitle_panel.offset_right = 340
+	_subtitle_panel.offset_top = -190
+	_subtitle_panel.offset_bottom = -122
+	_subtitle_panel.add_theme_stylebox_override("panel", UIKit.frame_style(10))
 	_subtitle_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_subtitle_panel)
 
@@ -444,51 +469,49 @@ func _build_subtitle() -> void:
 func _build_prompt() -> void:
 	var wrap := PanelContainer.new()
 	wrap.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-	wrap.offset_left = -210
-	wrap.offset_right = 210
+	wrap.offset_left = -220
+	wrap.offset_right = 220
 	wrap.offset_top = -112
-	wrap.offset_bottom = -74
+	wrap.offset_bottom = -72
 	wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var sb := UIKit.style(Color(0.06, 0.04, 0.03, 0.85), 999, Color(0.95, 0.78, 0.4, 0.38), 1, 6)
-	wrap.add_theme_stylebox_override("panel", sb)
+	wrap.add_theme_stylebox_override("panel", UIKit.slab_style(0.78, 7, UIKit.FILIGREE_DIM))
 	add_child(wrap)
 
 	_prompt_panel = HBoxContainer.new()
 	_prompt_panel.alignment = BoxContainer.ALIGNMENT_CENTER
-	_prompt_panel.add_theme_constant_override("separation", 8)
+	_prompt_panel.add_theme_constant_override("separation", 9)
 	wrap.add_child(_prompt_panel)
 
 	if not _mobile:
-		var press_lbl := UIKit.label("Press", 15, UIKit.CREAM)
+		var press_lbl := UIKit.kicker("Press", UIKit.MUTED, 10)
 		_prompt_panel.add_child(press_lbl)
 		_prompt_key_box = PanelContainer.new()
-		var ksb := UIKit.style(Color("f5ebd6"), 6, Color("5a3818"), 1, 0)
-		ksb.content_margin_left = 7
-		ksb.content_margin_right = 7
-		ksb.content_margin_top = 1
-		ksb.content_margin_bottom = 1
+		var ksb := UIKit.style(Color(0.93, 0.88, 0.78, 0.95), UIKit.SHARP, Color(0.42, 0.30, 0.16), 1, 0)
+		ksb.content_margin_left = 8
+		ksb.content_margin_right = 8
+		ksb.content_margin_top = 2
+		ksb.content_margin_bottom = 2
 		_prompt_key_box.add_theme_stylebox_override("panel", ksb)
-		var klbl := UIKit.label("E", 14, Color("26160a"))
+		var klbl := UIKit.label("E", 13, UIKit.INK)
 		klbl.add_theme_font_override("font", UIKit.ui_font(800, 0))
 		_prompt_key_box.add_child(klbl)
 		_prompt_panel.add_child(_prompt_key_box)
 
-	_prompt_label = UIKit.label("", 15, UIKit.CREAM)
-	_prompt_label.add_theme_font_override("font", UIKit.ui_font(700, 0))
+	_prompt_label = UIKit.kicker("", UIKit.CREAM, 11)
 	_prompt_panel.add_child(_prompt_label)
 	wrap.visible = false
 	_prompt_panel.set_meta("wrap", wrap)
 
 
 func _build_held() -> void:
-	_held_panel = _glass(8, Color("7d522c"))
+	_held_panel = _glass(9, UIKit.FILIGREE_DIM)
 	_held_panel.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 	_held_panel.offset_left = 18
-	_held_panel.offset_right = 310
-	_held_panel.offset_top = -54
+	_held_panel.offset_right = 330
+	_held_panel.offset_top = -56
 	_held_panel.offset_bottom = -14
 	add_child(_held_panel)
-	_held_label = UIKit.label("", 12, UIKit.CREAM)
+	_held_label = UIKit.kicker("", UIKit.CREAM, 10)
 	_held_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_held_panel.add_child(_held_label)
 	_held_panel.visible = false
@@ -713,14 +736,14 @@ func _on_prompt_changed(text: String) -> void:
 		wrap.visible = false
 		return
 	wrap.visible = true
-	_prompt_label.text = text if _mobile else "to " + text.to_lower()
+	_prompt_label.text = I18n.t(text).to_upper()
 
 
 func _on_held_changed(text: String) -> void:
 	if _held_panel != null:
 		_held_panel.visible = not Game.overlay_open and text != ""
 		if text != "":
-			_held_label.text = "IN HAND  •  " + text
+			_held_label.text = "IN HAND   " + I18n.t(text).to_upper()
 	_refresh_prep_bar()
 
 
@@ -768,13 +791,10 @@ func _on_toast(text: String, kind: String) -> void:
 	elif kind == "bad":
 		color = Color("ff8a6a")
 	var panel := PanelContainer.new()
-	var sb := UIKit.style(Color(0.08, 0.055, 0.04, 0.92), 12, Color(color.r, color.g, color.b, 0.55), 1, 9)
-	sb.shadow_color = Color(0, 0, 0, 0.4)
-	sb.shadow_size = 10
-	panel.add_theme_stylebox_override("panel", sb)
+	panel.add_theme_stylebox_override("panel", UIKit.slab_style(0.9, 9, Color(color.r, color.g, color.b, 0.7)))
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var label := UIKit.label(text, 12, color)
-	label.add_theme_font_override("font", UIKit.ui_font(600, 0))
+	label.add_theme_font_override("font", UIKit.ui_font(600, 1))
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	panel.add_child(label)
 	_toast_box.add_child(panel)

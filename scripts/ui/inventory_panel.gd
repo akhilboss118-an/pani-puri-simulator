@@ -28,7 +28,7 @@ func _ready() -> void:
 
 func _build_content() -> void:
 	var summary := PanelContainer.new()
-	summary.add_theme_stylebox_override("panel", UIKit.style(UIKit.PANEL_2, 12, UIKit.BORDER, 1, 12))
+	summary.add_theme_stylebox_override("panel", UIKit.slab_style(0.86, 12, UIKit.FILIGREE))
 	content.add_child(summary)
 	var sum_row := HBoxContainer.new()
 	sum_row.add_theme_constant_override("separation", 12)
@@ -36,13 +36,13 @@ func _build_content() -> void:
 
 	var left_sum := VBoxContainer.new()
 	left_sum.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	left_sum.add_theme_constant_override("separation", 2)
+	left_sum.add_theme_constant_override("separation", 3)
 	sum_row.add_child(left_sum)
-	left_sum.add_child(UIKit.gold_pill("Business Management", UIKit.GOLD, UIKit.INK, 10))
-	_money_label = UIKit.label("Cash: ₹0", 19, UIKit.CREAM)
-	_money_label.add_theme_font_override("font", UIKit.ui_font(700, 0))
+	left_sum.add_child(UIKit.section_header("Business management", UIKit.FILIGREE))
+	_money_label = UIKit.label("Cash: ₹0", 20, UIKit.CREAM)
+	_money_label.add_theme_font_override("font", UIKit.ui_font(700, 2))
 	left_sum.add_child(_money_label)
-	var profit_lbl := UIKit.label("Daily Profit: ₹%d" % (Economy.day_revenue - Economy.day_expenses), 14, UIKit.GREEN)
+	var profit_lbl := UIKit.kicker("Daily Profit: ₹%d" % (Economy.day_revenue - Economy.day_expenses), UIKit.MUTED, 12)
 	profit_lbl.name = "ProfitLabel"
 	left_sum.add_child(profit_lbl)
 
@@ -58,7 +58,7 @@ func _build_content() -> void:
 	_list.add_theme_constant_override("separation", 6)
 	scroll.add_child(_list)
 
-	_refill_all = UIKit.action_button("Refill everything", 48)
+	_refill_all = UIKit.gold_slab("Refill everything", 48)
 	_refill_all.pressed.connect(func(): Inventory.refill_all())
 	content.add_child(_refill_all)
 
@@ -80,18 +80,18 @@ func _refresh() -> void:
 		child.queue_free()
 	for def in GameData.ingredients():
 		_list.add_child(_make_row(def))
-	_refill_all.text = "Refill everything (₹%d)" % _basket_cost()
+	_refill_all.text = "REFILL EVERYTHING (₹%d)" % _basket_cost()
 	_refill_all.disabled = _basket_cost() == 0 or not Economy.can_afford(_basket_cost())
 
 
 func _make_row(def: IngredientDef) -> Control:
 	var panel := PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", UIKit.style(UIKit.PANEL_2, 10, UIKit.BORDER, 1, 8))
+	panel.add_theme_stylebox_override("panel", UIKit.slab_style(0.78, 9, UIKit.FILIGREE_DIM))
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 10)
 	panel.add_child(row)
 
-	var name_label := UIKit.label(def.display_name, 16)
+	var name_label := UIKit.kicker(def.display_name, UIKit.CREAM, 13)
 	name_label.custom_minimum_size = Vector2(150, 0)
 	row.add_child(name_label)
 
@@ -104,11 +104,12 @@ func _make_row(def: IngredientDef) -> Control:
 	bar.max_value = capacity
 	bar.value = stock
 	bar.show_percentage = false
-	bar.custom_minimum_size = Vector2(150, 12)
+	bar.custom_minimum_size = Vector2(150, 3)
 	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	var color := UIKit.GREEN if ratio > 0.4 else (UIKit.ORANGE if ratio > 0.15 else UIKit.RED)
-	bar.add_theme_stylebox_override("fill", UIKit.style(color, 6, Color(0, 0, 0, 0), 0, 0))
+	bar.add_theme_stylebox_override("background", UIKit.bar_track(3))
+	bar.add_theme_stylebox_override("fill", UIKit.thin_bar(color, 3))
 	row.add_child(bar)
 
 	var count := UIKit.label("%d / %d" % [stock, capacity], 14, UIKit.MUTED)
@@ -117,7 +118,7 @@ func _make_row(def: IngredientDef) -> Control:
 	row.add_child(count)
 
 	var cost := Inventory.refill_cost(def.id)
-	var button := UIKit.action_button("+%d  ₹%d" % [def.refill_amount, cost], 38)
+	var button := UIKit.slab_button("+%d  ₹%d" % [def.refill_amount, cost], UIKit.GOLD, 38)
 	button.custom_minimum_size = Vector2(130, 38)
 	button.disabled = stock >= capacity or not Economy.can_afford(cost)
 	button.pressed.connect(_on_refill.bind(def.id))

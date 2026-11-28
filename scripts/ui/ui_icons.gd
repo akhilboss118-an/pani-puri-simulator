@@ -220,48 +220,50 @@ class StreetMinimap extends Control:
 
 
 class LogoBanner extends Control:
+	## Cinematic wordmark: no emblem, no ribbon. A serif title held between two
+	## tapered gold rules with a small diamond, and a tracked subtitle beneath.
 	func _init() -> void:
-		custom_minimum_size = Vector2(460, 178)
+		custom_minimum_size = Vector2(460, 150)
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	func _draw() -> void:
 		var w := size.x
 		var cx := w * 0.5
-		# Illustrated Pani Puri emblem on the left side of the title
-		var emblem_c := Vector2(cx - 178, 86)
-		# Mint leaves
-		draw_circle(emblem_c + Vector2(-24, -22), 18, Color("48a032"))
-		draw_circle(emblem_c + Vector2(22, -26), 14, Color("5eb842"))
-		draw_circle(emblem_c + Vector2(-28, 12), 14, Color("3f8c2a"))
-		# Crispy golden puri bowl
-		draw_circle(emblem_c + Vector2(0, 3), 36, Color("4a240b"))
-		draw_circle(emblem_c, 33, Color("df9338"))
-		draw_circle(emblem_c + Vector2(0, -4), 22, Color("6a3412"))
-		draw_circle(emblem_c + Vector2(-7, -2), 9, Color("edc052"))
-		draw_circle(emblem_c + Vector2(7, 2), 8, Color("c47834"))
-		draw_circle(emblem_c + Vector2(0, -7), 11, Color("57a832"))
+		var scale_f := clampf(size.y / 150.0, 0.6, 1.6)
 
-		# Bold golden-yellow outlined "Pani Puri" & "Simulator"
-		var f_big := UIKit.display_font(900, 0)
-		_draw_outlined(f_big, "Pani Puri", Vector2(cx - 125, 68), 64, Color("ffd43b"), Color("4a2308"))
-		_draw_outlined(f_big, "Simulator", Vector2(cx - 118, 124), 56, Color("ffd43b"), Color("4a2308"))
+		_rule(cx, 12.0, w * 0.42, 0.55 * scale_f)
+		_diamond(Vector2(cx, 12.0), 3.5 * scale_f, 0.9)
 
-		# Wooden plank ribbon: "Prepare. Serve. Earn. Expand."
-		var rib := Rect2(cx - 165, 138, 330, 30)
-		draw_rect(rib.grow(2), Color("361a08"), true)
-		draw_rect(rib, Color("6b3b18"), true)
-		draw_rect(rib, Color("b37136"), false, 1.5)
-		var f_sub := UIKit.ui_font(700, 0)
-		var sub_txt := "Prepare. Serve. Earn. Expand."
-		var sub_sz := f_sub.get_string_size(sub_txt, HORIZONTAL_ALIGNMENT_CENTER, -1, 16)
-		draw_string(f_sub, Vector2(cx - sub_sz.x * 0.5, 159), sub_txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("fff3d8"))
+		var title_font := UIKit.display_font(900, 1)
+		var title_size := int(round(66.0 * scale_f))
+		var title := "PANI PURI"
+		var ts := title_font.get_string_size(title, HORIZONTAL_ALIGNMENT_LEFT, -1, title_size)
+		var ty := 12.0 + ts.y * 0.82 + 14.0 * scale_f
+		draw_string(title_font, Vector2(cx - ts.x * 0.5, ty + 4.0 * scale_f), title,
+			HORIZONTAL_ALIGNMENT_LEFT, -1, title_size, Color(0, 0, 0, 0.6))
+		draw_string(title_font, Vector2(cx - ts.x * 0.5, ty), title,
+			HORIZONTAL_ALIGNMENT_LEFT, -1, title_size, Color("f7ead2"))
 
-	func _draw_outlined(font: Font, text: String, pos: Vector2, fsize: int, fill: Color, outline: Color) -> void:
-		# Drop shadow + thick warm brown outline
-		draw_string(font, pos + Vector2(0, 5), text, HORIZONTAL_ALIGNMENT_LEFT, -1, fsize, Color(0, 0, 0, 0.55))
-		for dx in [-3, 0, 3]:
-			for dy in [-3, 0, 3]:
-				if dx == 0 and dy == 0:
-					continue
-				draw_string(font, pos + Vector2(dx, dy), text, HORIZONTAL_ALIGNMENT_LEFT, -1, fsize, outline)
-		draw_string(font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, fsize, fill)
+		_rule(cx, ty + 16.0 * scale_f, w * 0.26, 0.35 * scale_f)
+
+		var sub_font := UIKit.ui_font(600, 9)
+		var sub_size := int(round(14.0 * scale_f))
+		var sub := "SIMULATOR"
+		var ss := sub_font.get_string_size(sub, HORIZONTAL_ALIGNMENT_LEFT, -1, sub_size)
+		var sy := ty + 16.0 * scale_f + 12.0 * scale_f + ss.y * 0.72
+		draw_string(sub_font, Vector2(cx - ss.x * 0.5, sy), sub,
+			HORIZONTAL_ALIGNMENT_LEFT, -1, sub_size, Color("d9b877"))
+
+	func _rule(cx: float, y: float, half: float, alpha: float) -> void:
+		var cols := int(maxf(half, 8.0))
+		for i in cols:
+			var t := float(i) / float(cols)
+			var a := alpha * (1.0 - t) * (1.0 - t * 0.2)
+			var c := Color(0.86, 0.72, 0.44, a)
+			draw_rect(Rect2(cx - float(i) - 1.0, y, 1.0, 1.0), c, true)
+			draw_rect(Rect2(cx + float(i), y, 1.0, 1.0), c, true)
+
+	func _diamond(p: Vector2, d: float, alpha: float) -> void:
+		draw_colored_polygon(PackedVector2Array([
+			p + Vector2(0, -d), p + Vector2(d, 0), p + Vector2(0, d), p + Vector2(-d, 0),
+		]), Color(0.9, 0.76, 0.46, alpha))

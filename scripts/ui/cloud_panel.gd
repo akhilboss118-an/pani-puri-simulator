@@ -12,18 +12,20 @@ func _init() -> void:
 
 
 func _build_content() -> void:
-	_status = UIKit.label("", 14, UIKit.MUTED)
+	content.add_child(UIKit.section_header("Backup", UIKit.FILIGREE))
+	_status = UIKit.label("", 13, UIKit.MUTED)
 	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	content.add_child(_status)
 
-	var backup := UIKit.button("Save backup", 44)
+	var backup := UIKit.slab_button("Save backup", UIKit.FILIGREE, 42)
 	backup.pressed.connect(func(): CloudSave.snapshot(); _refresh())
 	content.add_child(backup)
-	var restore := UIKit.button("Restore backup", 44)
+	var restore := UIKit.slab_button("Restore backup", UIKit.FILIGREE, 42)
 	restore.pressed.connect(func(): CloudSave.restore(); _refresh())
 	content.add_child(restore)
 
-	var copy := UIKit.button("Copy save code", 44)
+	content.add_child(UIKit.section_header("Save code", UIKit.FILIGREE_DIM))
+	var copy := UIKit.slab_button("Copy save code", UIKit.FILIGREE, 42)
 	copy.pressed.connect(func():
 		var code := CloudSave.export_code()
 		DisplayServer.clipboard_set(code)
@@ -32,20 +34,20 @@ func _build_content() -> void:
 	content.add_child(copy)
 
 	_code_edit = LineEdit.new()
-	_code_edit.placeholder_text = "Paste save code..."
+	_code_edit.placeholder_text = "PASTE SAVE CODE..."
 	content.add_child(_code_edit)
-	var import_button := UIKit.button("Import save code", 44)
+	var import_button := UIKit.slab_button("Import save code", UIKit.FILIGREE, 42)
 	import_button.pressed.connect(func(): CloudSave.import_code(_code_edit.text); _refresh())
 	content.add_child(import_button)
 
 	content.add_child(UIKit.hsep(6))
-	var header := UIKit.label("LEADERBOARD", 16, UIKit.ORANGE)
-	content.add_child(header)
+	content.add_child(UIKit.section_header("Leaderboard", UIKit.GOLD))
 	_board = VBoxContainer.new()
 	_board.add_theme_constant_override("separation", 4)
 	content.add_child(_board)
 
-	var back := UIKit.button("Back", 44)
+	content.add_child(UIKit.hsep(4))
+	var back := UIKit.slab_button("Back", UIKit.FILIGREE_DIM, 44)
 	back.pressed.connect(close)
 	content.add_child(back)
 

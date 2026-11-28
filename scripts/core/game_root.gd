@@ -50,6 +50,68 @@ var _film_timeline: Array = [
 	{"at": 27.0, "fn": "film_hold"},
 ]
 
+var _promo_timeline: Array = [
+	{"at": 0.0, "fn": "promo_menu"},
+	{"at": 3.4, "fn": "promo_enter_stall"},
+	{"at": 5.2, "fn": "promo_glide_jar"},
+	{"at": 5.9, "fn": "promo_take"},
+	{"at": 6.6, "fn": "promo_crack"},
+	{"at": 7.3, "fn": "promo_glide_potato"},
+	{"at": 7.9, "fn": "promo_potato"},
+	{"at": 8.4, "fn": "promo_masala"},
+	{"at": 9.0, "fn": "promo_glide_pani"},
+	{"at": 9.6, "fn": "promo_pani"},
+	{"at": 10.3, "fn": "promo_glide_plate"},
+	{"at": 10.9, "fn": "promo_plate"},
+	{"at": 11.7, "fn": "promo_quick_puri"},
+	{"at": 12.6, "fn": "promo_quick_puri"},
+	{"at": 13.5, "fn": "promo_serve"},
+	{"at": 14.8, "fn": "promo_inventory"},
+	{"at": 16.6, "fn": "promo_close"},
+	{"at": 16.8, "fn": "promo_upgrades"},
+	{"at": 18.6, "fn": "promo_close"},
+	{"at": 18.8, "fn": "promo_expand_palace"},
+	{"at": 21.3, "fn": "promo_machine"},
+	{"at": 23.0, "fn": "promo_rain"},
+	{"at": 25.0, "fn": "promo_diwali_night"},
+	{"at": 27.6, "fn": "promo_done"},
+]
+
+var _promo60_timeline: Array = [
+	{"at": 0.00, "fn": "p60_menu"},
+	{"at": 5.75, "fn": "p60_enter_stall"},
+	{"at": 8.00, "fn": "p60_customer_order"},
+	{"at": 9.90, "fn": "p60_glide_jar"},
+	{"at": 10.55, "fn": "promo_take"},
+	{"at": 11.40, "fn": "promo_crack"},
+	{"at": 12.20, "fn": "promo_glide_potato"},
+	{"at": 12.85, "fn": "promo_potato"},
+	{"at": 13.55, "fn": "p60_chickpea"},
+	{"at": 14.30, "fn": "promo_masala"},
+	{"at": 15.05, "fn": "p60_chutney"},
+	{"at": 16.05, "fn": "promo_glide_pani"},
+	{"at": 16.65, "fn": "promo_pani"},
+	{"at": 17.35, "fn": "promo_glide_plate"},
+	{"at": 17.90, "fn": "promo_plate"},
+	{"at": 18.65, "fn": "p60_quick_puri"},
+	{"at": 19.45, "fn": "p60_quick_puri"},
+	{"at": 20.55, "fn": "p60_serve_customer"},
+	{"at": 22.85, "fn": "p60_waste_bin"},
+	{"at": 25.00, "fn": "p60_settings"},
+	{"at": 26.85, "fn": "p60_controls"},
+	{"at": 28.70, "fn": "p60_stock"},
+	{"at": 32.40, "fn": "p60_upgrades"},
+	{"at": 36.50, "fn": "p60_expand"},
+	{"at": 41.70, "fn": "p60_machine"},
+	{"at": 45.30, "fn": "p60_goals"},
+	{"at": 46.85, "fn": "p60_badges"},
+	{"at": 48.35, "fn": "p60_gallery"},
+	{"at": 50.10, "fn": "p60_rain"},
+	{"at": 52.20, "fn": "p60_diwali"},
+	{"at": 54.50, "fn": "p60_report"},
+	{"at": 60.20, "fn": "promo_done"},
+]
+
 var _update_timeline: Array = [
 	{"at": 0.0, "fn": "film_menu"},
 	{"at": 3.0, "fn": "film_counter"},
@@ -97,6 +159,10 @@ func _ready() -> void:
 		_run_film.call_deferred()
 	elif "--updatefilm" in OS.get_cmdline_user_args():
 		_run_update_film.call_deferred()
+	elif "--promo" in OS.get_cmdline_user_args():
+		_run_promo.call_deferred()
+	elif "--promo60" in OS.get_cmdline_user_args():
+		_run_promo60.call_deferred()
 	elif "--shots" in OS.get_cmdline_user_args():
 		_run_screenshot_tour.call_deferred()
 
@@ -346,7 +412,7 @@ func _run_update_film() -> void:
 	await get_tree().process_frame
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	world.customer_manager.call("freeze_for_tutorial")
-	world.customer_manager.call("spawn_tutorial_customer", 8)
+	world.customer_manager.call("spawn_tutorial_customer", 1)
 	hud.visible = true
 	_film_time = 0.0
 	_film_step = 0
@@ -366,6 +432,390 @@ func _film_move(pos: Vector3, ry: float, rx: float) -> void:
 	player.global_position = pos
 	player.rotation.y = ry
 	player.camera.rotation.x = rx
+
+
+func _run_promo() -> void:
+	await get_tree().process_frame
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	_film_time = 0.0
+	_film_step = 0
+	_film_timeline = _promo_timeline
+	_film_active = true
+
+
+func _glide_player(pos: Vector3, ry: float, rx: float, dur: float) -> void:
+	if player == null:
+		return
+	var tw := create_tween().set_parallel(true)
+	tw.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	tw.tween_property(player, "global_position", pos, dur).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_property(player, "rotation:y", ry, dur).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_property(player.camera, "rotation:x", rx, dur).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+
+func promo_menu() -> void:
+	show_menu()
+	if _menu_camera:
+		_menu_camera.current = true
+		_menu_camera.position = Vector3(-11.0, 2.5, 1.6)
+		var tw := create_tween()
+		tw.tween_property(_menu_camera, "position", Vector3(-6.0, 2.45, 1.6), 3.3).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+
+func promo_enter_stall() -> void:
+	Game.start_new_game()
+	player.set_active(false)
+	menu.visible = false
+	hud.visible = true
+	if _menu_camera:
+		_menu_camera.current = false
+	player.camera.current = true
+	world.customer_manager.call("freeze_for_tutorial")
+	var cust: Customer = world.customer_manager.call("spawn_tutorial_customer", 1)
+	if cust:
+		var order := {
+			"recipe_id": "classic",
+			"name": "Classic Pani Puri",
+			"quantity": 3,
+			"pani": "mint",
+			"spice": 1,
+			"sweet": false,
+			"onion": false,
+			"chickpea": false,
+			"price": Progression.price_for(GameData.recipe("classic")),
+			"customer": "Priya",
+			"note": "Make it crispy!",
+			"vip": false,
+			"tip_mult": 1.2,
+			"dialogue": "order_pani",
+		}
+		cust.customer_name = "Priya"
+		cust.global_position = Vector3(-0.1, 0.14, 7.45)
+		cust.target_position = Vector3(-0.1, 0.14, 7.45)
+		cust.face_towards(Vector3(0.0, 0.14, 10.45))
+		cust.begin_order(order)
+		Orders.set_active(order, cust)
+	_film_move(Vector3(0.0, 0.2, 10.45), 0.0, -0.14)
+	_glide_player(Vector3(-0.3, 0.2, 10.35), 0.1, -0.18, 1.4)
+
+
+func promo_glide_jar() -> void:
+	_glide_player(Vector3(-1.35, 0.2, 10.2), 0.28, -0.24, 0.65)
+
+
+func promo_take() -> void:
+	world.stall.puri_box.interact(player)
+
+
+func promo_crack() -> void:
+	world.stall.puri_box.interact(player)
+
+
+func promo_glide_potato() -> void:
+	_glide_player(Vector3(-0.8, 0.2, 10.2), 0.14, -0.26, 0.55)
+
+
+func promo_potato() -> void:
+	world.stall.potato.interact(player)
+
+
+func promo_masala() -> void:
+	_glide_player(Vector3(0.35, 0.2, 10.25), -0.2, -0.3, 0.45)
+	world.stall.masala.interact(player)
+
+
+func promo_glide_pani() -> void:
+	_glide_player(Vector3(-0.04, 0.2, 10.25), 0.0, -0.26, 0.55)
+
+
+func promo_pani() -> void:
+	world.stall.pani_mint.interact(player)
+
+
+func promo_glide_plate() -> void:
+	_glide_player(Vector3(-0.45, 0.2, 10.35), 0.04, -0.32, 0.55)
+
+
+func promo_plate() -> void:
+	world.stall.plate.interact(player)
+
+
+func promo_quick_puri() -> void:
+	world.stall.puri_box.interact(player)
+	world.stall.puri_box.interact(player)
+	world.stall.potato.interact(player)
+	world.stall.masala.interact(player)
+	world.stall.pani_mint.interact(player)
+	world.stall.plate.interact(player)
+
+
+func promo_serve() -> void:
+	_glide_player(Vector3(-0.2, 0.2, 10.4), 0.0, -0.12, 0.45)
+	world.stall.plate.interact(player)
+
+
+func promo_inventory() -> void:
+	open_inventory()
+
+
+func promo_upgrades() -> void:
+	open_upgrades()
+
+
+func promo_close() -> void:
+	_close_panels()
+
+
+func promo_expand_palace() -> void:
+	_grant_restaurant_upgrades()
+	_grant_machine_upgrades()
+	world.sync_upgrades()
+	_film_move(Vector3(0.0, 0.2, 4.4), PI, 0.06)
+	_glide_player(Vector3(2.2, 0.2, 4.6), PI - 0.18, 0.08, 2.3)
+
+
+func promo_machine() -> void:
+	_film_move(Vector3(1.65, 0.2, 9.75), -1.1, -0.28)
+	_glide_player(Vector3(1.85, 0.2, 9.55), -1.22, -0.24, 1.5)
+
+
+func promo_rain() -> void:
+	Game.day = 3
+	Clock.minutes = 17 * 60 + 15
+	Clock._emit_time()
+	world.apply_day_theme(3)
+	_film_move(Vector3(-4.2, 0.2, -1.5), PI * 0.86, 0.04)
+	_glide_player(Vector3(-2.0, 0.2, -0.5), PI * 0.94, 0.06, 1.8)
+
+
+func promo_diwali_night() -> void:
+	Game.day = 5
+	Clock.minutes = 19 * 60 + 45
+	Clock._emit_time()
+	world.apply_day_theme(5)
+	_film_move(Vector3(-5.0, 0.2, 3.6), PI * 0.78, 0.08)
+	_glide_player(Vector3(0.5, 0.2, 4.2), PI * 1.05, 0.08, 2.4)
+
+
+func promo_done() -> void:
+	get_tree().quit(0)
+
+
+func _run_promo60() -> void:
+	await get_tree().process_frame
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	_film_time = 0.0
+	_film_step = 0
+	_film_timeline = _promo60_timeline
+	_film_active = true
+
+
+func p60_menu() -> void:
+	show_menu()
+	if _menu_camera:
+		_menu_camera.current = true
+		_menu_camera.fov = 60.0
+		_menu_camera.position = Vector3(-11.2, 2.55, 1.6)
+		var tw := create_tween()
+		tw.tween_property(_menu_camera, "position", Vector3(-5.6, 2.5, 1.4), 5.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+
+func p60_enter_stall() -> void:
+	Game.start_new_game()
+	player.set_active(false)
+	menu.visible = false
+	hud.visible = true
+	if _menu_camera:
+		_menu_camera.current = false
+	player.camera.current = true
+	player.camera.fov = 78.0
+	world.customer_manager.call("freeze_for_tutorial")
+	var c1: Customer = world.customer_manager.call("spawn_tutorial_customer", 1)
+	if c1:
+		c1.customer_name = "Customer 1"
+		c1.global_position = Vector3(-2.6, 0.14, 7.45)
+		c1.walk_to(Vector3(-0.1, 0.14, 7.45), 0)
+		c1._bubble.visible = false
+		c1._bubble_bg.visible = false
+		c1._bubble_frame.visible = false
+		c1._bar_fill.visible = false
+		c1._bar_bg.visible = false
+		if c1._badge:
+			c1._badge.visible = false
+		Orders.clear_active()
+		world.customer_manager.active = null
+	# Spawn NPC 2 walking cleanly from the right into slot 1 so both NPCs meet side-by-side!
+	var c2 := Customer.new()
+	c2.customer_name = "Customer 2"
+	c2.model_index = 2
+	world.customer_manager.add_child(c2)
+	c2.setup(4.0)
+	c2.set_personality("foodie", false)
+	c2.exit_position = world.exit_point
+	c2.global_position = Vector3(3.4, 0.14, 7.45)
+	c2.walk_to(Vector3(0.85, 0.14, 7.45), 1)
+	c2.departed.connect(world.customer_manager._on_departed)
+	c2.walked_out.connect(world.customer_manager._on_walked_out)
+	c2.finished_eating.connect(world.customer_manager._on_finished_eating)
+	world.customer_manager.customers.append(c2)
+	world.customer_manager.queue.append(c2)
+
+	_film_move(Vector3(0.0, 0.2, 10.72), 0.0, -0.14)
+	_glide_player(Vector3(-0.1, 0.2, 10.65), 0.02, -0.14, 1.8)
+
+
+func p60_customer_order() -> void:
+	var cm = world.customer_manager
+	if cm.queue.is_empty():
+		return
+	var c1: Customer = cm.queue[0]
+	var order := {
+		"recipe_id": "classic",
+		"name": "Classic Pani Puri",
+		"quantity": 3,
+		"pani": "mint",
+		"spice": 1,
+		"sweet": true,
+		"onion": false,
+		"chickpea": true,
+		"price": Progression.price_for(GameData.recipe("classic")),
+		"customer": "Customer 1",
+		"note": "Make it crispy!",
+		"vip": false,
+		"tip_mult": 1.2,
+		"dialogue": "order_onion",
+	}
+	c1.global_position = Vector3(-0.1, 0.14, 7.45)
+	c1.target_position = c1.global_position
+	c1.face_towards(Vector3(0.0, 0.14, 10.65))
+	c1.begin_order(order)
+	cm.active = c1
+	Orders.set_active(order, c1)
+
+
+func p60_glide_jar() -> void:
+	_glide_player(Vector3(-1.32, 0.2, 10.4), 0.26, -0.22, 0.6)
+
+
+func p60_chickpea() -> void:
+	_glide_player(Vector3(-0.48, 0.2, 10.35), 0.08, -0.26, 0.5)
+	world.stall.chickpea.interact(player)
+
+
+func p60_chutney() -> void:
+	_glide_player(Vector3(0.62, 0.2, 10.35), -0.14, -0.26, 0.5)
+	world.stall.chutney.interact(player)
+
+
+func p60_quick_puri() -> void:
+	world.stall.puri_box.interact(player)
+	world.stall.puri_box.interact(player)
+	world.stall.potato.interact(player)
+	world.stall.chickpea.interact(player)
+	world.stall.masala.interact(player)
+	world.stall.chutney.interact(player)
+	world.stall.pani_mint.interact(player)
+	world.stall.plate.interact(player)
+
+
+func p60_serve_customer() -> void:
+	_glide_player(Vector3(-0.1, 0.2, 10.55), 0.0, -0.10, 0.55)
+	world.stall.plate.interact(player)
+
+
+func p60_waste_bin() -> void:
+	world.stall.puri_box.interact(player)
+	world.stall.puri_box.interact(player)
+	_glide_player(Vector3(1.90, 0.2, 10.35), -0.68, -0.46, 0.60)
+	await get_tree().create_timer(0.60).timeout
+	if player.held_item != null:
+		world.stall.trash.interact(player)
+
+
+func p60_settings() -> void:
+	menu.visible = false
+	menu._controls_modal.visible = false
+	hud.visible = true
+	open_settings()
+
+
+func p60_controls() -> void:
+	_close_panels()
+	hud.visible = false
+	menu.visible = true
+	menu._controls_modal.visible = true
+
+
+func p60_stock() -> void:
+	menu._controls_modal.visible = false
+	menu.visible = false
+	hud.visible = true
+	open_inventory()
+	Inventory.add_stock("puri", 35)
+	Inventory.add_stock("potato", 20)
+
+
+func p60_upgrades() -> void:
+	open_upgrades()
+	Progression.set_price(35)
+	Economy.cash = maxi(Economy.cash, 8000)
+	Progression.buy("garlic_pani")
+	world.sync_upgrades()
+
+
+func p60_expand() -> void:
+	_close_panels()
+	_grant_restaurant_upgrades()
+	world.sync_upgrades()
+	player.camera.fov = 74.0
+	_film_move(Vector3(-2.2, 0.2, 4.0), PI - 0.22, 0.08)
+	_glide_player(Vector3(2.4, 0.2, 4.2), PI + 0.20, 0.08, 5.0)
+
+
+func p60_machine() -> void:
+	_grant_machine_upgrades()
+	world.sync_upgrades()
+	player.camera.fov = 76.0
+	_film_move(Vector3(3.75, 0.2, 8.05), 2.66, -0.36)
+	_glide_player(Vector3(3.15, 0.2, 7.75), 3.09, -0.32, 3.3)
+
+
+func p60_goals() -> void:
+	open_goals()
+
+
+func p60_badges() -> void:
+	open_collection()
+
+
+func p60_gallery() -> void:
+	open_models()
+	model_gallery_panel.select_model_by_name("customer_2")
+
+
+func p60_rain() -> void:
+	_close_panels()
+	player.camera.fov = 74.0
+	Game.day = 3
+	Clock.minutes = 17 * 60 + 15
+	Clock._emit_time()
+	world.apply_day_theme(3)
+	_film_move(Vector3(-4.2, 0.2, -1.5), PI * 0.86, 0.05)
+	_glide_player(Vector3(-1.8, 0.2, -0.4), PI * 0.94, 0.07, 2.0)
+
+
+func p60_diwali() -> void:
+	Game.day = 5
+	Clock.minutes = 19 * 60 + 45
+	Clock._emit_time()
+	world.apply_day_theme(5)
+	_film_move(Vector3(-4.5, 0.2, 3.6), PI * 0.80, 0.08)
+	_glide_player(Vector3(0.4, 0.2, 4.1), PI * 1.04, 0.08, 2.2)
+
+
+func p60_report() -> void:
+	Economy.day_expenses = mini(Economy.day_expenses, 620)
+	Game.end_day(true)
 
 
 func film_menu() -> void:
@@ -416,7 +866,7 @@ func film_serve() -> void:
 
 func film_quick_puri() -> void:
 	if Orders.active_customer == null:
-		world.customer_manager.call("spawn_tutorial_customer", 9)
+		world.customer_manager.call("spawn_tutorial_customer", 2)
 	_film_move(Vector3(0.3, 0.2, 10.15), 0.0, -0.1)
 	world.stall.puri_box.interact(player)
 	world.stall.puri_box.interact(player)
@@ -631,6 +1081,9 @@ func _run_screenshot_tour() -> void:
 	var out_dir := ProjectSettings.globalize_path("res://build/screenshots")
 	DirAccess.make_dir_recursive_absolute(out_dir)
 
+	# Let the staggered title-screen entrance settle before capturing.
+	await get_tree().create_timer(1.3).timeout
+	await RenderingServer.frame_post_draw
 	await _capture(out_dir, "01_menu")
 
 	Game.start_new_game()

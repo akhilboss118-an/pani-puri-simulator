@@ -1,10 +1,9 @@
 # Art Pipeline
 
-Everything in the game except the nine customer GLBs and a handful of environment
-props is procedural (primitives plus shared cached materials), so the download
-stays small. Seven static customers were converted from user-supplied FBX
-characters, two more are animated Mixamo-style NPCs, and all names are kept
-out of the game.
+Everything in the game except the two animated customer GLBs and a handful of
+environment props is procedural (primitives plus shared cached materials), so
+the download stays small. Both active NPCs are rigged Mixamo-style animated
+characters (`customer_1.glb` and `customer_2.glb`) with `idle`, `walk`, and `eat` clips.
 
 ## 1. Customers: FBX -> GLB
 

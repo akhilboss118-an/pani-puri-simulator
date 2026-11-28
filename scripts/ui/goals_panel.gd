@@ -12,14 +12,16 @@ func _init() -> void:
 
 
 func _build_content() -> void:
-	_hint = UIKit.label("", 15, UIKit.MUTED)
+	_hint = UIKit.label("", 14, UIKit.MUTED)
 	_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	content.add_child(_hint)
-	_list = VBoxContainer.new()
-	_list.add_theme_constant_override("separation", 10)
-	content.add_child(_list)
 	content.add_child(UIKit.hsep(4))
-	var back := UIKit.button("Back to stall", 44)
+
+	_list = VBoxContainer.new()
+	_list.add_theme_constant_override("separation", 12)
+	content.add_child(_list)
+	content.add_child(UIKit.hsep(6))
+	var back := UIKit.slab_button("Back to stall", UIKit.FILIGREE_DIM, 44)
 	back.pressed.connect(close)
 	content.add_child(back)
 
@@ -56,17 +58,25 @@ func _refresh() -> void:
 		label_text += String(goal.get("label", "Goal"))
 		var card := VBoxContainer.new()
 		card.add_theme_constant_override("separation", 3)
-		var title := UIKit.label(label_text, 18, UIKit.GREEN if done else UIKit.CREAM)
+		var title := UIKit.label(label_text, 17, UIKit.GREEN if done else UIKit.CREAM)
+		title.add_theme_font_override("font", UIKit.ui_font(700, 2))
 		card.add_child(title)
-		var reward := UIKit.label("Reward: Rs %d   +%d XP" % [
+		var reward := UIKit.kicker("Reward: Rs %d   +%d XP" % [
 			int(goal.get("reward_cash", 0)), int(goal.get("reward_xp", 0)),
-		], 13, UIKit.MUTED)
+		], UIKit.MUTED, 11)
 		card.add_child(reward)
 		var bar := ProgressBar.new()
 		bar.min_value = 0
 		bar.max_value = maxi(1, int(goal.get("target", 1)))
 		bar.value = int(goal.get("progress", 0))
 		bar.show_percentage = false
-		bar.custom_minimum_size = Vector2(0, 10)
+		bar.custom_minimum_size = Vector2(0, 3)
+		bar.add_theme_stylebox_override("background", UIKit.bar_track(3))
+		bar.add_theme_stylebox_override("fill", UIKit.thin_bar(UIKit.GREEN if done else UIKit.GOLD, 3))
 		card.add_child(bar)
-		_list.add_child(card)
+
+		var slab := PanelContainer.new()
+		slab.add_theme_stylebox_override("panel", UIKit.slab_style(0.72, 12,
+			UIKit.GREEN if done else UIKit.FILIGREE_DIM))
+		slab.add_child(card)
+		_list.add_child(slab)

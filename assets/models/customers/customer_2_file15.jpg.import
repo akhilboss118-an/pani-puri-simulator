@@ -2,19 +2,19 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bnxh3ib3tbfec"
-path="res://.godot/imported/customer_6_0.jpg-3c0ca728b1c0f836e628da7bfdfc5f7a.ctex"
+uid="uid://72w5gthpdmdd"
+path="res://.godot/imported/customer_2_file15.jpg-d911d334cd455028d77c320442155614.ctex"
 metadata={
 "vram_texture": false
 }
 generator_parameters={
-"md5": "915a8d2f61deb3a9d574a1cf3b90be9b"
+"md5": "ffdfc44bd3ddc967a79058b86163c2ad"
 }
 
 [deps]
 
-source_file="res://assets/models/customers/customer_6_0.jpg"
-dest_files=["res://.godot/imported/customer_6_0.jpg-3c0ca728b1c0f836e628da7bfdfc5f7a.ctex"]
+source_file="res://assets/models/customers/customer_2_file15.jpg"
+dest_files=["res://.godot/imported/customer_2_file15.jpg-d911d334cd455028d77c320442155614.ctex"]
 
 [params]
 

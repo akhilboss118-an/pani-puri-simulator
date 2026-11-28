@@ -33,19 +33,47 @@ func _ready() -> void:
 
 
 func _build_background() -> void:
-	# Gentle warm vignette around edges while keeping the center bazaar bright and crisp.
+	# Cinematic scrim: a soft centre glow behind the wordmark, a heavy vignette
+	# and a fine grain pass. Everything is baked - no shaders, no screen reads.
+	var glow := TextureRect.new()
+	glow.texture = UIKit.radial_texture([
+		[0.0, Color(0.85, 0.62, 0.30, 0.20)],
+		[0.45, Color(0.55, 0.36, 0.16, 0.10)],
+		[1.0, Color(0.1, 0.07, 0.04, 0.0)],
+	], Vector2(0.5, 0.42), 0.62, 128)
+	glow.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	glow.stretch_mode = TextureRect.STRETCH_SCALE
+	glow.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(glow)
+
+	var scrim := TextureRect.new()
+	scrim.texture = UIKit.linear_texture([
+		[0.0, Color(0.02, 0.016, 0.012, 0.90)],
+		[0.42, Color(0.02, 0.016, 0.012, 0.74)],
+		[0.72, Color(0.03, 0.02, 0.015, 0.32)],
+		[1.0, Color(0.04, 0.028, 0.02, 0.0)],
+	], Vector2(0.0, 1.0), Vector2i(192, 108))
+	scrim.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	scrim.stretch_mode = TextureRect.STRETCH_SCALE
+	scrim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	scrim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(scrim)
+
 	var vignette := TextureRect.new()
 	vignette.texture = UIKit.radial_texture([
 		[0.0, Color(0, 0, 0, 0.0)],
-		[0.62, Color(0.03, 0.02, 0.015, 0.06)],
-		[0.88, Color(0.03, 0.02, 0.015, 0.22)],
-		[1.0, Color(0.02, 0.012, 0.008, 0.42)],
-	], Vector2(0.5, 0.5), 0.78, 96)
+		[0.52, Color(0.02, 0.014, 0.01, 0.10)],
+		[0.82, Color(0.02, 0.014, 0.01, 0.42)],
+		[1.0, Color(0.01, 0.008, 0.006, 0.80)],
+	], Vector2(0.5, 0.46), 0.72, 128)
 	vignette.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	vignette.stretch_mode = TextureRect.STRETCH_SCALE
 	vignette.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	vignette.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(vignette)
+
+	add_child(UIKit.grain_overlay(0.05, 180.0))
 
 
 func _build_content() -> void:
@@ -55,77 +83,93 @@ func _build_content() -> void:
 	add_child(_center)
 
 	_box = VBoxContainer.new()
-	_box.add_theme_constant_override("separation", 12)
+	_box.add_theme_constant_override("separation", 10)
 	_box.alignment = BoxContainer.ALIGNMENT_CENTER
 	_center.add_child(_box)
+
+	var eyebrow := UIKit.kicker("An Indian Street Food Story", UIKit.FILIGREE_DIM, 11)
+	eyebrow.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_box.add_child(eyebrow)
 
 	_logo = UIIcons.LogoBanner.new()
 	_logo.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_box.add_child(_logo)
 
-	_box.add_child(UIKit.hsep(6))
+	var tagline := UIKit.label("Crack  •  Fill  •  Dip  •  Serve", 13, Color(0.80, 0.73, 0.62))
+	tagline.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_box.add_child(tagline)
+
+	_box.add_child(UIKit.hsep(16))
 
 	var btn_col := VBoxContainer.new()
-	btn_col.custom_minimum_size = Vector2(280, 0)
+	btn_col.custom_minimum_size = Vector2(320, 0)
 	btn_col.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	btn_col.add_theme_constant_override("separation", 10)
+	btn_col.add_theme_constant_override("separation", 8)
 	_box.add_child(btn_col)
 
-	var new_game := UIKit.wood_menu_button("Start Game", 52)
+	var new_game := UIKit.gold_slab("Start Game", 56)
 	new_game.pressed.connect(func(): new_game_pressed.emit())
 	btn_col.add_child(new_game)
 
-	_continue_button = UIKit.wood_menu_button("Continue", 46)
+	_continue_button = UIKit.slab_button("Continue", UIKit.FILIGREE, 50)
 	_continue_button.pressed.connect(func(): continue_pressed.emit())
 	btn_col.add_child(_continue_button)
 
-	var settings := UIKit.wood_menu_button("Settings", 48)
+	var sub_row := HBoxContainer.new()
+	sub_row.add_theme_constant_override("separation", 8)
+	sub_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	btn_col.add_child(sub_row)
+
+	var settings := UIKit.slab_button("Settings", UIKit.FILIGREE_DIM, 44)
+	settings.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	settings.pressed.connect(func(): _settings.open())
-	btn_col.add_child(settings)
+	sub_row.add_child(settings)
 
-	var controls_btn := UIKit.wood_menu_button("Controls", 48)
+	var controls_btn := UIKit.slab_button("Controls", UIKit.FILIGREE_DIM, 44)
+	controls_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	controls_btn.pressed.connect(func(): _controls_modal.visible = true)
-	btn_col.add_child(controls_btn)
+	sub_row.add_child(controls_btn)
 
-	var exit_btn := UIKit.wood_menu_button("Exit", 48)
+	var exit_btn := UIKit.slab_button("Exit", UIKit.FILIGREE_DIM, 44)
+	exit_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	exit_btn.pressed.connect(func(): quit_pressed.emit())
-	btn_col.add_child(exit_btn)
+	sub_row.add_child(exit_btn)
+
+	_box.add_child(UIKit.hsep(10))
 
 	var credits_btn := UIKit.ghost_button("Credits", 34)
-	credits_btn.custom_minimum_size = Vector2(100, 34)
-	credits_btn.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
-	credits_btn.offset_left = -126
-	credits_btn.offset_right = -24
-	credits_btn.offset_top = -50
-	credits_btn.offset_bottom = -16
+	credits_btn.custom_minimum_size = Vector2(120, 34)
+	credits_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	credits_btn.pressed.connect(func(): _credits.visible = true)
-	add_child(credits_btn)
+	_box.add_child(credits_btn)
 
-	var version := UIKit.label("v%s  •  Godot 4.7" % Game.VERSION, 11, Color(0.96, 0.9, 0.78, 0.8))
+	var version := UIKit.label("v%s   •   GODOT 4.7   •   COMPATIBILITY" % Game.VERSION, 10, Color(0.72, 0.66, 0.57, 0.75))
+	version.add_theme_font_override("font", UIKit.ui_font(600, 2))
 	version.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-	version.offset_left = 24
+	version.offset_left = 26
 	version.offset_top = -32
-	version.offset_right = 320
+	version.offset_right = 420
 	version.offset_bottom = -12
 	add_child(version)
+
+	# Staggered entrance, weighty and slow.
+	if not Game.settings.get("reduced_motion", false):
+		for i in _box.get_child_count():
+			UIKit.fade_in(_box.get_child(i), 0.07 * float(i))
 
 
 func _layout() -> void:
 	if _logo == null:
 		return
 	var vp := get_viewport_rect().size
-	var scale_f := clampf(vp.y / 720.0, 0.75, 1.15)
-	_logo.custom_minimum_size = Vector2(460.0 * scale_f, 174.0 * scale_f)
+	var scale_f := clampf(vp.y / 720.0, 0.72, 1.2)
+	_logo.custom_minimum_size = Vector2(460.0 * scale_f, 150.0 * scale_f)
 	if _continue_button:
 		_continue_button.visible = SaveManager.has_save()
 
 
 func _process(delta: float) -> void:
 	_time += delta
-	if _logo:
-		var pulse := 1.0 + 0.008 * sin(_time * 1.6)
-		_logo.pivot_offset = _logo.size * 0.5
-		_logo.scale = Vector2(pulse, pulse)
 
 
 func _build_controls() -> void:

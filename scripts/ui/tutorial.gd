@@ -63,23 +63,25 @@ func _build_ui() -> void:
 	panel.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
 	panel.offset_left = -330
 	panel.offset_right = 330
-	panel.offset_top = -240
-	panel.offset_bottom = -128
-	panel.add_theme_stylebox_override("panel", UIKit.style(Color("241a14"), 14, UIKit.GOLD, 2, 12))
+	panel.offset_top = -248
+	panel.offset_bottom = -126
+	panel.add_theme_stylebox_override("panel", UIKit.frame_style(14))
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(panel)
 
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 3)
+	box.add_theme_constant_override("separation", 4)
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_child(box)
 
-	_step_label = UIKit.label("STEP 1 OF 6", 12, UIKit.GOLD)
+	_step_label = UIKit.kicker("STEP 1 OF 6", UIKit.GOLD, 11)
 	box.add_child(_step_label)
+	box.add_child(UIKit.divider(UIKit.FILIGREE, 0.35))
 	_title_label = UIKit.label("Take a puri shell", 21, UIKit.CREAM)
+	_title_label.add_theme_font_override("font", UIKit.ui_font(700, 2))
 	_title_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(_title_label)
-	_hint_label = UIKit.label("", 14, UIKit.MUTED)
+	_hint_label = UIKit.label("", 13, UIKit.MUTED)
 	_hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(_hint_label)
 
@@ -87,7 +89,7 @@ func _build_ui() -> void:
 	row.alignment = BoxContainer.ALIGNMENT_END
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.add_child(row)
-	var skip := UIKit.button("Skip tutorial", 30)
+	var skip := UIKit.slab_button("Skip tutorial", UIKit.FILIGREE_DIM, 30)
 	skip.custom_minimum_size.x = 150
 	skip.pressed.connect(func(): end_tutorial(true))
 	row.add_child(skip)

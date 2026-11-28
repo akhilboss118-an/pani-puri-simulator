@@ -45,7 +45,7 @@ func _build_content() -> void:
 	right.add_child(_selected_label)
 	_build_preview(right)
 
-	var back := UIKit.button("Back to stall", 44)
+	var back := UIKit.slab_button("Back to stall", UIKit.FILIGREE_DIM, 44)
 	back.pressed.connect(close)
 	content.add_child(back)
 
@@ -59,6 +59,7 @@ func _build_preview(parent: VBoxContainer) -> void:
 
 	_preview = SubViewport.new()
 	_preview.size = Vector2(320, 360)
+	_preview.own_world_3d = true
 	_preview.transparent_bg = true
 	_preview.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	container.add_child(_preview)
@@ -89,6 +90,13 @@ func _build_preview(parent: VBoxContainer) -> void:
 	_preview.add_child(_preview_camera)
 
 
+func select_model_by_name(target_name: String) -> void:
+	for entry in _models:
+		if String(entry.get("name", "")) == target_name:
+			_show_model(entry)
+			return
+
+
 func _on_open() -> void:
 	_rebuild()
 
@@ -101,7 +109,7 @@ func _rebuild() -> void:
 	for child in _list.get_children():
 		child.queue_free()
 	for entry in _models:
-		var button := UIKit.button(String(entry["name"]), 34)
+		var button := UIKit.slab_button(String(entry.get("name", "Model")), UIKit.FILIGREE, 34)
 		button.pressed.connect(func(e=entry): _show_model(e))
 		_list.add_child(button)
 	if not _models.is_empty():
@@ -155,10 +163,17 @@ func _show_model(entry: Dictionary) -> void:
 	if inst == null:
 		return
 	_preview_root.add_child(inst)
-	_fit(inst)
+	if String(entry.get("kind", "")) == "customer":
+		# Skinned customer meshes report unscaled armature AABBs before pose evaluation; frame fixed 1.68 m height cleanly.
+		inst.scale = Vector3.ONE * 1.12
+		inst.position = Vector3(0.0, -0.95, 0.0)
+		inst.rotation.y = PI
+	else:
+		_fit(inst)
 	var players := inst.find_children("*", "AnimationPlayer", true, false)
 	if not players.is_empty():
 		_anim_player = players[0] as AnimationPlayer
+		Customer.configure_model_animations(_anim_player)
 		if _anim_player.has_animation("idle"):
 			_anim_player.play("idle")
 		else:
