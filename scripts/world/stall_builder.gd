@@ -92,9 +92,29 @@ static func build(parent: Node3D) -> Dictionary:
 
 static func _counter(root: Node3D, z: float) -> void:
 	MeshFactory.box(root, Vector3(4.2, 0.86, 0.7), Vector3(0, 0.43, z), GameData.C_WOOD, "Counter")
-	MeshFactory.box(root, Vector3(4.2, 0.09, 0.72), Vector3(0, 0.905, z), GameData.C_STEEL, "CounterTop", 0.0, false)
+	MeshFactory.box(root, Vector3(4.2, 0.09, 0.72), Vector3(0, 0.905, z), Color("2b2724"), "CounterTop", 0.0, false)
+	MeshFactory.box(root, Vector3(4.24, 0.045, 0.05), Vector3(0, 0.93, z + 0.345), Color("8d6a3c"), "CounterLip", 0.0, false)
 	MeshFactory.box(root, Vector3(3.9, 0.5, 0.04), Vector3(0, 0.42, z - 0.37), GameData.C_TEAL, "FrontPanel")
 	MeshFactory.box(root, Vector3(3.9, 0.05, 0.04), Vector3(0, 0.7, z - 0.37), GameData.C_ORANGE, "Trim", 0.0, false)
+
+	# Customer-facing side: warm timber, brass rail and a small painted wordmark.
+	MeshFactory.box(root, Vector3(3.86, 0.64, 0.05), Vector3(0, 0.46, z + 0.355), Color("4a3222"), "NearPanel")
+	for i in 6:
+		MeshFactory.box(root, Vector3(0.035, 0.58, 0.02), Vector3(-1.55 + i * 0.62, 0.45, z + 0.383), Color("3b2719"), "NearSlat", 0.0, false)
+	MeshFactory.box(root, Vector3(3.94, 0.035, 0.07), Vector3(0, 0.795, z + 0.36), Color("c9a05c"), "NearTrim", 0.0, false)
+	var rail := MeshFactory.cylinder(root, 0.022, 3.7, Vector3(0, 0.3, z + 0.42), Color("c9963f"), "BrassRail", 8, false)
+	rail.rotation.z = PI / 2.0
+	var wordmark := Label3D.new()
+	wordmark.text = "PANI PURI"
+	wordmark.font = UIKit.display_font(700)
+	wordmark.font_size = 40
+	wordmark.pixel_size = 0.0038
+	wordmark.position = Vector3(0, 0.56, z + 0.39)
+	wordmark.modulate = Color("ffe9c4")
+	wordmark.outline_size = 0
+	wordmark.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	wordmark.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	root.add_child(wordmark)
 	# wheels
 	for sx in [-1.8, 1.8]:
 		for sz in [-0.2, 0.2]:
@@ -142,6 +162,7 @@ static func _signage(root: Node3D, z: float) -> Dictionary:
 	MeshFactory.box(root, Vector3(2.3, 0.52, 0.03), Vector3(0, 0.42, z - 0.39), Color("211812"), "Menu", 0.0, false)
 	var label := Label3D.new()
 	label.text = "PANI PURI  Rs 30\nEXTRA PURI  Rs 30"
+	label.font = UIKit.ui_font(700, 1)
 	label.font_size = 40
 	label.pixel_size = 0.004
 	label.position = Vector3(0, 0.42, z - 0.41)

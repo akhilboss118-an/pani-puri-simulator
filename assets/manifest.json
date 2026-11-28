@@ -1,7 +1,7 @@
 {
   "project": "Pani Puri Simulator",
-  "version": "1.4.0",
-  "updated": "2026-11-27",
+  "version": "1.5.0",
+  "updated": "2026-11-28",
   "policy": "Art is a mix of procedural primitives, shared cached materials, seven static customer GLBs converted from user-supplied FBX plus two animated Mixamo customers (idle/walk/eat), 18 Kenney CC0 props plus user-supplied Poly-by-Google, MiniPoly, Kay Lousberg, Ultimate Food Pack and Pani Puri Thela assets, procedural music/SFX, 18 Eleven Labs Hindi/Hinglish voice lines and a Noto Sans Devanagari subtitle font. No Sketchfab models are downloaded in-game: environment assets are documented as a manual import in ART_PIPELINE.md, and attribution for every drop-in model is recorded here.",
   "assets": [
     {

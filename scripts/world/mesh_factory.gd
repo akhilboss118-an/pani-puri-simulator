@@ -92,6 +92,7 @@ static func signboard(parent: Node3D, text: String, pos: Vector3, width: float, 
 	box(root, Vector3(width, height, 0.08), Vector3.ZERO, color, "Board")
 	var label := Label3D.new()
 	label.text = text
+	label.font = UIKit.display_font(700)
 	label.font_size = 48
 	label.pixel_size = clampf(height * 0.5 / 48.0, 0.0006, 0.008)
 	label.position = Vector3(0, 0, 0.05)

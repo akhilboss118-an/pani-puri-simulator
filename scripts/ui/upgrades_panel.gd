@@ -101,6 +101,7 @@ func _build_content() -> void:
 	scroll.custom_minimum_size = Vector2(0, 300)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	content.add_child(scroll)
+	fit_to_viewport(scroll, 0.3, 300.0)
 	_list = VBoxContainer.new()
 	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_list.add_theme_constant_override("separation", 6)

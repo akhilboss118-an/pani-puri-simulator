@@ -33,7 +33,9 @@ func build(quality: int) -> void:
 	_ground()
 	_shops()
 	_street_props()
+	_string_lights()
 	_build_stall()
+	_stall_details()
 	restaurant = RestaurantBuilder.build(self, _quality)
 	EnvironmentLoader.apply(self)
 	_build_customers()
@@ -51,7 +53,10 @@ func apply_quality(quality: int) -> void:
 	if _sun:
 		_sun.shadow_enabled = quality >= 1
 		_sun.directional_shadow_max_distance = 40.0 if quality >= 2 else 28.0
-		_sun.light_energy = 0.95 if quality >= 1 else 0.85
+		_sun.light_energy = 1.0 if quality >= 1 else 0.9
+		_sun.shadow_blur = 1.8 if quality >= 2 else 1.0
+	if _world_environment != null:
+		_world_environment.adjustment_enabled = quality >= 1
 
 
 # ------------------------------------------------------------------ lighting
@@ -62,20 +67,30 @@ func _setup_environment() -> void:
 	env.background_mode = Environment.BG_SKY
 	var sky := Sky.new()
 	var sky_mat := ProceduralSkyMaterial.new()
-	sky_mat.sky_top_color = Color("4a7cb0")
-	sky_mat.sky_horizon_color = Color("e2b487")
-	sky_mat.ground_bottom_color = Color("4a3f32")
-	sky_mat.ground_horizon_color = Color("d3a87c")
+	sky_mat.sky_top_color = Color("2c4f74")
+	sky_mat.sky_horizon_color = Color("e8b183")
+	sky_mat.ground_bottom_color = Color("352a22")
+	sky_mat.ground_horizon_color = Color("b98a5f")
 	sky_mat.sun_angle_max = 18.0
+	sky_mat.sky_energy_multiplier = 0.9
+	sky_mat.ground_energy_multiplier = 0.78
 	sky.sky_material = sky_mat
 	env.sky = sky
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
-	env.ambient_light_energy = 0.65
+	env.ambient_light_energy = 0.36
 	env.tonemap_mode = Environment.TONE_MAPPER_ACES
-	env.tonemap_exposure = 1.05
+	env.tonemap_exposure = 0.72
+	env.tonemap_white = 6.0
 	env.fog_enabled = true
-	env.fog_light_color = Color("d9b58d")
-	env.fog_density = 0.0035
+	env.fog_light_color = Color("c9a37c")
+	env.fog_density = 0.0026
+	env.fog_sky_affect = 0.2
+	env.fog_aerial_perspective = 0.1
+	# Gentle grade: a touch more contrast and saturation sells the food colours.
+	env.adjustment_enabled = true
+	env.adjustment_brightness = 1.0
+	env.adjustment_contrast = 1.12
+	env.adjustment_saturation = 1.12
 	world_env.environment = env
 	add_child(world_env)
 	_world_env = world_env
@@ -83,33 +98,46 @@ func _setup_environment() -> void:
 
 	_sun = DirectionalLight3D.new()
 	_sun.name = "Sun"
-	_sun.rotation_degrees = Vector3(-48, 200, 0)
-	_sun.light_color = Color("ffe6c4")
+	_sun.rotation_degrees = Vector3(-42, 205, 0)
+	_sun.light_color = Color("ffdfb8")
 	_sun.light_energy = 1.0
+	_sun.light_angular_distance = 1.4
 	_sun.shadow_enabled = _quality >= 1
+	_sun.shadow_blur = 1.2
 	_sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
-	_sun.directional_shadow_max_distance = 30.0
-	_sun.shadow_bias = 0.04
+	_sun.directional_shadow_max_distance = 34.0
+	_sun.shadow_bias = 0.035
 	add_child(_sun)
 
-	# two cheap warm lights under the canopy, no shadows
-	for x in [-1.3, 1.3]:
+	# Cool rim from behind the street separates the stall from the skyline.
+	var rim := DirectionalLight3D.new()
+	rim.name = "Rim"
+	rim.rotation_degrees = Vector3(-18, 22, 0)
+	rim.light_color = Color("9fc3e8")
+	rim.light_energy = 0.45
+	rim.shadow_enabled = false
+	add_child(rim)
+
+	# Warm practicals under the canopy, no shadows.
+	for x in [-1.35, 1.35]:
 		var lamp := OmniLight3D.new()
-		lamp.position = Vector3(x, 2.4, 8.6)
-		lamp.light_color = Color("ffbd73")
-		lamp.light_energy = 0.35
-		lamp.omni_range = 3.0
+		lamp.position = Vector3(x, 2.35, 8.9)
+		lamp.light_color = Color("ffb066")
+		lamp.light_energy = 0.55
+		lamp.omni_range = 3.6
+		lamp.omni_attenuation = 1.4
 		lamp.shadow_enabled = false
 		add_child(lamp)
 
-	# a soft fill behind the street for evening reads
+	# A soft bounce from the pavement keeps faces and food from going muddy.
 	var fill := DirectionalLight3D.new()
 	fill.name = "FillLight"
-	fill.light_color = Color("ffcfb3")
-	fill.light_energy = 0.12
+	fill.light_color = Color("ffd7bd")
+	fill.light_energy = 0.16
 	fill.shadow_enabled = false
 	add_child(fill)
 	fill.global_position = Vector3(0, 12, 24)
+	fill.rotation_degrees = Vector3(-62, 0, 0)
 
 
 # -------------------------------------------------------------------- ground
@@ -130,7 +158,7 @@ func _ground() -> void:
 
 	# dust patches to break up the flat road
 	for i in 7:
-		var patch := MeshFactory.quad(self, Vector2(randf_range(1.5, 3.5), randf_range(0.8, 2.0)), Vector3(randf_range(-22, 22), 0.127, randf_range(-4.5, 4.5)), Color(0.16, 0.14, 0.12, 0.35))
+		var patch := MeshFactory.quad(self, Vector2(randf_range(1.5, 3.5), randf_range(0.8, 2.0)), Vector3(randf_range(-22, 22), 0.127, randf_range(-4.5, 4.5)), Color(0.34, 0.29, 0.24, 0.16))
 		patch.rotation.x = -PI / 2.0
 		patch.rotation.z = randf_range(0, TAU)
 
@@ -192,6 +220,41 @@ func _shop(x: float, z_front: float, normal: float, width: float, height: float,
 	for sx in [-1.0, 1.0]:
 		MeshFactory.cylinder(shop, 0.025, 3.3, Vector3(x + sx * width * 0.38, 1.77, z_front + normal * 1.2), Color("4a4038"), "AwningPole", 6, false)
 
+	# --- facade depth: floor bands, painted ads, AC boxes and roof tanks ---
+	var floors := maxi(1, int(height / 2.9))
+	for f in range(1, floors):
+		var fy := 0.12 + f * 2.9
+		if fy < height - 0.3:
+			MeshFactory.box(shop, Vector3(width + 0.1, 0.1, 0.1), Vector3(x, fy, fz + normal * 0.03), wall.darkened(0.18), "FloorBand", 0.0, false)
+			for i in 3:
+				var ux := x - width * 0.3 + i * width * 0.3
+				MeshFactory.box(shop, Vector3(width * 0.15, 0.9, 0.05), Vector3(ux, fy + 1.25, fz + normal * 0.02), Color("2e3f47"), "FloorWindow", 0.0, false)
+				MeshFactory.box(shop, Vector3(width * 0.15 + 0.05, 0.95, 0.03), Vector3(ux, fy + 1.25, fz - normal * 0.005), Color("8a7a63"), "FloorFrame", 0.0, false)
+	if height > 6.5:
+		var ad_y := height * 0.66
+		var ad_w := width * 0.52
+		var ad := MeshFactory.quad(shop, Vector2(ad_w, 1.55), Vector3(x + width * 0.19, ad_y, fz + normal * 0.05), awning.darkened(0.12), "PaintedAd")
+		ad.rotation.y = rot
+		var ad_label := Label3D.new()
+		ad_label.text = shop_name
+		ad_label.font = UIKit.display_font(700)
+		ad_label.font_size = 40
+		ad_label.pixel_size = clampf(1.55 * 0.42 / 40.0, 0.002, 0.006)
+		ad_label.position = Vector3(x + width * 0.19, ad_y, fz + normal * 0.07)
+		ad_label.rotation.y = rot
+		ad_label.modulate = Color("fff2d8")
+		ad_label.outline_size = 0
+		ad_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		ad_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		shop.add_child(ad_label)
+	# a couple of AC units break up the plaster
+	for i in 2:
+		MeshFactory.box(shop, Vector3(0.42, 0.34, 0.2), Vector3(x - width * 0.24 + i * width * 0.48, height * 0.42, fz + normal * 0.12), Color("b9b2a4"), "ACUnit", 0.0, false)
+	# rooftop water tank + parapet detail
+	if height > 7.0:
+		MeshFactory.cylinder(shop, 0.42, 0.9, Vector3(x + width * 0.22, height + 0.58, center_z), Color("2f3438"), "WaterTank", 10, false)
+		MeshFactory.box(shop, Vector3(0.08, 0.4, 0.08), Vector3(x + width * 0.22, height + 0.2, center_z), Color("4a4540"), "TankLeg", 0.0, false)
+
 	MeshFactory.add_box_collider(shop, Vector3(width, height, depth), Vector3(x, 0.12 + height * 0.5, center_z), 1)
 
 
@@ -233,6 +296,147 @@ func _street_props() -> void:
 	MeshFactory.box(self, Vector3(0.5, 0.5, 0.5), Vector3(-3.5, 0.37, 9.9), Color("a97b4a"), "Crate", 0.2)
 	MeshFactory.box(self, Vector3(0.45, 0.35, 0.4), Vector3(-3.4, 0.8, 9.85), Color("b98b5a"), "Crate2", 0.5)
 	MeshFactory.sphere(self, 0.3, Vector3(3.4, 0.42, 9.7), Color("c9b48a"), "Sack", 8, false)
+
+
+# -------------------------------------------------------------- string lights
+
+## Warm bulbs strung across the street in three gentle catenaries. All bulbs
+## share one MultiMesh, so the whole decoration costs a single draw call.
+func _string_lights() -> void:
+	var root := Node3D.new()
+	root.name = "StringLights"
+	add_child(root)
+
+	var bulb_mesh := SphereMesh.new()
+	bulb_mesh.radius = 0.055
+	bulb_mesh.height = 0.11
+	bulb_mesh.radial_segments = 6
+	bulb_mesh.rings = 4
+
+	var bulb_mat := StandardMaterial3D.new()
+	bulb_mat.albedo_color = Color("ffe0a4")
+	bulb_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+
+	var wire_mat := MeshFactory.material(Color("2a2420"), 0.9)
+
+	var strands := [
+		{"z": 6.4, "y": 4.5, "sag": 0.55, "from": -14.0, "to": 14.0},
+		{"z": 2.2, "y": 4.9, "sag": 0.70, "from": -14.0, "to": 14.0},
+		{"z": -2.4, "y": 5.1, "sag": 0.60, "from": -14.0, "to": 14.0},
+	]
+	var positions: Array[Vector3] = []
+	for strand in strands:
+		var z := float(strand.z)
+		var y := float(strand.y)
+		var sag := float(strand.sag)
+		var x0 := float(strand.from)
+		var x1 := float(strand.to)
+		for s in 8:
+			var p0 := _catenary(x0, x1, y, sag, float(s) / 8.0, z)
+			var p1 := _catenary(x0, x1, y, sag, float(s + 1) / 8.0, z)
+			var seg := MeshFactory.box(root, Vector3(p0.distance_to(p1), 0.014, 0.014), (p0 + p1) * 0.5, Color("2a2420"), "Wire", 0.0, false)
+			seg.rotation.z = atan2(p1.y - p0.y, p1.x - p0.x)
+			seg.material_override = wire_mat
+		var count := 22
+		for i in count:
+			var t := float(i + 1) / float(count + 1)
+			positions.append(_catenary(x0, x1, y, sag, t, z) - Vector3(0, 0.085, 0))
+
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.mesh = bulb_mesh
+	mm.instance_count = positions.size()
+	for i in positions.size():
+		mm.set_instance_transform(i, Transform3D(Basis(), positions[i]))
+	var bulbs := MultiMeshInstance3D.new()
+	bulbs.name = "Bulbs"
+	bulbs.multimesh = mm
+	bulbs.material_override = bulb_mat
+	bulbs.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	root.add_child(bulbs)
+
+	# One cheap warm pool under the middle strand.
+	var glow := OmniLight3D.new()
+	glow.position = Vector3(0, 3.9, 4.6)
+	glow.light_color = Color("ffb877")
+	glow.light_energy = 0.30
+	glow.omni_range = 7.0
+	glow.shadow_enabled = false
+	root.add_child(glow)
+
+
+func _catenary(x0: float, x1: float, y: float, sag: float, t: float, z: float) -> Vector3:
+	return Vector3(lerpf(x0, x1, t), y - sin(PI * t) * sag, z)
+
+
+# --------------------------------------------------------------- stall dressing
+
+## Small, non-interactive props that make the cart feel owned: brass pots, a
+## chalkboard, a potted plant and a worn rug.
+func _stall_details() -> void:
+	var root := Node3D.new()
+	root.name = "StallDressing"
+	add_child(root)
+
+	var brass := MeshFactory.material(Color("c9963f"), 0.32, 0.75)
+	var brass_dark := MeshFactory.material(Color("8a6427"), 0.42, 0.65)
+
+	# stacked brass pots, left of the cart
+	for i in 3:
+		var pot := MeshFactory.cylinder(root, 0.26 - i * 0.04, 0.16, Vector3(-3.35, 0.2 + i * 0.16, 9.7), Color("c9963f"), "BrassPot", 14, true)
+		pot.material_override = brass if i % 2 == 0 else brass_dark
+		var rim := MeshFactory.cylinder(root, (0.26 - i * 0.04) + 0.015, 0.02, Vector3(-3.35, 0.28 + i * 0.16, 9.7), Color("e6b85c"), "BrassRim", 14, false)
+		rim.material_override = brass
+
+	# hanging lanterns under the canopy
+	for x in [-1.75, 1.75]:
+		MeshFactory.cylinder(root, 0.012, 0.5, Vector3(x, 2.35, 9.35), Color("2a2420"), "LanternCord", 5, false)
+		var body := MeshFactory.sphere(root, 0.12, Vector3(x, 2.02, 9.35), Color("ffb45f"), "Lantern", 8, false)
+		var lantern_mat := StandardMaterial3D.new()
+		lantern_mat.albedo_color = Color("ffc478")
+		lantern_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		body.material_override = lantern_mat
+		MeshFactory.cylinder(root, 0.05, 0.03, Vector3(x, 2.13, 9.35), Color("2a2420"), "LanternCap", 8, false)
+		MeshFactory.cylinder(root, 0.05, 0.03, Vector3(x, 1.91, 9.35), Color("2a2420"), "LanternBase", 8, false)
+
+	# A-frame chalkboard, angled to greet the queue
+	var board := Node3D.new()
+	board.position = Vector3(-4.6, 0.12, 10.35)
+	board.rotation.y = 0.42
+	root.add_child(board)
+	MeshFactory.box(board, Vector3(0.86, 0.06, 0.5), Vector3(0, 0.03, 0), Color("4a3626"), "BoardFoot")
+	var slate := MeshFactory.box(board, Vector3(0.8, 1.0, 0.06), Vector3(0, 0.62, 0), Color("1d2320"), "Slate")
+	slate.rotation.x = -0.14
+	MeshFactory.box(board, Vector3(0.88, 0.06, 0.09), Vector3(0, 1.14, -0.02), Color("6b4c30"), "BoardTop")
+	MeshFactory.box(board, Vector3(0.06, 1.02, 0.09), Vector3(-0.41, 0.62, -0.02), Color("6b4c30"), "BoardSideL")
+	MeshFactory.box(board, Vector3(0.06, 1.02, 0.09), Vector3(0.41, 0.62, -0.02), Color("6b4c30"), "BoardSideR")
+	var chalk := Label3D.new()
+	chalk.text = "TODAY'S\nSPECIAL"
+	chalk.font = UIKit.display_font(700)
+	chalk.font_size = 64
+	chalk.pixel_size = 0.0032
+	chalk.position = Vector3(0, 0.66, 0.045)
+	chalk.modulate = Color("f4e6c8")
+	chalk.outline_size = 0
+	chalk.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	chalk.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	chalk.rotation.x = -0.14
+	board.add_child(chalk)
+
+	# potted plant, right of the cart
+	MeshFactory.cylinder(root, 0.22, 0.34, Vector3(4.05, 0.29, 10.35), Color("8a4a2e"), "PlantPot", 10)
+	for i in 4:
+		var leaf := MeshFactory.sphere(root, 0.2, Vector3(4.05 + cos(i * 1.7) * 0.13, 0.62 + i * 0.12, 10.35 + sin(i * 1.7) * 0.13), Color("4f7a3a").lightened(i * 0.04), "PlantLeaf", 7, false)
+		leaf.scale = Vector3(0.8, 1.25, 0.8)
+
+	# worn rug in front of the counter
+	var rug := MeshFactory.quad(root, Vector2(3.6, 1.5), Vector3(0.2, 0.132, 10.05), Color("6d2a22"), "Rug")
+	rug.rotation.x = -PI / 2.0
+	var rug_inner := MeshFactory.quad(root, Vector2(3.2, 1.16), Vector3(0.2, 0.134, 10.05), Color("8a3a2a"), "RugInner")
+	rug_inner.rotation.x = -PI / 2.0
+	for i in 6:
+		var stripe := MeshFactory.quad(root, Vector2(0.1, 1.1), Vector3(-1.25 + i * 0.58, 0.136, 10.05), Color("d9a45c"), "RugStripe")
+		stripe.rotation.x = -PI / 2.0
 
 
 func _tree(x: float, z: float, scale: float) -> void:
@@ -414,18 +618,21 @@ func apply_day_theme(day: int) -> void:
 		match weather:
 			"rain":
 				_world_environment.fog_density = 0.008
-				_world_environment.ambient_light_energy = 0.5
+				_world_environment.ambient_light_energy = 0.38
 				_world_environment.fog_light_color = Color("aeb6bb")
+				_world_environment.adjustment_saturation = 0.94
 			"heat":
 				_world_environment.fog_density = 0.002
-				_world_environment.ambient_light_energy = 0.82
+				_world_environment.ambient_light_energy = 0.46
 				_world_environment.fog_light_color = Color("f0d6a2")
+				_world_environment.adjustment_saturation = 1.16
 			_:
-				_world_environment.fog_density = 0.0035
-				_world_environment.ambient_light_energy = 0.65
-				_world_environment.fog_light_color = Color("d9b58d")
+				_world_environment.fog_density = 0.0026
+				_world_environment.ambient_light_energy = 0.3
+				_world_environment.fog_light_color = Color("c9a37c")
+				_world_environment.adjustment_saturation = 1.12
 	if _sun != null:
-		_sun.light_energy = 0.65 if weather == "rain" else (1.2 if weather == "heat" else 1.0)
+		_sun.light_energy = 0.66 if weather == "rain" else (1.12 if weather == "heat" else 1.0)
 	if _rain != null:
 		_rain.visible = weather == "rain"
 	if _confetti != null:

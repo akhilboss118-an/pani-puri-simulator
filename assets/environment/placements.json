@@ -174,9 +174,9 @@
     {
       "file": "res://assets/environment/props/apartment_building.glb",
       "anchor": "street_far",
-      "offset": [22, 0, -9],
+      "offset": [27, 0, -16],
       "rotation_deg": [0, 180, 0],
-      "scale": 0.62,
+      "scale": 0.55,
       "enabled": true,
       "notes": "User-supplied Poly-by-Google apartment building on the far pavement."
     },

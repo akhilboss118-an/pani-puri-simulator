@@ -31,6 +31,7 @@ func _build_content() -> void:
 	scroll.custom_minimum_size = Vector2(240, 420)
 	scroll.mouse_filter = Control.MOUSE_FILTER_STOP
 	row.add_child(scroll)
+	fit_to_viewport(scroll, 0.4, 420.0)
 	_list = VBoxContainer.new()
 	_list.add_theme_constant_override("separation", 4)
 	scroll.add_child(_list)

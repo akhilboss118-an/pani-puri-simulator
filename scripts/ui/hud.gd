@@ -2,6 +2,9 @@ class_name HUD
 extends Control
 ## In-game HUD: money, time, reputation, active order, interaction prompt,
 ## toasts and (on touch devices) the virtual joystick and use button.
+##
+## The layout is built from floating glass cards rather than one long column,
+## so the 3D street stays visible on a phone screen.
 
 var player: Player
 
@@ -29,12 +32,14 @@ var _prompt_panel: PanelContainer
 var _prompt_label: Label
 var _subtitle_panel: PanelContainer
 var _subtitle_label: Label
+var _subtitle_kicker: Label
 var _subtitle_serial: int = 0
 var _held_panel: PanelContainer
 var _held_label: Label
 var _toast_box: VBoxContainer
 var _crosshair: Control
-var _top_right: HBoxContainer
+var _top_right: Control
+var _top_left_panel: PanelContainer
 var _touch_controls: Array[Control] = []
 
 var _mobile: bool = false
@@ -107,129 +112,200 @@ func _build() -> void:
 
 # ------------------------------------------------------------------ top bars
 
+func _glass(margin: int = 12, border: Color = Color(1, 0.93, 0.82, 0.12)) -> PanelContainer:
+	var p := PanelContainer.new()
+	var sb := UIKit.style(Color(0.055, 0.043, 0.035, 0.82), 16, border, 1, margin)
+	sb.shadow_color = Color(0, 0, 0, 0.4)
+	sb.shadow_size = 14
+	sb.shadow_offset = Vector2(0, 4)
+	p.add_theme_stylebox_override("panel", sb)
+	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return p
+
+
 func _build_top_left() -> void:
-	_level_label = UIKit.label("LV 1", 14, UIKit.TEAL)
+	var panel := _glass(13)
+	panel.position = Vector2(18, 16)
+	panel.custom_minimum_size = Vector2(238, 0)
+	add_child(panel)
+	_top_left_panel = panel
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 2)
+	panel.add_child(box)
+
+	var cash_head := HBoxContainer.new()
+	cash_head.add_theme_constant_override("separation", 6)
+	cash_head.add_child(UIKit.kicker("Cash", UIKit.GOLD, 10))
+	_level_label = UIKit.label("LV 1", 11, UIKit.TEAL)
+	_level_label.add_theme_font_override("font", UIKit.ui_font(800, 2))
+	_level_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_level_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	cash_head.add_child(_level_label)
+	box.add_child(cash_head)
+
+	_money_label = UIKit.heading("Rs 500", 34, UIKit.CREAM, 700)
+	_money_label.pivot_offset = Vector2(70, 20)
+	box.add_child(_money_label)
+
+	_day_label = UIKit.label("Day 1  -  9:00 AM", 13, UIKit.MUTED)
+	box.add_child(_day_label)
+
+	var meta_row := HBoxContainer.new()
+	meta_row.add_theme_constant_override("separation", 8)
+	_theme_label = UIKit.kicker("Clear Day", UIKit.GOLD, 10)
+	_theme_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	meta_row.add_child(_theme_label)
+	_rep_label = UIKit.kicker("Rep 20", UIKit.ORANGE, 10)
+	meta_row.add_child(_rep_label)
+	box.add_child(meta_row)
+
+	var xp_row := HBoxContainer.new()
+	xp_row.add_theme_constant_override("separation", 8)
 	_xp_bar = ProgressBar.new()
-	_xp_bar.custom_minimum_size = Vector2(110, 7)
+	_xp_bar.custom_minimum_size = Vector2(0, 6)
+	_xp_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_xp_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_xp_bar.show_percentage = false
 	_xp_bar.max_value = 90
 	_xp_bar.value = 0
-
-	var panel := UIKit.panel(8)
-	panel.position = Vector2(16, 14)
-	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(panel)
-	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 0)
-	panel.add_child(box)
-	box.add_child(_level_label)
-
-	_money_label = UIKit.label("Rs 500", 22, UIKit.CREAM)
-	_money_label.pivot_offset = Vector2(66, 15)
-	box.add_child(_money_label)
-	_day_label = UIKit.label("Day 1  -  9:00 AM", 14, UIKit.MUTED)
-	box.add_child(_day_label)
-	_theme_label = UIKit.label("CLEAR DAY", 12, UIKit.GOLD)
-	box.add_child(_theme_label)
-
-	var xp_row := HBoxContainer.new()
-	xp_row.add_theme_constant_override("separation", 6)
-	xp_row.add_theme_constant_override("margin_left", 2)
-	xp_row.add_theme_constant_override("margin_right", 2)
+	_xp_bar.add_theme_stylebox_override("fill", UIKit.bar_fill(UIKit.TEAL, 6))
 	xp_row.add_child(_xp_bar)
-	_xp_text = UIKit.label("0 / 90 XP", 11, UIKit.MUTED)
+	_xp_text = UIKit.label("0 / 90", 10, UIKit.MUTED)
 	xp_row.add_child(_xp_text)
 	box.add_child(xp_row)
 
-	_fps_label = UIKit.label("FPS", 11, UIKit.MUTED)
+	_fps_label = UIKit.label("FPS", 10, UIKit.MUTED)
 	_fps_label.visible = _mobile
 	box.add_child(_fps_label)
 
-	_stock_warning = UIKit.label("", 13, UIKit.RED)
+	_stock_warning = UIKit.label("", 12, UIKit.RED)
+	_stock_warning.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(_stock_warning)
 
-	_rush_label = UIKit.label("RUSH HOUR", 12, UIKit.GOLD)
+	_rush_label = UIKit.label("RUSH HOUR", 11, UIKit.GOLD)
+	_rush_label.add_theme_font_override("font", UIKit.ui_font(800, 2))
 	_rush_label.visible = false
 	box.add_child(_rush_label)
 
-	_combo_label = UIKit.label("", 14, UIKit.GOLD)
+	_combo_label = UIKit.label("", 13, UIKit.GOLD)
 	_combo_label.visible = false
 	box.add_child(_combo_label)
-	_tips_label = UIKit.label("", 13, UIKit.GOLD)
+	_tips_label = UIKit.label("", 12, UIKit.GOLD)
 	_tips_label.visible = false
 	box.add_child(_tips_label)
-	_goals_label = UIKit.label("GOALS  0/3  (G)", 12, UIKit.TEAL)
-	box.add_child(_goals_label)
-	_badge_label = UIKit.label("BADGES  0/18  (B)", 12, UIKit.GOLD)
-	box.add_child(_badge_label)
+
+	var stats := HBoxContainer.new()
+	stats.add_theme_constant_override("separation", 12)
+	_goals_label = UIKit.label("GOALS  0/3  G", 10, UIKit.TEAL)
+	_badge_label = UIKit.label("BADGES  0/18  B", 10, UIKit.GOLD)
+	stats.add_child(_goals_label)
+	stats.add_child(_badge_label)
+	box.add_child(stats)
 
 
 func _build_top_right() -> void:
-	var row := HBoxContainer.new()
-	row.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	row.offset_left = -700
-	row.offset_right = -20
-	row.offset_top = 18
-	row.offset_bottom = 70
-	row.alignment = BoxContainer.ALIGNMENT_END
-	row.add_theme_constant_override("separation", 10)
-	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(row)
-	_top_right = row
+	var mobile := _mobile
+	var container: BoxContainer
+	if mobile:
+		var column := VBoxContainer.new()
+		column.add_theme_constant_override("separation", 6)
+		column.alignment = BoxContainer.ALIGNMENT_END
+		container = column
+	else:
+		container = HBoxContainer.new()
+		container.add_theme_constant_override("separation", 8)
+		(container as HBoxContainer).alignment = BoxContainer.ALIGNMENT_END
 
-	var rep_panel := UIKit.panel(8)
-	rep_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	rep_panel.custom_minimum_size = Vector2(0, 28)
-	row.add_child(rep_panel)
-	_rep_label = UIKit.label("REP 20", 15, UIKit.ORANGE)
-	rep_panel.add_child(_rep_label)
+	container.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	container.offset_left = -640 if not mobile else -260
+	container.offset_right = -18
+	container.offset_top = 16
+	container.offset_bottom = 64
+	container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(container)
+	_top_right = container
 
-	var stock_button := UIKit.button("Stock", 40)
-	stock_button.pressed.connect(func(): Game.root.call("open_inventory"))
-	row.add_child(stock_button)
-	var upgrade_button := UIKit.button("Upgrades", 40)
-	upgrade_button.pressed.connect(func(): Game.root.call("open_upgrades"))
-	row.add_child(upgrade_button)
-	var goals_button := UIKit.button("Goals", 40)
-	goals_button.pressed.connect(func(): Game.root.call("open_goals"))
-	row.add_child(goals_button)
-	var badges_button := UIKit.button("Badges", 40)
-	badges_button.pressed.connect(func(): Game.root.call("open_collection"))
-	row.add_child(badges_button)
-	var models_button := UIKit.button("Models", 40)
-	models_button.pressed.connect(func(): Game.root.call("open_models"))
-	row.add_child(models_button)
-	var menu_button := UIKit.button("Menu", 40)
-	menu_button.pressed.connect(func(): Game.root.call("open_pause"))
-	row.add_child(menu_button)
+	var primary := HBoxContainer.new()
+	primary.add_theme_constant_override("separation", 6)
+	primary.alignment = BoxContainer.ALIGNMENT_END
+	container.add_child(primary)
+
+	for spec in [["Stock", "open_inventory"], ["Upgrades", "open_upgrades"], ["Goals", "open_goals"]]:
+		primary.add_child(_hud_button(String(spec[0]), String(spec[1])))
+
+	var secondary: HBoxContainer
+	if mobile:
+		secondary = HBoxContainer.new()
+		secondary.add_theme_constant_override("separation", 6)
+		secondary.alignment = BoxContainer.ALIGNMENT_END
+		container.add_child(secondary)
+	else:
+		secondary = primary
+
+	for spec in [["Badges", "open_collection"], ["Models", "open_models"], ["Menu", "open_pause"]]:
+		secondary.add_child(_hud_button(String(spec[0]), String(spec[1])))
+
+
+func _hud_button(text: String, method: String) -> Button:
+	var b := UIKit.button(text, 36)
+	b.add_theme_font_override("font", UIKit.ui_font(700, 0))
+	b.add_theme_font_size_override("font_size", 13)
+	b.custom_minimum_size = Vector2(0, 36)
+	b.add_theme_stylebox_override("normal", UIKit.style(Color(0.055, 0.043, 0.035, 0.8), 999, Color(1, 0.93, 0.82, 0.16), 1, 12))
+	b.add_theme_stylebox_override("hover", UIKit.style(Color(0.16, 0.12, 0.09, 0.92), 999, UIKit.GOLD, 1, 12))
+	b.add_theme_stylebox_override("pressed", UIKit.style(UIKit.GOLD, 999, UIKit.GOLD, 1, 12))
+	b.add_theme_color_override("font_pressed_color", UIKit.INK)
+	b.pressed.connect(func(): Game.root.call(method))
+	return b
 
 
 func _build_order_card() -> void:
-	_order_card = UIKit.panel(14)
+	_order_card = PanelContainer.new()
+	var sb := UIKit.style(UIKit.PAPER, 16, UIKit.GOLD.darkened(0.15), 1, 16)
+	sb.shadow_color = Color(0, 0, 0, 0.5)
+	sb.shadow_size = 22
+	sb.shadow_offset = Vector2(0, 8)
+	sb.border_width_left = 5
+	sb.border_color = UIKit.ORANGE
+	_order_card.add_theme_stylebox_override("panel", sb)
 	_order_card.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	_order_card.offset_left = -350
-	_order_card.offset_right = -20
-	_order_card.offset_top = 84
-	_order_card.offset_bottom = 250
+	_order_card.offset_left = -336
+	_order_card.offset_right = -18
+	_order_card.offset_top = 76
+	_order_card.offset_bottom = 244
 	_order_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_order_card.add_theme_stylebox_override("panel", UIKit.style(UIKit.PANEL, 14, UIKit.ORANGE, 2, 14))
 	add_child(_order_card)
 
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 6)
 	_order_card.add_child(box)
-	_order_title = UIKit.label("ORDER", 16, UIKit.ORANGE)
-	box.add_child(_order_title)
-	_order_body = UIKit.label("", 19, UIKit.CREAM)
+
+	var head := HBoxContainer.new()
+	_order_title = UIKit.kicker("Order", UIKit.COPPER, 11)
+	_order_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_child(_order_title)
+	head.add_child(UIKit.kicker("Live", UIKit.GREEN.darkened(0.15), 10))
+	box.add_child(head)
+
+	_order_body = UIKit.label("", 18, UIKit.PAPER_INK)
+	_order_body.add_theme_font_override("font", UIKit.ui_font(700, 0))
 	_order_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(_order_body)
+
+	var rule := ColorRect.new()
+	rule.color = Color(0.42, 0.31, 0.2, 0.22)
+	rule.custom_minimum_size = Vector2(0, 1)
+	box.add_child(rule)
+
 	_order_bar = ProgressBar.new()
 	_order_bar.min_value = 0
 	_order_bar.max_value = 100
 	_order_bar.value = 100
 	_order_bar.show_percentage = false
-	_order_bar.custom_minimum_size = Vector2(0, 10)
+	_order_bar.custom_minimum_size = Vector2(0, 7)
+	_order_bar.add_theme_stylebox_override("background", UIKit.style(Color(0.78, 0.7, 0.58, 0.5), 4, Color(0, 0, 0, 0), 0, 0))
+	_order_bar.add_theme_stylebox_override("fill", UIKit.bar_fill(UIKit.GREEN, 4))
 	box.add_child(_order_bar)
 	_order_card.visible = false
 
@@ -241,12 +317,23 @@ func _build_subtitle() -> void:
 	_subtitle_panel.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
 	_subtitle_panel.offset_left = -430
 	_subtitle_panel.offset_right = 430
-	_subtitle_panel.offset_top = -196
-	_subtitle_panel.offset_bottom = -116
-	_subtitle_panel.add_theme_stylebox_override("panel", UIKit.style(Color(0.08, 0.06, 0.05, 0.88), 12, UIKit.GOLD, 2, 10))
+	_subtitle_panel.offset_top = -206
+	_subtitle_panel.offset_bottom = -118
+	var sb := UIKit.style(Color(0.05, 0.04, 0.032, 0.9), 14, Color(0.9, 0.75, 0.5, 0.45), 1, 12)
+	sb.shadow_color = Color(0, 0, 0, 0.45)
+	sb.shadow_size = 16
+	_subtitle_panel.add_theme_stylebox_override("panel", sb)
 	_subtitle_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_subtitle_panel)
-	_subtitle_label = UIKit.label("", 21, UIKit.CREAM)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 2)
+	_subtitle_panel.add_child(box)
+	_subtitle_kicker = UIKit.kicker("Customer", UIKit.GOLD, 9)
+	_subtitle_kicker.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(_subtitle_kicker)
+
+	_subtitle_label = UIKit.label("", 20, UIKit.CREAM)
 	_subtitle_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_subtitle_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_subtitle_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -255,7 +342,7 @@ func _build_subtitle() -> void:
 		var font: Resource = load(font_path)
 		if font is Font:
 			_subtitle_label.add_theme_font_override("font", font)
-	_subtitle_panel.add_child(_subtitle_label)
+	box.add_child(_subtitle_label)
 	_subtitle_panel.visible = false
 
 
@@ -264,12 +351,16 @@ func _build_prompt() -> void:
 	_prompt_panel.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
 	_prompt_panel.offset_left = -300
 	_prompt_panel.offset_right = 300
-	_prompt_panel.offset_top = -104
-	_prompt_panel.offset_bottom = -58
+	_prompt_panel.offset_top = -108
+	_prompt_panel.offset_bottom = -60
 	_prompt_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_prompt_panel.add_theme_stylebox_override("panel", UIKit.style(Color(0.08, 0.06, 0.05, 0.82), 12, UIKit.ORANGE, 1, 8))
+	var sb := UIKit.style(Color(0.05, 0.04, 0.032, 0.86), 999, Color(0.95, 0.78, 0.5, 0.4), 1, 10)
+	sb.shadow_color = Color(0, 0, 0, 0.4)
+	sb.shadow_size = 12
+	_prompt_panel.add_theme_stylebox_override("panel", sb)
 	add_child(_prompt_panel)
-	_prompt_label = UIKit.label("", 20, UIKit.CREAM)
+	_prompt_label = UIKit.label("", 18, UIKit.CREAM)
+	_prompt_label.add_theme_font_override("font", UIKit.ui_font(600, 1))
 	_prompt_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_prompt_panel.add_child(_prompt_label)
 	_prompt_panel.visible = false
@@ -280,11 +371,15 @@ func _build_held() -> void:
 	_held_panel.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 	_held_panel.offset_left = 20
 	_held_panel.offset_right = 460
-	_held_panel.offset_top = -78
-	_held_panel.offset_bottom = -30
+	_held_panel.offset_top = -80
+	_held_panel.offset_bottom = -32
 	_held_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var sb := UIKit.style(Color(0.05, 0.04, 0.032, 0.8), 12, Color(0.95, 0.78, 0.5, 0.25), 1, 10)
+	sb.shadow_color = Color(0, 0, 0, 0.35)
+	sb.shadow_size = 10
+	_held_panel.add_theme_stylebox_override("panel", sb)
 	add_child(_held_panel)
-	_held_label = UIKit.label("", 16, UIKit.MUTED)
+	_held_label = UIKit.label("", 15, UIKit.MUTED)
 	_held_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_held_panel.add_child(_held_label)
 	_held_panel.visible = false
@@ -295,22 +390,21 @@ func _build_toasts() -> void:
 	_toast_box.set_anchors_preset(Control.PRESET_CENTER_TOP)
 	_toast_box.offset_left = -260
 	_toast_box.offset_right = 260
-	_toast_box.offset_top = 92
-	_toast_box.offset_bottom = 280
+	_toast_box.offset_top = 96
+	_toast_box.offset_bottom = 290
 	_toast_box.alignment = BoxContainer.ALIGNMENT_BEGIN
-	_toast_box.add_theme_constant_override("separation", 4)
+	_toast_box.add_theme_constant_override("separation", 6)
 	_toast_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_toast_box)
 
 
 func _build_crosshair() -> void:
-	_crosshair = ColorRect.new()
-	_crosshair.color = Color(1, 0.95, 0.85, 0.75)
+	_crosshair = Reticle.new()
 	_crosshair.set_anchors_preset(Control.PRESET_CENTER)
-	_crosshair.offset_left = -2
-	_crosshair.offset_right = 2
-	_crosshair.offset_top = -2
-	_crosshair.offset_bottom = 2
+	_crosshair.offset_left = -11
+	_crosshair.offset_right = 11
+	_crosshair.offset_top = -11
+	_crosshair.offset_bottom = 11
 	_crosshair.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_crosshair)
 
@@ -338,22 +432,23 @@ func _build_touch_controls() -> void:
 
 	var use_button := Button.new()
 	use_button.text = "USE"
-	use_button.add_theme_font_size_override("font_size", 22)
+	use_button.add_theme_font_override("font", UIKit.ui_font(800, 2))
+	use_button.add_theme_font_size_override("font_size", 20)
 	use_button.custom_minimum_size = Vector2(120, 120)
 	use_button.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
 	use_button.offset_left = -170
 	use_button.offset_right = -50
 	use_button.offset_top = -190
 	use_button.offset_bottom = -70
-	use_button.add_theme_stylebox_override("normal", UIKit.style(Color(0.95, 0.55, 0.23, 0.9), 60, Color(1, 0.85, 0.6), 2, 0))
-	use_button.add_theme_stylebox_override("hover", UIKit.style(Color(1, 0.62, 0.28, 0.95), 60, Color(1, 0.9, 0.7), 2, 0))
-	use_button.add_theme_stylebox_override("pressed", UIKit.style(Color(0.85, 0.45, 0.18, 0.95), 60, Color(1, 0.85, 0.6), 2, 0))
-	use_button.add_theme_color_override("font_color", Color("241a14"))
+	use_button.add_theme_stylebox_override("normal", UIKit.style(Color(0.95, 0.62, 0.28, 0.94), 60, Color(1, 0.9, 0.7), 2, 0))
+	use_button.add_theme_stylebox_override("hover", UIKit.style(Color(1, 0.7, 0.34, 0.98), 60, Color(1, 0.95, 0.8), 2, 0))
+	use_button.add_theme_stylebox_override("pressed", UIKit.style(Color(0.85, 0.5, 0.2, 0.98), 60, Color(1, 0.9, 0.7), 2, 0))
+	use_button.add_theme_color_override("font_color", UIKit.INK)
 	use_button.pressed.connect(_on_use_pressed)
 	add_child(use_button)
 	_touch_controls.append(use_button)
 
-	var hint := UIKit.label("drag to look", 13, Color(1, 0.94, 0.84, 0.5))
+	var hint := UIKit.label("drag to look", 12, Color(1, 0.94, 0.84, 0.45))
 	hint.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
 	hint.offset_left = -260
 	hint.offset_right = -60
@@ -395,8 +490,9 @@ func _on_money_changed(cash: int) -> void:
 		return
 	_money_label.text = "Rs %d" % cash
 	var tween := create_tween()
-	_money_label.scale = Vector2(1.12, 1.12)
-	tween.tween_property(_money_label, "scale", Vector2.ONE, 0.18)
+	_money_label.pivot_offset = _money_label.size * 0.5
+	_money_label.scale = Vector2(1.06, 1.06)
+	tween.tween_property(_money_label, "scale", Vector2.ONE, 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 func _on_time_changed(_hour: int, _minute: int) -> void:
@@ -406,7 +502,7 @@ func _on_time_changed(_hour: int, _minute: int) -> void:
 
 func _on_reputation_changed(value: float) -> void:
 	if _rep_label:
-		_rep_label.text = "REP %d" % int(round(value))
+		_rep_label.text = "Rep %d" % int(round(value))
 
 
 func _on_xp_changed(level: int, xp: int, xp_to_next: int, _ratio: float) -> void:
@@ -458,13 +554,13 @@ func _on_goals_changed(data: Dictionary) -> void:
 	if _goals_label == null:
 		return
 	var all: Array = data.get("goals", [])
-	_goals_label.text = "GOALS  %d/%d  (G)" % [int(data.get("completed", 0)), all.size()]
+	_goals_label.text = "GOALS  %d/%d  G" % [int(data.get("completed", 0)), all.size()]
 
 
 func _refresh_badges() -> void:
 	if _badge_label == null:
 		return
-	_badge_label.text = "BADGES  %d/%d  (B)" % [Achievements.unlocked_count(), Achievements.DEFS.size()]
+	_badge_label.text = "BADGES  %d/%d  B" % [Achievements.unlocked_count(), Achievements.DEFS.size()]
 
 
 func _on_theme_changed(_weather: String, label: String) -> void:
@@ -504,7 +600,7 @@ func _on_prompt_changed(text: String) -> void:
 		_prompt_panel.visible = false
 		return
 	_prompt_panel.visible = true
-	_prompt_label.text = text if _mobile else "[E]  " + text
+	_prompt_label.text = text if _mobile else "E   -   " + text
 
 
 func _on_held_changed(text: String) -> void:
@@ -512,14 +608,14 @@ func _on_held_changed(text: String) -> void:
 		return
 	_held_panel.visible = text != ""
 	if text != "":
-		_held_label.text = "IN HAND  " + text
+		_held_label.text = "IN HAND   " + text
 
 
 func _on_order_updated(order: Dictionary) -> void:
 	if _order_card == null:
 		return
 	_order_card.visible = true
-	_order_title.text = "ORDER  -  " + String(order.get("customer", "Customer"))
+	_order_title.text = "ORDER  -  " + String(order.get("customer", "Customer")).to_upper()
 	var prefs: Array[String] = []
 	prefs.append(GameData.SPICE_NAMES[clampi(int(order.get("spice", 1)), 0, 2)])
 	prefs.append("sweet" if bool(order.get("sweet", false)) else "no sweet")
@@ -548,9 +644,13 @@ func _on_toast(text: String, kind: String) -> void:
 	elif kind == "bad":
 		color = Color("ff8a6a")
 	var panel := PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", UIKit.style(Color(0.08, 0.06, 0.05, 0.86), 10, color.darkened(0.35), 1, 8))
+	var sb := UIKit.style(Color(0.05, 0.04, 0.032, 0.9), 999, Color(color.r, color.g, color.b, 0.45), 1, 10)
+	sb.shadow_color = Color(0, 0, 0, 0.4)
+	sb.shadow_size = 10
+	panel.add_theme_stylebox_override("panel", sb)
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var label := UIKit.label(text, 17, color)
+	var label := UIKit.label(text, 15, color)
+	label.add_theme_font_override("font", UIKit.ui_font(600, 0))
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	panel.add_child(label)
 	_toast_box.add_child(panel)
@@ -576,7 +676,7 @@ func _on_stock_changed(_id: String) -> void:
 		var def := GameData.ingredient(id)
 		if def:
 			names.append(def.display_name)
-	_stock_warning.text = "Low: " + ", ".join(names)
+	_stock_warning.text = "LOW STOCK  " + ", ".join(names)
 
 
 func _process(delta: float) -> void:
@@ -588,7 +688,7 @@ func _process(delta: float) -> void:
 		if bucket != _patience_bucket:
 			_patience_bucket = bucket
 			var color: Color = [UIKit.GREEN, UIKit.ORANGE, UIKit.RED][bucket]
-			_order_bar.add_theme_stylebox_override("fill", UIKit.style(color, 6, Color(0, 0, 0, 0), 0, 0))
+			_order_bar.add_theme_stylebox_override("fill", UIKit.bar_fill(color, 4))
 
 
 func _update_fps(delta: float) -> void:
@@ -618,6 +718,8 @@ func _on_rush_hour_changed(active: bool) -> void:
 func _on_overlay_changed(open: bool) -> void:
 	if _top_right:
 		_top_right.visible = not open
+	if _top_left_panel:
+		_top_left_panel.visible = not open
 	if _order_card:
 		_order_card.visible = not open and Orders.active_customer != null
 	if _prompt_panel and open:

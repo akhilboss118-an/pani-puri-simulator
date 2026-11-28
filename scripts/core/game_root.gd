@@ -5,6 +5,7 @@ extends Node
 var world: WorldBuilder
 var player: Player
 var ui_layer: CanvasLayer
+var post_fx: CanvasLayer
 
 var menu: MainMenu
 var hud: HUD
@@ -115,16 +116,22 @@ func _build_world() -> void:
 
 	_menu_camera = Camera3D.new()
 	_menu_camera.name = "MenuCamera"
-	_menu_camera.fov = 60.0
+	_menu_camera.fov = 48.0
 	add_child(_menu_camera)
-	_menu_camera.position = Vector3(4.8, 2.45, 4.6)
-	_menu_camera.look_at(Vector3(0.2, 1.5, 8.8))
+	_menu_camera.position = Vector3(-3.7, 2.75, 3.9)
+	_menu_camera.look_at(Vector3(2.0, 1.5, 9.0))
 	_menu_camera.current = true
 
 
 func _build_ui() -> void:
+	post_fx = preload("res://scripts/ui/post_fx.gd").new()
+	post_fx.name = "PostFX"
+	add_child(post_fx)
+	post_fx.call("apply_quality", int(Game.settings.quality))
+
 	ui_layer = CanvasLayer.new()
 	ui_layer.name = "UI"
+	ui_layer.layer = 10
 	add_child(ui_layer)
 
 	hud = HUD.new()
@@ -281,6 +288,8 @@ func _close_panels() -> void:
 func apply_quality() -> void:
 	if world:
 		world.apply_quality(int(Game.settings.quality))
+	if post_fx:
+		post_fx.call("apply_quality", int(Game.settings.quality))
 
 
 func _on_day_ended(report: Dictionary) -> void:
@@ -307,9 +316,12 @@ func _process(delta: float) -> void:
 		_film_tick(delta)
 	if Game.state == Game.State.MENU and _menu_camera != null:
 		_menu_time += delta
-		var drift := sin(_menu_time * 0.11) * 0.55
-		_menu_camera.position = Vector3(4.8 + drift, 2.45 + sin(_menu_time * 0.07) * 0.1, 4.6 - drift * 0.3)
-		_menu_camera.look_at(Vector3(0.2, 1.5, 8.8))
+		var drift := sin(_menu_time * 0.09) * 0.18
+		_menu_camera.position = Vector3(
+			-3.7 + drift,
+			2.75 + sin(_menu_time * 0.06) * 0.045,
+			3.9 - drift * 0.16)
+		_menu_camera.look_at(Vector3(2.0 + drift * 0.3, 1.5, 9.0))
 
 
 # ---------------------------------------------------------------- promo film
@@ -361,8 +373,8 @@ func film_menu() -> void:
 	hud.visible = false
 	if _menu_camera:
 		_menu_camera.current = true
-		_menu_camera.position = Vector3(2.0, 2.2, 3.5)
-		_menu_camera.look_at(Vector3(0.0, 1.4, 8.9))
+		_menu_camera.position = Vector3(-3.7, 2.75, 3.9)
+		_menu_camera.look_at(Vector3(2.0, 1.5, 9.0))
 	_menu_time = 0.0
 
 

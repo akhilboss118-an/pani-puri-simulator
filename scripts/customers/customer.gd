@@ -44,6 +44,7 @@ var _arm_r: Node3D
 var _head: Node3D
 var _bubble: Label3D
 var _bubble_bg: MeshInstance3D
+var _bubble_frame: MeshInstance3D
 var _badge: Label3D
 var _bar_fill: MeshInstance3D
 var _bar_bg: MeshInstance3D
@@ -58,6 +59,7 @@ func _ready() -> void:
 	_build()
 	_bubble.visible = false
 	_bubble_bg.visible = false
+	_bubble_frame.visible = false
 	_bar_fill.visible = false
 	_bar_bg.visible = false
 	if _badge:
@@ -167,15 +169,30 @@ func _build_procedural_body() -> void:
 
 
 func _build_order_overlay() -> void:
-	# order bubble
-	_bubble_bg = MeshFactory.quad(self, Vector2(1.25, 0.36), Vector3(0, 2.08, 0), Color(1, 0.98, 0.92, 0.96))
+	# order bubble: a cream card with a thin brass frame
+	_bubble_frame = MeshFactory.quad(self, Vector2(1.2, 0.5), Vector3(0, 2.14, -0.006), Color(0.79, 0.63, 0.36, 0.98))
+	var frame_mat := _bubble_frame.material_override as StandardMaterial3D
+	frame_mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	frame_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	_bubble_bg = MeshFactory.quad(self, Vector2(1.12, 0.42), Vector3(0, 2.14, 0), Color(1, 0.98, 0.92, 0.97))
 	var mat := _bubble_bg.material_override as StandardMaterial3D
 	mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	_bubble = MeshFactory.label(self, "", Vector3(0, 2.08, 0.01), 26, Color("241a12"), 0.003)
-	_bubble.width = 400
-	_bubble.autowrap_mode = TextServer.AUTOWRAP_OFF
-	_badge = MeshFactory.label(self, "", Vector3(0.9, 2.12, 0.01), 17, Color("241a12"), 0.0024)
+	_bubble = Label3D.new()
+	_bubble.text = ""
+	_bubble.position = Vector3(0, 2.14, 0.012)
+	_bubble.font = UIKit.ui_font(800)
+	_bubble.font_size = 36
+	_bubble.pixel_size = 0.0031
+	_bubble.modulate = Color("2a1c12")
+	_bubble.outline_size = 0
+	_bubble.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_bubble.width = 340
+	_bubble.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_bubble.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_bubble.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	add_child(_bubble)
+	_badge = MeshFactory.label(self, "", Vector3(0.9, 2.16, 0.012), 17, Color("2a1c12"), 0.0024)
 	_badge.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_badge.visible = false
 
@@ -252,6 +269,7 @@ func begin_order(order_data: Dictionary) -> void:
 	_bubble.text = order_text()
 	_bubble.visible = true
 	_bubble_bg.visible = true
+	_bubble_frame.visible = true
 	_bar_fill.visible = true
 	_bar_bg.visible = true
 	Audio.play("bell", 1.2, -18.0)
@@ -291,6 +309,7 @@ func receive(score: float, message: String) -> void:
 	_bubble.text = message
 	_bubble.visible = true
 	_bubble_bg.visible = true
+	_bubble_frame.visible = true
 	_bar_fill.visible = false
 	_bar_bg.visible = false
 	Audio.play("good" if score >= 0.6 else "bad", 1.0, -8.0)
@@ -316,6 +335,7 @@ func leave(exit_position: Vector3) -> void:
 	_play_animation("walk")
 	_bubble.visible = false
 	_bubble_bg.visible = false
+	_bubble_frame.visible = false
 	_bar_fill.visible = false
 	_bar_bg.visible = false
 	if _badge:
@@ -417,5 +437,6 @@ func _patience_tick(delta: float) -> void:
 		_bubble.text = "Too slow!"
 		_bubble.visible = true
 		_bubble_bg.visible = true
+		_bubble_frame.visible = true
 		Audio.play_dialogue("walkout", global_position)
 		walked_out.emit(self)
